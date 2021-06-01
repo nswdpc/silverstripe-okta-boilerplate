@@ -1,0 +1,7 @@
+---
+Name: silverstripe-okta-api
+---
+# API client options
+NSWDPC\Authentication\Okta\Client:
+  default_file_location: null
+  config_file_location: null

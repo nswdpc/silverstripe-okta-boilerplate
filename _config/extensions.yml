@@ -1,0 +1,17 @@
+---
+Name: silverstripe-okta-extensions
+---
+Bigfork\SilverStripeOAuth\Client\Model\Passport:
+  extensions:
+    - 'NSWDPC\Authentication\Okta\PassportExtension'
+SilverStripe\Security\Group:
+  # default group to be used as parent
+  okta_group:
+    Code: 'okta-root'
+    Title: 'Okta'
+    Description: 'This is the parent group for all groups imported from Okta'
+    IsOktaGroup: 1
+    Locked: 1
+  # apply extension
+  extensions:
+      - 'NSWDPC\Authentication\Okta\GroupExtension'

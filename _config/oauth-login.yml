@@ -1,0 +1,57 @@
+---
+Name: silverstripe-okta-controller
+After:
+  - '#oauthcontroller'
+---
+# Provide the OktaLoginHandler, which extends the default
+Bigfork\SilverStripeOAuth\Client\Control\Controller:
+  token_handlers:
+    loginhandler:
+      priority: 10
+      context: login
+      class: NSWDPC\Authentication\Okta\OktaLoginHandler
+---
+Name: silverstripe-okta-loginhandler
+---
+# configure the Okta Login Handker
+NSWDPC\Authentication\Okta\OktaLoginHandler:
+  link_existing_member: true
+  apply_group_restriction: true
+  site_restricted_groups: []
+---
+Name: silverstripe-okta-oauthprovider
+---
+# Create the Okta provider
+SilverStripe\Core\Injector\Injector:
+  Bigfork\SilverStripeOAuth\Client\Factory\ProviderFactory:
+    properties:
+      providers:
+        'Okta': '%$OktaProvider'
+  OktaProvider:
+    class: 'Foxworth42\OAuth2\Client\Provider\Okta'
+    constructor:
+      Options:
+        clientId: ''
+        clientSecret: ''
+        issuer: ''
+        redirectUri: ''
+# Register the provider as an Authenticator
+Bigfork\SilverStripeOAuth\Client\Authenticator\Authenticator:
+  providers:
+    'Okta':
+      # Name of provider, show on login button
+      name: 'Authenticate via Okta'
+      # Scopes see https://developer.okta.com/docs/reference/api/oidc/#access-token-scopes-and-claims
+      scopes:
+        - 'openid'
+        - 'profile'
+        - 'email'
+        - 'groups'
+# Provide member field mappings
+Bigfork\SilverStripeOAuth\Client\Mapper\GenericMemberMapper:
+  mapping:
+    'Okta':
+      # Member.field : Provider.field mapping
+      'Email': 'Email'
+      'FirstName': 'FirstName'
+      'Surname': 'Surname'
