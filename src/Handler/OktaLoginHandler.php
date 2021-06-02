@@ -44,6 +44,48 @@ class OktaLoginHandler extends LoginTokenHandler
     private static $site_restricted_groups = [];
 
     /**
+     * List of failure codes
+     */
+    const FAIL_USER_NO_GROUPS = 100;
+    const FAIL_USER_MEMBER_COLLISION = 101;
+    const FAIL_USER_MISSING_REQUIRED_GROUPS = 102;
+    const FAIL_USER_MISSING_EMAIL = 103;
+    const FAIL_USER_MEMBER_EMAIL_MISMATCH = 104;
+    const FAIL_USER_MEMBER_PASSPORT_MISMATCH = 105;
+    const FAIL_NO_PROVIDER_NAME = 200;
+    const FAIL_NO_PASSPORT_NO_MEMBER_CREATED = 300;
+    const FAIL_PASSPORT_NO_MEMBER_CREATED = 301;
+
+    /*
+     * @var string|null
+     */
+    protected $loginFailureCode = null;
+
+    /**
+     * @inheritdoc
+     */
+    public function handleToken(AccessToken $token, AbstractProvider $provider)
+    {
+        $this->setLoginFailureCode(null);//reset failure code on new attempt
+        return parent::handleToken($token, $provider);
+    }
+
+    /**
+     * @param string|null $code
+     */
+    protected function setLoginFailureCode($code) {
+        $this->loginFailureCode = $code;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getLoginFailureCode() {
+        return $this->loginFailureCode;
+    }
+
+
+    /**
      * Given an identifier and a provider string, return the Passport matching
      * @return Passport|null
      */
@@ -56,7 +98,19 @@ class OktaLoginHandler extends LoginTokenHandler
     }
 
     /**
-     * Given an identifier and a provider string, return the Passport matching
+     * Get the passport for a provider/member combination
+     * @return Passport|null
+     */
+    protected function getMemberPassport(Member $claimedMember, string $provider) {
+        $passport = Passport::get()->filter([
+            'MemberID' => $claimedMember->ID,
+            'OAuthSource' => $provider
+        ])->first();
+        return $passport;
+    }
+
+    /**
+     * Given an identifier and a provider string, create a passport
      * @return Passport|null
      */
     protected function createPassport(string $identifier, string $provider) : Passport {
@@ -90,6 +144,7 @@ class OktaLoginHandler extends LoginTokenHandler
         // get user Okta groups (titles)
         $data = $user->toArray();
         if(empty($data['groups']) || !is_array($data['groups'])) {
+            $this->setLoginFailureCode(self::FAIL_USER_NO_GROUPS);
             throw new ValidationException(
                 _t(
                     'OKTA.GENERAL_SESSION_ERROR',
@@ -114,6 +169,7 @@ class OktaLoginHandler extends LoginTokenHandler
         $intersect = array_intersect($restrictedGroups, $data['groups']);
         // the intersect must contain all the restricted groups
         if($intersect != $restrictedGroups) {
+            $this->setLoginFailureCode(self::FAIL_USER_MISSING_REQUIRED_GROUPS);
             throw new ValidationException(
                 _t(
                     'OKTA.GENERAL_SESSION_ERROR',
@@ -143,6 +199,7 @@ class OktaLoginHandler extends LoginTokenHandler
 
         $userEmail = $user->getEmail();
         if(!$userEmail) {
+            $this->setLoginFailureCode(self::FAIL_USER_MISSING_EMAIL);
             throw new ValidationException(
                 _t(
                     'OKTA.GENERAL_SESSION_ERROR',
@@ -152,6 +209,7 @@ class OktaLoginHandler extends LoginTokenHandler
         }
 
         if(empty($providerName)) {
+            $this->setLoginFailureCode(self::FAIL_NO_PROVIDER_NAME);
             throw new ValidationException(
                 _t(
                     'OKTA.GENERAL_SESSION_ERROR',
@@ -163,11 +221,12 @@ class OktaLoginHandler extends LoginTokenHandler
         /** @var Passport $passport */
         $passport = $this->getPassport($identifier, $providerName);
         if (!$passport) {
-            // Create a passport
-            $passport = $this->createPassport($identifier, $providerName);
+
             // Create the new member (or return a matching one if config allows)
             $member = $this->createMember($token, $provider);
+
             if(!$member) {
+                $this->setLoginFailureCode(self::FAIL_NO_PASSPORT_NO_MEMBER_CREATED);
                 throw new ValidationException(
                     _t(
                         'OKTA.INVALID_MEMBER',
@@ -175,14 +234,33 @@ class OktaLoginHandler extends LoginTokenHandler
                     )
                 );
             }
+
+            // validate whether a passport already exists for the member/provider
+            // this could occur if user B email address claims a member account
+            // with the same email address
+            $memberPassport = $this->getMemberPassport($member, $providerName);
+            if($memberPassport && $memberPassport->exists()) {
+                $this->setLoginFailureCode(self::FAIL_USER_MEMBER_PASSPORT_MISMATCH);
+                throw new ValidationException(
+                    _t(
+                        'OKTA.INVALID_MEMBER',
+                        'Sorry, there was an issue finding your account. Please try again or contact support'
+                    )
+                );
+            }
+
+            // Assign created member to passport
+            $passport = $this->createPassport($identifier, $providerName);
             $passport->MemberID = $member->ID;
             $passport->write();
+
         } else {
 
             // Passport exists, validate it
             $member = $passport->Member();
 
             if(!$member) {
+                $this->setLoginFailureCode(self::FAIL_PASSPORT_NO_MEMBER_CREATED);
                 throw new ValidationException(
                     _t(
                         'OKTA.INVALID_MEMBER',
@@ -193,8 +271,9 @@ class OktaLoginHandler extends LoginTokenHandler
 
             // validate that the Member.Email matches the returned $user email
             // this will be hit if someone's email changes at Okta
-            // TODO: sync job via API to pull in update email address
+            // TODO: sync job via API to pull in updated email address
             if( $member->Email != $userEmail ) {
+                $this->setLoginFailureCode(self::FAIL_USER_MEMBER_EMAIL_MISMATCH);
                 throw new ValidationException(
                     _t(
                         'OKTA.INVALID_MEMBER',
@@ -261,9 +340,11 @@ class OktaLoginHandler extends LoginTokenHandler
         $session = $this->getSession();
         $providerName = $session->get('oauth2.provider');
         $user = $provider->getResourceOwner($token);
-
         $userEmail = $user->getEmail();
+
+        // require a user email for this operation
         if(!$userEmail) {
+            $this->setLoginFailureCode(self::FAIL_USER_MISSING_EMAIL);
             throw new ValidationException(
                 _t(
                     'OKTA.NO_EMAIL_RETURNED',
@@ -272,22 +353,37 @@ class OktaLoginHandler extends LoginTokenHandler
             );
         }
 
+        // require a provider name for this operation
+        if(empty($providerName)) {
+            $this->setLoginFailureCode(self::FAIL_NO_PROVIDER_NAME);
+            throw new ValidationException(
+                _t(
+                    'OKTA.GENERAL_SESSION_ERROR',
+                    'Sorry, we could not sign you in. Please try again.'
+                )
+            );
+        }
+
         /* @var Member|null */
-        $member = Member::get()->filter('Email', $userEmail)->first();
-        if(!$member) {
-            // no existing member, can create one
+        $claimedMember = Member::get()->filter('Email', $userEmail)->first();
+        $identifier = $user->getId();
+
+        if(!$claimedMember) {
+            // no existing member for the user's email address, can create one
             $member = Member::create();
             $member = $this->getMapper($providerName)->map($member, $user);
             // Retained for compat with LoginTokenHandler
             $member->OAuthSource = null;
             $member->write();
         } else if($this->config()->get('link_existing_member')) {
-            // Member exists, update mapped fields
-            $member = $this->getMapper($providerName)->map($member, $user);
+            // Member exists, update mapped fields from the provider
+            // TODO: select a primary provider for fields if multiple providers?
+            $member = $this->getMapper($providerName)->map($claimedMember, $user);
             $member->OAuthSource = null;
             $member->write();
         } else {
-            // Member exists, but collision detected
+            // Member exists, but collision detected and config disallows linking
+            $this->setLoginFailureCode(self::FAIL_USER_MEMBER_COLLISION);
             throw new ValidationException(
                 _t(
                     'OKTA.MEMBER_COLLISION',
@@ -295,7 +391,6 @@ class OktaLoginHandler extends LoginTokenHandler
                 )
             );
         }
-
         return $member;
     }
 }
