@@ -1,40 +1,76 @@
 <?php
 
-use Foxworth42\OAuth2\Client\Provider\Okta;
-use NSWDPC\Authentication\Okta\Client;
+namespace NSWDPC\Authentication\Okta\Tests;
+
+use Bigfork\SilverStripeOAuth\Client\Model\Passport;
 use Bigfork\SilverStripeOAuth\Client\Control\Controller;
 use Bigfork\SilverStripeOAuth\Client\Factory\ProviderFactory;
-use SilverStripe\Core\Config\Config;
-use SilverStripe\Core\Injector\Injector;
+use Foxworth42\OAuth2\Client\Provider\Okta;
+use Foxworth42\OAuth2\Client\Provider\OktaUser;
+use GuzzleHttp\ClientInterface;
+use League\OAuth2\Client\Token\AccessToken;
+use Mockery;
+use NSWDPC\Authentication\Okta\Client;
+use NSWDPC\Authentication\Okta\OktaLoginHandler;
+use Psr\Http\Message\ResponseInterface;
+use Psr\Http\Message\StreamInterface;
+use SilverStripe\Control\Controller as SilverstripeController;
 use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Control\HTTPResponse;
 use SilverStripe\Control\Session;
+use SilverStripe\Core\Config\Config;
+use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\SapphireTest;
+use SilverStripe\ORM\ValidationResult;
+use SilverStripe\Security\Member;
+use SilverStripe\Security\RequestAuthenticationHandler;
 
 /**
  * Run test related to the Okta API using `okta/sdk`
  */
 class OAuthTest extends SapphireTest {
 
-    protected $usesDatabase = false;
-
-    protected $autoFollowRedirection = false;
+    /**
+     * @inheritdoc
+     */
+    protected $usesDatabase = true;
 
     /**
-     * Test that we can create an authentication URL from the Okta configuration
+     * @inheritdoc
      */
-    public function testOktaAuthenticateUrl() {
+    protected $autoFollowRedirection = false;
+
+
+    /**
+     * Get an Access Token
+     */
+    protected function getAccessToken($options = []) : AccessToken
+    {
+        return new AccessToken($options);
+    }
+
+    /**
+     * Return issuer URI parts
+     */
+    protected function getIssuer() : array {
         $issuer = [
             'host' => 'something.example.com',
             'path' => '/oauth2',
             'scheme' => 'https'
         ];
+        return $issuer;
+    }
 
+    /**
+     * Test that we can create an authentication URL from the Okta configuration
+     */
+    public function testOktaAuthenticateUrl() {
+        $issuer = $this->getIssuer();
         $options = [
             'clientId' => 'test-client-id',
-            'clientSecret' => 'test-client-id',
+            'clientSecret' => 'test-client-secret',
             'issuer' => "{$issuer['scheme']}://{$issuer['host']}{$issuer['path']}",
-            'redirectUri' => 'https://localhost/oauth2/callback/',
+            'redirectUri' => 'https://localhost/oauth/callback/',
         ];
         $providers = [];
         $providers['OktaTest'] = new Okta( $options );
@@ -63,7 +99,6 @@ class OAuthTest extends SapphireTest {
         ];
 
         $query = http_build_query($getVars);
-        print $query . "\n";
 
         $request = new HTTPRequest(
             'GET',
@@ -102,9 +137,259 @@ class OAuthTest extends SapphireTest {
     }
 
     /**
-     * Test that we can get a valid redirection response from a fake callback request
+     * Get a user with a 'corret' claim on an email (as in they own the SS member email address)
      */
-    public function testOktaCallbackUrl() {
+    protected function getCorrectUser() : array {
+        return [
+            'sub' => "some-okta-user-id",
+            'given_name' => "Sandy",
+            'family_name' => "Okta-User",
+            'name' => "Sandy Okta-User",
+            'email' => "sandy.oktauser@example.com",
+            'preferred_username' => "sandy.oktauser",
+            'groups' => [
+                'everyone',
+                'some-group',
+                'another-group'
+            ]
+        ];
+    }
+
+    /**
+     * Get conflicting user, note same email as correct user ^
+     */
+    protected function getConflictingUser() : array {
+        return [
+            'sub' => "conflicting-okta-user-id",
+            'given_name' => "Sandy",
+            'family_name' => "NotSandy",
+            'name' => "Sandy NotSandy",
+            'email' => "sandy.oktauser@example.com",
+            'preferred_username' => "sandy.notsandy",
+            'groups' => [
+                'some-group',
+                'external-group'
+            ]
+        ];
+    }
+
+    /**
+     * Return an access token and provider for a supplied user and session
+     */
+    protected function setupForLoginHandler(Session $session, array $authenticatingUser) {
+        $controller = SilverstripeController::curr();
+        $controller->getRequest()->setSession($session);
+
+        $issuer = $this->getIssuer();
+
+        $options = [
+            'clientId' => 'test-client-id',
+            'clientSecret' => 'test-client-secret',
+            'issuer' => "{$issuer['scheme']}://{$issuer['host']}{$issuer['path']}",
+            'redirectUri' => 'https://localhost/oauth/callback/',
+        ];
+
+        $provider = new Okta( $options );
+
+        $stream = Mockery::mock(StreamInterface::class);
+        $stream
+            ->shouldReceive('__toString')
+            ->once()
+            ->andReturn(json_encode($authenticatingUser));
+
+        $response = Mockery::mock(ResponseInterface::class);
+        $response
+            ->shouldReceive('getBody')
+            ->once()
+            ->andReturn($stream);
+        $response
+            ->shouldReceive('getHeader')
+            ->once()
+            ->with('content-type')
+            ->andReturn('application/json');
+
+        $client = Mockery::spy(ClientInterface::class, [
+            'send' => $response,
+        ]);
+
+        $provider->setHttpClient($client);
+
+        $accessToken = $this->getAccessToken([
+            'access_token' => 'okta_test_123',
+            'expires' => 3600
+        ]);
+
+        $user = $provider->getResourceOwner($accessToken);
+        $url = $provider->getResourceOwnerDetailsUrl($accessToken);
+
+        $this->assertInstanceOf(OktaUser::class, $user);
+
+        $this->assertEquals(
+            $options['issuer'] . "/v1/userinfo",
+            $url
+        );
+
+        return [
+            'accessToken' => $accessToken,
+            'provider' => $provider,
+        ];
+    }
+
+    public function testOktaLoginHandlerFailWithRestrictedGroups() {
+        $session = new Session([]);
+        $result = $this->setupForLoginHandler($session, $this->getCorrectUser());
+
+        $oauthsource = 'Okta';
+        $session->set('oauth2.provider', $oauthsource);
+
+        // failed the token handling by restricting groups
+        $restrictedGroups = [
+            'Site group 1'
+        ];
+
+        Config::inst()->update(OktaLoginHandler::class, 'link_existing_member', true);
+        Config::inst()->update(OktaLoginHandler::class, 'apply_group_restriction', true);
+        Config::inst()->update(OktaLoginHandler::class, 'site_restricted_groups', $restrictedGroups);
+
+        $handler = new OktaLoginHandler();
+        $response = $handler->handleToken($result['accessToken'], $result['provider']);
+
+        $code = $handler->getLoginFailureCode();
+        $this->assertEquals(OktaLoginHandler::FAIL_USER_MISSING_REQUIRED_GROUPS, $code);
+
+        $this->assertInstanceOf(HTTPResponse::class, $response);
+
+        $this->assertEquals(403, $response->getStatusCode(), "Authentication failure should be a 403");
+        $security = $session->get('Security');
+
+    }
+
+    public function testOktaLoginHandlerSuccessWithRestrictedGroups() {
+        $session = new Session([]);
+        $result = $this->setupForLoginHandler($session, $this->getCorrectUser());
+
+        $oauthsource = 'Okta';
+        $session->set('oauth2.provider', $oauthsource);
+
+        // Restrict the user to this group
+        $restrictedGroups = [
+            'another-group'
+        ];
+
+        Config::inst()->update(OktaLoginHandler::class, 'link_existing_member', true);
+        Config::inst()->update(OktaLoginHandler::class, 'apply_group_restriction', true);
+        Config::inst()->update(OktaLoginHandler::class, 'site_restricted_groups', $restrictedGroups);
+
+        $handler = new OktaLoginHandler();
+        $response = $handler->handleToken($result['accessToken'], $result['provider']);
+
+        $this->assertNull($response);
+
+        $message = $session->get('Security.Message.message');
+        $type = $session->get('Security.Message.type');
+
+        $code = $handler->getLoginFailureCode();
+
+        $this->assertEmpty($message);
+        $this->assertNull($code);
+
+        $member = Member::get()->filter('Email', 'sandy.oktauser@example.com')->first();
+        $this->assertTrue($member && $member->isInDB());
+
+        $passport = Passport::get()->filter([
+            'OAuthSource' => $oauthsource,
+            'Identifier' => "some-okta-user-id"
+        ])->first();
+
+        $this->assertTrue($passport && $passport->isInDB());
+
+        $this->assertEquals($passport->MemberID, $member->ID);
+
+    }
+
+
+    /**
+     * That a user with the same email address can't link to current Member
+     */
+    public function testOktaLoginHandlerConflictingUsers() {
+
+        $session = new Session([]);
+
+        $correct = $this->getCorrectUser();
+        $result = $this->setupForLoginHandler($session, $correct);
+
+        $oauthsource = 'Okta';
+        $session->set('oauth2.provider', $oauthsource);
+
+        // Restrict the user to this group
+        $restrictedGroups = [
+            'some-group'
+        ];
+
+        Config::inst()->update(OktaLoginHandler::class, 'link_existing_member', true);
+        Config::inst()->update(OktaLoginHandler::class, 'apply_group_restriction', true);
+        Config::inst()->update(OktaLoginHandler::class, 'site_restricted_groups', $restrictedGroups);
+
+        $handler = new OktaLoginHandler();
+        $correctResponse = $handler->handleToken($result['accessToken'], $result['provider']);
+
+        $this->assertNull($correctResponse);
+
+        $message = $session->get('Security.Message.message');
+        $type = $session->get('Security.Message.type');
+
+        $code = $handler->getLoginFailureCode();
+
+        $this->assertEmpty($message);
+        $this->assertNull($code);
+
+        $correctMember = Member::get()->filter('Email', $correct['email'])->first();
+        $this->assertTrue($correctMember && $correctMember->isInDB());
+
+        $correctPassport = Passport::get()->filter([
+            'OAuthSource' => $oauthsource,
+            'Identifier' => $correct['sub']
+        ])->first();
+
+        $this->assertTrue($correctPassport && $correctPassport->isInDB());
+        $this->assertEquals($correctPassport->MemberID, $correctMember->ID);
+
+        // attempt handleToken again with the conflicting user
+        $session = new Session([]);
+        $session->set('oauth2.provider', $oauthsource);
+        $conflicting = $this->getConflictingUser();
+
+        $this->assertEquals($conflicting['email'], $correct['email']);
+
+        $result = $this->setupForLoginHandler($session, $conflicting);
+
+        // handle token for user with conflicting email address
+        $handler = new OktaLoginHandler();
+        $conflictingResponse = $handler->handleToken($result['accessToken'], $result['provider']);
+        $code = $handler->getLoginFailureCode();
+
+        // check correct passport hasn't changed
+        $postCorrectPassport = Passport::get()->filter([
+            'OAuthSource' => $oauthsource,
+            'Identifier' => $correct['sub']
+        ])->first();
+        $this->assertTrue($postCorrectPassport && $postCorrectPassport->isInDB());
+        $this->assertEquals($postCorrectPassport->MemberID, $correctMember->ID);
+
+        // check that a passport was not created for the conflicting user
+        $conflictingPassport = Passport::get()->filter([
+            'OAuthSource' => $oauthsource,
+            'Identifier' => $conflicting['sub']
+        ])->first();
+        $this->assertTrue(empty($conflictingPassport->ID));
+
+        // check member hasn't changed
+        $checkMember = Member::get()->filter('Email', $correct['email'])->first();
+        $this->assertEquals($checkMember->ID, $correctMember->ID);
+
+        $this->assertEquals($code, OktaLoginHandler::FAIL_USER_MEMBER_PASSPORT_MISMATCH);
+        $this->assertInstanceOf(HTTPResponse::class, $conflictingResponse);
+        $this->assertEquals(403, $conflictingResponse->getStatusCode());
 
     }
 
