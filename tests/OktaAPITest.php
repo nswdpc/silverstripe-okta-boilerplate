@@ -1,5 +1,7 @@
 <?php
 
+namespace NSWDPC\Authentication\Okta\Tests;
+
 use NSWDPC\Authentication\Okta\Client;
 use Okta\Client as OktaClient;
 use Okta\Utilities\AuthorizationMode;
