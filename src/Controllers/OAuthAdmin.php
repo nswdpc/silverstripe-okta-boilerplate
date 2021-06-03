@@ -34,10 +34,15 @@ class OAuthAdmin extends ModelAdmin
 
     private static $managed_models = [
         Passport::class,
+        OAuthLog::class
     ];
 
     public function getEditForm($id = null, $fields = null)
     {
+
+        if($this->modelClass == OAuthLog::class) {
+            OAuthLog::truncate();
+        }
 
         $form = parent::getEditForm($id, $fields);
         $grid = $form->Fields()->dataFieldByName($this->sanitiseClassName($this->modelClass));
