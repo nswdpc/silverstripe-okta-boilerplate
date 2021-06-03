@@ -91,28 +91,28 @@ class PassportExtension extends DataExtension implements PermissionProvider {
     }
 
     /**
-     * These fields are readonly and can only be deleted or viewed
+     * Who can edit a passport
      */
     public function canEdit($member) {
         return Permission::checkMember($member, 'OAUTH_PASSPORT_EDIT');
     }
 
     /**
-     * These fields are readonly and can only be deleted or viewed
+     * Who can create a passport
      */
     public function canCreate($member) {
         return Permission::checkMember($member, 'OAUTH_PASSPORT_EDIT');
     }
 
     /**
-     * These fields are readonly and can only be deleted or viewed
+     * Who can delete a passport
      */
     public function canDelete($member) {
         return Permission::checkMember($member, 'OAUTH_PASSPORT_EDIT');
     }
 
     /**
-     * These fields are readonly and can only be deleted or viewed
+     * Who can view a passport
      */
     public function canView($member) {
         return Permission::checkMember($member, 'OAUTH_PASSPORT_VIEW');
