@@ -15,3 +15,6 @@ SilverStripe\Security\Group:
   # apply extension
   extensions:
       - 'NSWDPC\Authentication\Okta\GroupExtension'
+SilverStripe\Security\Member:
+  extensions:
+      - 'NSWDPC\Authentication\Okta\MemberExtension'
