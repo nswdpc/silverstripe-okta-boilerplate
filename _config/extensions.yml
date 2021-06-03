@@ -14,7 +14,10 @@ SilverStripe\Security\Group:
     Locked: 1
   # apply extension
   extensions:
-      - 'NSWDPC\Authentication\Okta\GroupExtension'
+    - 'NSWDPC\Authentication\Okta\GroupExtension'
 SilverStripe\Security\Member:
   extensions:
-      - 'NSWDPC\Authentication\Okta\MemberExtension'
+    - 'NSWDPC\Authentication\Okta\MemberExtension'
+SilverStripe\Security\MemberAuthenticator\LostPasswordHandler:
+  extensions:
+    - 'NSWDPC\Authentication\Okta\LostPasswordHandlerExtension'
