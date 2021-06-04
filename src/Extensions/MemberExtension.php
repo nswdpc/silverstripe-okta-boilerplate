@@ -12,5 +12,6 @@ class MemberExtension extends DataExtension
 
     public function updateCmsFields($fields) {
         $fields->removeByName('Passports');
+        $fields->removeByName('OAuthSource');
     }
 }
