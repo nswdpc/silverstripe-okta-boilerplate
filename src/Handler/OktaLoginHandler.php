@@ -439,11 +439,9 @@ class OktaLoginHandler extends LoginTokenHandler
                         $group->ParentID = $parent->ID;
                         $group->IsOktaGroup = 1;
                         $group->Title = $oktaGroupName;
-                        $group->Description(
-                            _t(
+                        $group->Description = _t(
                                 'OKTA.GROUP_DESCRIPTION_IMPORT',
                                 'This group was imported from Okta'
-                            )
                         );
                         $group->write();
                     }
