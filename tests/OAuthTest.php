@@ -22,6 +22,7 @@ use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\ORM\ValidationResult;
+use SilverStripe\Security\Group;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\RequestAuthenticationHandler;
 
@@ -174,6 +175,42 @@ class OAuthTest extends SapphireTest {
     }
 
     /**
+     * Get a user with a bunch of groups to test  group assignment and sync on auth
+     */
+    protected function getAssignGroupTestUser() : array {
+        return [
+            'sub' => "test-group-user-id",
+            'given_name' => "Herman",
+            'family_name' => "Gruppe",
+            'name' => "Herman Gruppe",
+            'email' => "Herman.Gruppe@example.com",
+            'preferred_username' => "herman.gruppe",
+            'groups' => [
+                'group 1',
+                'group 10',
+                'group 11',
+                'group 2',
+                'group 3'
+            ]
+        ];
+    }
+    
+    /**
+     * Get a user with a bunch of groups to test  group assignment and sync on auth
+     */
+    protected function getAssignNoGroupTestUser() : array {
+        return [
+            'sub' => "test-group-user-id",
+            'given_name' => "Herman",
+            'family_name' => "Keine-Gruppe",
+            'name' => "Herman Keine-Gruppe",
+            'email' => "Herman.Keine-Gruppe@example.com",
+            'preferred_username' => "herman.keine-gruppe",
+            'groups' => []
+        ];
+    }
+
+    /**
      * Return an access token and provider for a supplied user and session
      */
     protected function setupForLoginHandler(Session $session, array $authenticatingUser) {
@@ -247,9 +284,9 @@ class OAuthTest extends SapphireTest {
             'Site group 1'
         ];
 
-        Config::inst()->update(OktaLoginHandler::class, 'link_existing_member', true);
-        Config::inst()->update(OktaLoginHandler::class, 'apply_group_restriction', true);
-        Config::inst()->update(OktaLoginHandler::class, 'site_restricted_groups', $restrictedGroups);
+        Config::inst()->set(OktaLoginHandler::class, 'link_existing_member', true);
+        Config::inst()->set(OktaLoginHandler::class, 'apply_group_restriction', true);
+        Config::inst()->set(OktaLoginHandler::class, 'site_restricted_groups', $restrictedGroups);
 
         $handler = new OktaLoginHandler();
         $response = $handler->handleToken($result['accessToken'], $result['provider']);
@@ -276,9 +313,9 @@ class OAuthTest extends SapphireTest {
             'another-group'
         ];
 
-        Config::inst()->update(OktaLoginHandler::class, 'link_existing_member', true);
-        Config::inst()->update(OktaLoginHandler::class, 'apply_group_restriction', true);
-        Config::inst()->update(OktaLoginHandler::class, 'site_restricted_groups', $restrictedGroups);
+        Config::inst()->set(OktaLoginHandler::class, 'link_existing_member', true);
+        Config::inst()->set(OktaLoginHandler::class, 'apply_group_restriction', true);
+        Config::inst()->set(OktaLoginHandler::class, 'site_restricted_groups', $restrictedGroups);
 
         $handler = new OktaLoginHandler();
         $response = $handler->handleToken($result['accessToken'], $result['provider']);
@@ -326,9 +363,9 @@ class OAuthTest extends SapphireTest {
             'some-group'
         ];
 
-        Config::inst()->update(OktaLoginHandler::class, 'link_existing_member', true);
-        Config::inst()->update(OktaLoginHandler::class, 'apply_group_restriction', true);
-        Config::inst()->update(OktaLoginHandler::class, 'site_restricted_groups', $restrictedGroups);
+        Config::inst()->set(OktaLoginHandler::class, 'link_existing_member', true);
+        Config::inst()->set(OktaLoginHandler::class, 'apply_group_restriction', true);
+        Config::inst()->set(OktaLoginHandler::class, 'site_restricted_groups', $restrictedGroups);
 
         $handler = new OktaLoginHandler();
         $correctResponse = $handler->handleToken($result['accessToken'], $result['provider']);
@@ -390,6 +427,180 @@ class OAuthTest extends SapphireTest {
         $this->assertEquals($code, OktaLoginHandler::FAIL_USER_MEMBER_PASSPORT_MISMATCH);
         $this->assertInstanceOf(HTTPResponse::class, $conflictingResponse);
         $this->assertEquals(403, $conflictingResponse->getStatusCode());
+
+    }
+
+    /**
+     * Test group assignment for an authenticating user with groups that intersect the current groups
+     */
+    public function testOktaLoginHandlerGroupAssignment() {
+
+        $session = new Session([]);
+        $userWithGroups = $this->getAssignGroupTestUser();
+        
+        $userGroupCount = count($userWithGroups['groups']);
+        $this->assertTrue($userGroupCount > 0, "For this test, the getAssignGroupTestUser test user should have some groups");
+
+        // create a local Member, assign some groups
+        $member = Member::create();
+        $member->Email = $userWithGroups['email'];
+        $member->write();
+
+        $inst = Group::create();
+        $rootOktaGroup = $inst->applyOktaRootGroup();
+
+        // current SS groups to create, as Okta linked groups
+        $currentSystemGroups = ['group 10','group 11','group 12','group 13'];
+        
+        $this->assertEquals(
+            0,
+            $member->getOktaGroups()->count()
+        );
+        
+        // create in DB
+        foreach($currentSystemGroups as $groupTitle) {
+            $createdGroup = Group::create([
+                'Title' => $groupTitle,
+                'IsOktaGroup' => 1,
+                'ParentID' => $rootOktaGroup->ID
+            ]);
+            $createdGroup->write();
+            // assign these groups to the member
+            // this member previously had 12 and 13
+            // member should end up with no group 12, group 13
+            $member->Groups()->add($createdGroup);
+        }
+
+        // the member should have same okta groups
+        $this->assertEquals(count($currentSystemGroups), $member->getOktaGroups()->count());
+
+        $result = $this->setupForLoginHandler($session, $userWithGroups);
+
+        $oauthsource = 'Okta';
+        $session->set('oauth2.provider', $oauthsource);
+
+        // Restrict the user to this group post-auth (they can sign in)
+        $restrictedGroups = [
+            'group 1'
+        ];
+
+        Config::inst()->set(OktaLoginHandler::class, 'link_existing_member', true);
+        Config::inst()->set(OktaLoginHandler::class, 'apply_group_restriction', true);
+        Config::inst()->set(OktaLoginHandler::class, 'site_restricted_groups', $restrictedGroups);
+
+        $handler = new OktaLoginHandler();
+        $response = $handler->handleToken($result['accessToken'], $result['provider']);
+
+        $this->assertNull($response);
+
+        $message = $session->get('Security.Message.message');
+        $type = $session->get('Security.Message.type');
+
+        $code = $handler->getLoginFailureCode();
+
+        // successful sign-in
+        $this->assertEmpty($message);
+        $this->assertNull($code);
+
+        $postLoginMember = Member::get()->filter('Email', $userWithGroups['email'])->first();
+        $this->assertTrue($postLoginMember && $postLoginMember->isInDB());
+        $this->assertEquals($member->ID, $postLoginMember->ID);
+        
+        $postLoginGroups = $postLoginMember->getOktaGroups();
+        
+        // the members post login groups should now match the groups present
+        $this->assertEquals(
+            $userWithGroups['groups'],
+            $postLoginGroups->sort('Title')->column('Title'),
+            'The Okta groups supplied by the user do not match the post login groups associated with the member'
+        );
+        
+        // all groups should be retained in SS, even if no longer linked to user
+        $allOktaGroups = array_unique(array_merge($userWithGroups['groups'],$currentSystemGroups));
+        $postLoginSystemGroups = Group::get()->filter(['IsOktaGroup' => 1])->exclude(['ID' => $rootOktaGroup->ID]);
+        
+        $this->assertEquals(count($allOktaGroups), $postLoginSystemGroups->count());
+
+    }
+    
+    /**
+     * Test handling when a user presents with no groups
+     */
+    public function testOktaLoginHandlerNoGroupAssignment() {
+
+        $session = new Session([]);
+        $userWithNoGroups = $this->getAssignNoGroupTestUser();
+
+        // create a local Member, assign some groups
+        $member = Member::create();
+        $member->Email = $userWithNoGroups['email'];
+        $member->write();
+
+        $inst = Group::create();
+        $rootOktaGroup = $inst->applyOktaRootGroup();
+
+        // current SS groups to create, as Okta linked groups
+        $currentSystemGroups = ['group 20','group 21','group 22','group 23'];
+        
+        $this->assertEquals(
+            0,
+            $member->getOktaGroups()->count()
+        );
+        
+        // create in DB
+        foreach($currentSystemGroups as $groupTitle) {
+            $createdGroup = Group::create([
+                'Title' => $groupTitle,
+                'IsOktaGroup' => 1,
+                'ParentID' => $rootOktaGroup->ID
+            ]);
+            $createdGroup->write();
+        }
+
+        $result = $this->setupForLoginHandler($session, $userWithNoGroups);
+
+        $oauthsource = 'Okta';
+        $session->set('oauth2.provider', $oauthsource);
+
+        // set configuration for no group restriction
+        Config::inst()->set(OktaLoginHandler::class, 'link_existing_member', true);
+        Config::inst()->set(OktaLoginHandler::class, 'apply_group_restriction', false);
+        Config::inst()->set(OktaLoginHandler::class, 'site_restricted_groups', []);
+
+        $handler = new OktaLoginHandler();
+        $response = $handler->handleToken($result['accessToken'], $result['provider']);
+
+        $this->assertNull($response);
+
+        $message = $session->get('Security.Message.message');
+        $type = $session->get('Security.Message.type');
+
+        $code = $handler->getLoginFailureCode();
+
+        // successful sign-in
+        $this->assertEmpty($message);
+        $this->assertNull($code);
+
+        $postLoginMember = Member::get()->filter('Email', $userWithNoGroups['email'])->first();
+        $this->assertTrue($postLoginMember && $postLoginMember->isInDB());
+        $this->assertEquals($member->ID, $postLoginMember->ID);
+        
+        $postLoginGroups = $postLoginMember->getOktaGroups();
+        
+        $this->assertEmpty($postLoginGroups->column('Title'));
+        
+        // the members post login groups should now match the groups present
+        $this->assertEquals(
+            $userWithNoGroups['groups'],
+            $postLoginGroups->sort('Title')->column('Title'),
+            'The Okta groups supplied by the user do not match the post login groups associated with the member'
+        );
+        
+        // all groups should be retained in SS, even if no longer linked to user
+        $allOktaGroups = array_unique(array_merge($userWithNoGroups['groups'],$currentSystemGroups));
+        $postLoginSystemGroups = Group::get()->filter(['IsOktaGroup' => 1])->exclude(['ID' => $rootOktaGroup->ID]);
+        
+        $this->assertEquals(count($allOktaGroups), $postLoginSystemGroups->count());
 
     }
 

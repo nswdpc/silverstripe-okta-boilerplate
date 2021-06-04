@@ -399,34 +399,80 @@ class OktaLoginHandler extends LoginTokenHandler
      * You must add a "Groups claim filter" = 'groups' 'Matches regex' '.*' in the Service app
      * OpenID Connect ID Token section
      * @see https://developer.okta.com/docs/guides/customize-tokens-groups-claim/add-groups-claim-org-as/
+     * @return array values are created or updated Group.ID values for the $member
+     * @param ResourceOwnerInterface $user an Okta user
+     * @param Member $member associated with the Okta user
      */
-    protected function assignGroups(ResourceOwnerInterface $user, Member $member) {
-        // assign groups to the member
+    protected function assignGroups(ResourceOwnerInterface $user, Member $member) : array {
+
+        // groups are present in the returned user, but not via a method
         $data = $user->toArray();
-        if(!empty($data['groups']) && is_array($data['groups'])) {
+
+        // Note: to return all the user's Okta groups, the groups claim in the application settings should be
+        // .* to return all the user's groups
+        // the list of groups here may not represent a list of all the user's Okta groups
+        // the goal here is to sync on auth the available Okta groups
+        $groups = !empty($data['groups']) && is_array($data['groups']) ? $data['groups'] : [];
+
+        // @var \SilverStripe\ORM\ManyManyList
+        // the current member Okta groups
+        $currentMemberGroups = $member->getOktaGroups();
+        // store groups created or updated
+        $createdOrUpdatedGroups = [];
+
+        // the Okta user returned some groups
+        if(!empty($groups)) {
             $inst = Group::create();
             $parent = $inst->applyOktaRootGroup();
             if($parent && $parent->isInDB()) {
-                foreach($data['groups'] as $groupName) {
+                foreach($data['groups'] as $oktaGroupName) {
 
-                    // if group exists
+                    // check for existing group
                     $group = Group::get()->filter([
-                        'Title' => $groupName,
+                        'Title' => $oktaGroupName,
                         'IsOktaGroup' => 1
                     ])->first();
 
                     if(empty($group->ID)) {
+                        // create this local group
                         $group = Group::create();
                         $group->ParentID = $parent->ID;
                         $group->IsOktaGroup = 1;
-                        $group->Title = $groupName;
+                        $group->Title = $oktaGroupName;
                         $group->write();
                     }
-                    // ensure linked to group
+
+                    // ensure Member linked to group
                     $member->Groups()->add($group);
+
+                    // store created/update groups
+                    $createdOrUpdatedGroups[] = $group->ID;
+
                 }
             }
         }
+
+        // if the Member had any groups to start with
+        if($currentMemberGroups->count() > 0) {
+
+            // check whether any groups were created or updated
+            if(!empty($createdOrUpdatedGroups)) {
+                // get the groups that were not created or updated
+                $groupsToUnlink = $currentMemberGroups->exclude(['ID' => $createdOrUpdatedGroups]);
+            } else {
+                // no local groups were created or updated, unlink all from the member groups list
+                $groupsToUnlink = $currentMemberGroups;
+            }
+
+            // remove the unlinked groups from the
+            foreach($groupsToUnlink as $groupToUnlink) {
+                // the group is retained, only the link to the $member is removed
+                $currentMemberGroups->remove($groupToUnlink);
+            }
+        }
+
+        return $createdOrUpdatedGroups;
+
     }
 
     /**

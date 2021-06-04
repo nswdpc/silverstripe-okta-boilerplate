@@ -4,6 +4,7 @@ namespace NSWDPC\Authentication\Okta;
 use SilverStripe\Core\Convert;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\ORM\DataExtension;
+use SilverStripe\Forms\ReadonlyField;
 use SilverStripe\Security\Group;
 
 /**
@@ -26,6 +27,24 @@ class GroupExtension extends DataExtension {
         'IsOktaGroup' => true, // query on IsOktaGroup
         'Title' => true // need to query on title
     ];
+
+    /**
+     * Add/edit CMS fields
+     */
+    public function updateCmsFields($fields) {
+        $fields->addFieldToTab(
+            'Root.Main',
+            ReadonlyField::create(
+                'IsOktaGroup'
+            )->setDescription(
+                _t(
+                    'OKTA.IS_OKTA_GROUP_DESCRIPTION',
+                    'This group was synchronised from Okta'
+                )
+            ),
+            'Description'
+        );
+    }
 
     /**
      * Require default records on dev build
