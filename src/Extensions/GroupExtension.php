@@ -4,6 +4,9 @@ namespace NSWDPC\Authentication\Okta;
 use SilverStripe\Core\Convert;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\ORM\DataExtension;
+use SilverStripe\ORM\ValidationException;
+use SilverStripe\ORM\FieldType\DBBoolean;
+use SilverStripe\ORM\FieldType\DBField;
 use SilverStripe\Forms\ReadonlyField;
 use SilverStripe\Security\Group;
 
@@ -27,20 +30,54 @@ class GroupExtension extends DataExtension {
         'IsOktaGroup' => true, // query on IsOktaGroup
         'Title' => true // need to query on title
     ];
+    
+    /**
+     * Handle pre-write logic for OktaGroups
+     * Any group that is marked an Okta group may not be assigned permissions or roles
+     * Okta groups are solely for grouping users and/or targeted content
+     */
+    public function onBeforeWrite() {
+        parent::onBeforeWrite();
+        if($this->owner->IsOktaGroup) {
+            // avoid writing an OktaGroup with permissions
+            $permissionCount = $this->owner->Permissions()->count();
+            if($permissionCount > 0) {
+                throw new OktaPermissionEscalationException(
+                    _t(
+                        'OKTA.OKTA_GROUP_NO_PERMISSIONS',
+                        "An Okta group may not be assigned permissions"
+                    )
+                );
+            }
+            $roleCount = $this->owner->Roles()->count();
+            if($roleCount > 0) {
+                throw new OktaPermissionEscalationException(
+                    _t(
+                        'OKTA.OKTA_GROUP_NO_ROLES',
+                        "An Okta group may not be assigned roles"
+                    )
+                );
+            }
+        }
+    }
 
     /**
      * Add/edit CMS fields
      */
     public function updateCmsFields($fields) {
+        $fields->removeByName('IsOktaGroup');
         $fields->addFieldToTab(
-            'Root.Main',
+            'Root.Members',
             ReadonlyField::create(
-                'IsOktaGroup'
+                'IsOktaGroupLabel',
+                _t('OKTA.OKTA_GROUP', 'Okta group')
             )->setDescription(
                 _t(
                     'OKTA.IS_OKTA_GROUP_DESCRIPTION',
                     'This group was synchronised from Okta'
                 )
+            )->setValue(
+                DBField::create_field(DBBoolean::class, $this->owner->IsOktaGroup)->Nice()
             ),
             'Description'
         );
