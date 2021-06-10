@@ -89,6 +89,7 @@ class OAuthTest extends SapphireTest {
         $this->assertEquals($options['issuer'] . '/v1/token', $provider->getBaseAccessTokenUrl([]));
 
         $getVars = [
+            'BackURL' => '/',
             'provider' => 'OktaTest',
             'context' => 'login',
             'scope' => [
