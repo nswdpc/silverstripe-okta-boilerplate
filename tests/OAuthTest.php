@@ -41,6 +41,13 @@ class OAuthTest extends SapphireTest {
      */
     protected $autoFollowRedirection = false;
 
+    /**
+     * Log out the currently signed in user, if any, before any tests
+     */
+    public function setUp() {
+        parent::setUp();
+        $this->logOut();
+    }
 
     /**
      * Get an Access Token
@@ -113,7 +120,7 @@ class OAuthTest extends SapphireTest {
 
         $this->assertInstanceOf(HTTPResponse::class, $authenticate);
 
-        $this->assertEquals(302, $authenticate->getStatusCode());
+        $this->assertEquals(302, $authenticate->getStatusCode(), "Authentication failure should be a 302 redirect");
 
         $location = $authenticate->getHeader('Location');
 
@@ -223,7 +230,7 @@ class OAuthTest extends SapphireTest {
     /**
      * Return an access token and provider for a supplied user and session
      */
-    protected function setupForLoginHandler(Session $session, array $authenticatingUser) {
+    protected function setupForLoginHandler(Session &$session, array $authenticatingUser) {
 
         $this->setSessionOnController($session);
         
@@ -306,8 +313,14 @@ class OAuthTest extends SapphireTest {
 
         $this->assertInstanceOf(HTTPResponse::class, $response);
 
-        $this->assertEquals(403, $response->getStatusCode(), "Authentication failure should be a 403");
-        $security = $session->get('Security');
+        $this->assertEquals(302, $response->getStatusCode(), "Authentication failure should be a 302 redirect");
+        $sessionMessage = $session->get('Security.Message.message');
+        $sessionMessageType = $session->get('Security.Message.type');
+        
+        // assert that the message contains the message id via regex
+        $pattern = "/^.+\(#([0-9]+)\)$/s";
+        $this->assertTrue( preg_match($pattern, $sessionMessage, $matches) > 0, "Session message should match pattern {$pattern}");
+        $this->assertEquals('warning', $sessionMessageType);
 
     }
 
@@ -402,6 +415,7 @@ class OAuthTest extends SapphireTest {
         $this->assertEquals($correctPassport->MemberID, $correctMember->ID);
 
         // attempt handleToken again with the conflicting user
+        $this->logOut();
         $session = new Session([]);
         $session->set('oauth2.provider', $oauthsource);
         $conflicting = $this->getConflictingUser();
@@ -434,10 +448,16 @@ class OAuthTest extends SapphireTest {
         $checkMember = Member::get()->filter('Email', $correct['email'])->first();
         $this->assertEquals($checkMember->ID, $correctMember->ID);
 
-        $this->assertEquals($code, OktaLoginHandler::FAIL_USER_MEMBER_PASSPORT_MISMATCH);
+        $this->assertEquals(OktaLoginHandler::FAIL_USER_MEMBER_PASSPORT_MISMATCH, $code);
         $this->assertInstanceOf(HTTPResponse::class, $conflictingResponse);
-        $this->assertEquals(403, $conflictingResponse->getStatusCode());
-
+        $this->assertEquals(302, $conflictingResponse->getStatusCode(), "Authentication failure should be a 302 redirect");
+        $sessionMessage = $session->get('Security.Message.message');
+        $sessionMessageType = $session->get('Security.Message.type');
+        
+        // assert that the message contains the message id via regex
+        $pattern = "/^.+\(#([0-9]+)\)$/s";
+        $this->assertTrue( preg_match($pattern, $sessionMessage, $matches) > 0, "Session message should match pattern {$pattern}");
+        $this->assertEquals('warning', $sessionMessageType);
     }
 
     /**
