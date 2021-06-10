@@ -1,4 +1,5 @@
 <?php
+
 namespace NSWDPC\Authentication\Okta;
 
 use SilverStripe\ORM\DataExtension;
@@ -10,8 +11,8 @@ use SilverStripe\Security\Member;
  */
 class MemberExtension extends DataExtension
 {
-
-    public function updateCmsFields($fields) {
+    public function updateCmsFields($fields)
+    {
         $fields->removeByName('Passports');
         $fields->removeByName('OAuthSource');
     }
@@ -19,7 +20,8 @@ class MemberExtension extends DataExtension
     /**
      * Get a Member's *direct* Okta groups, which excludes the root Okta group
      */
-    public function getOktaGroups() : ManyManyList {
+    public function getOktaGroups() : ManyManyList
+    {
         return $this->owner->DirectGroups()->filter(['IsOktaGroup' => 1]);
     }
 }

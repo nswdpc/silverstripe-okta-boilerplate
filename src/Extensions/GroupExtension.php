@@ -1,4 +1,5 @@
 <?php
+
 namespace NSWDPC\Authentication\Okta;
 
 use SilverStripe\Core\Convert;
@@ -14,7 +15,8 @@ use SilverStripe\Security\Group;
  * Update group handling to include Okta group support
  * @author James
  */
-class GroupExtension extends DataExtension {
+class GroupExtension extends DataExtension
+{
 
     /**
      * @var array
@@ -36,12 +38,13 @@ class GroupExtension extends DataExtension {
      * Any group that is marked an Okta group may not be assigned permissions or roles
      * Okta groups are solely for grouping users and/or targeted content
      */
-    public function onBeforeWrite() {
+    public function onBeforeWrite()
+    {
         parent::onBeforeWrite();
-        if($this->owner->IsOktaGroup) {
+        if ($this->owner->IsOktaGroup) {
             // avoid writing an OktaGroup with permissions
             $permissionCount = $this->owner->Permissions()->count();
-            if($permissionCount > 0) {
+            if ($permissionCount > 0) {
                 throw new OktaPermissionEscalationException(
                     _t(
                         'OKTA.OKTA_GROUP_NO_PERMISSIONS',
@@ -50,7 +53,7 @@ class GroupExtension extends DataExtension {
                 );
             }
             $roleCount = $this->owner->Roles()->count();
-            if($roleCount > 0) {
+            if ($roleCount > 0) {
                 throw new OktaPermissionEscalationException(
                     _t(
                         'OKTA.OKTA_GROUP_NO_ROLES',
@@ -64,7 +67,8 @@ class GroupExtension extends DataExtension {
     /**
      * Add/edit CMS fields
      */
-    public function updateCmsFields($fields) {
+    public function updateCmsFields($fields)
+    {
         $fields->removeByName('IsOktaGroup');
         $fields->addFieldToTab(
             'Root.Members',
@@ -86,7 +90,8 @@ class GroupExtension extends DataExtension {
     /**
      * Require default records on dev build
      */
-    public function requireDefaultRecords() {
+    public function requireDefaultRecords()
+    {
         $this->owner->applyOktaRootGroup();
     }
 
@@ -94,22 +99,23 @@ class GroupExtension extends DataExtension {
      * Create or update the default root Okta group configured, if set
      * @return Group|null
      */
-    public function applyOktaRootGroup() {
+    public function applyOktaRootGroup()
+    {
         $parent = $this->owner->config()->get('okta_group');
-        if(empty($parent['Code'])) {
+        if (empty($parent['Code'])) {
             return;
         }
-        $group = Group::get()->filter( [ 'Code' => Convert::raw2url($parent['Code']) ] )->first();
-        if(!$group) {
+        $group = Group::get()->filter([ 'Code' => Convert::raw2url($parent['Code']) ])->first();
+        if (!$group) {
             $group = Group::create($parent);
             $group->IsOktaGroup = 1;
             $group->ParentID = 0;
             $group->write();
         } else {
-            if(isset($parent['Title'])) {
+            if (isset($parent['Title'])) {
                 $group->Title = $parent['Title'];
             }
-            if(isset($parent['Description'])) {
+            if (isset($parent['Description'])) {
                 $group->Description = $parent['Description'];
             }
             $group->Locked = $parent['Locked'] ?? 1;
@@ -120,5 +126,4 @@ class GroupExtension extends DataExtension {
         }
         return $group;
     }
-
 }

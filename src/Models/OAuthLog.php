@@ -1,4 +1,5 @@
 <?php
+
 namespace NSWDPC\Authentication\Okta;
 
 use SilverStripe\ORM\DataObject;
@@ -11,7 +12,8 @@ use SilverStripe\Security\PermissionProvider;
  * Stores OAuth failures for inspection
  * @author James
  */
-class OAuthLog extends DataObject implements PermissionProvider {
+class OAuthLog extends DataObject implements PermissionProvider
+{
 
     /**
      * @var string
@@ -74,14 +76,16 @@ class OAuthLog extends DataObject implements PermissionProvider {
     /**
      * Retrieve code meaning
      */
-    public function getMeaning() : string {
+    public function getMeaning() : string
+    {
         return OktaLoginHandler::getFailMessageForCode($this->Code);
     }
 
     /**
      * Quick add record
      */
-    public static function add($code, int $messageId, $providerName, $identifier = '') : self {
+    public static function add($code, int $messageId, $providerName, $identifier = '') : self
+    {
         $record = self::create([
             'Code' => $code,
             'MessageId' => $messageId,
@@ -95,16 +99,18 @@ class OAuthLog extends DataObject implements PermissionProvider {
     /**
      * @return string
      */
-    public function getTitle() {
+    public function getTitle()
+    {
         return $this->MessageId;
     }
 
     /**
      * Truncate logs
      */
-    public static function truncate() {
+    public static function truncate()
+    {
         $day = intval(self::config()->get('log_truncation_age'));
-        if($day <= 0) {
+        if ($day <= 0) {
             $day = 7;
         }
         $sql = "DELETE FROM `OAuthLog` WHERE Created < CURDATE() - INTERVAL {$day} DAY";
@@ -114,28 +120,32 @@ class OAuthLog extends DataObject implements PermissionProvider {
     /**
      * Who can edit
      */
-    public function canEdit($member = null) {
+    public function canEdit($member = null)
+    {
         return false;
     }
 
     /**
      * Who can create
      */
-    public function canCreate($member = null, $context = []) {
+    public function canCreate($member = null, $context = [])
+    {
         return false;
     }
 
     /**
      * Who can delete
      */
-    public function canDelete($member = null) {
+    public function canDelete($member = null)
+    {
         return Permission::checkMember($member, 'OAUTH_LOG_DELETE');
     }
 
     /**
      * Who can view
      */
-    public function canView($member = null) {
+    public function canView($member = null)
+    {
         return Permission::checkMember($member, 'OAUTH_LOG_VIEW');
     }
 
@@ -159,18 +169,17 @@ class OAuthLog extends DataObject implements PermissionProvider {
     /**
      * Update fields
      */
-    public function getCmsFields() {
+    public function getCmsFields()
+    {
         $fields = parent::getCmsFields();
-        if($codeField = $fields->dataFieldByName('Code')) {
+        if ($codeField = $fields->dataFieldByName('Code')) {
             $codeField->setRightTitle(
                 OktaLoginHandler::getFailMessageForCode($this->Code)
             );
         }
-        if($oauthSourceField = $fields->dataFieldByName('OAuthSource')) {
+        if ($oauthSourceField = $fields->dataFieldByName('OAuthSource')) {
             $oauthSourceField->setTitle(_t('OAUTH.SOURCE_TITLE', 'OAuth provider'));
         }
         return $fields;
     }
-
-
 }

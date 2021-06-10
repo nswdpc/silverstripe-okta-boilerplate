@@ -1,4 +1,5 @@
 <?php
+
 namespace NSWDPC\Authentication\Okta;
 
 use Bigfork\SilverStripeOAuth\Client\Factory\ProviderFactory;
@@ -17,7 +18,8 @@ use SilverStripe\Security\Security;
  * Adds unique indexes to the DB
  * @author James
  */
-class PassportExtension extends DataExtension implements PermissionProvider {
+class PassportExtension extends DataExtension implements PermissionProvider
+{
 
     /**
      * @var array
@@ -67,16 +69,18 @@ class PassportExtension extends DataExtension implements PermissionProvider {
         'Member.Email' => 'PartialMatchFilter'
     ];
 
-    public function onBeforeWrite() {
+    public function onBeforeWrite()
+    {
         parent::onBeforeWrite();
-        if(!$this->owner->isInDB()) {
+        if (!$this->owner->isInDB()) {
             $member = Security::getCurrentUser();
             $this->owner->CreatedByMemberID = $member->ID ?? 0;
         }
     }
 
-    public function getTitle() {
-        if($this->owner->exists()) {
+    public function getTitle()
+    {
+        if ($this->owner->exists()) {
             return _t(
                 'OAUTH.PASSPORT_TITLE',
                 '{Identifier} @ {OAuthSource}',
@@ -93,37 +97,41 @@ class PassportExtension extends DataExtension implements PermissionProvider {
     /**
      * Who can edit a passport
      */
-    public function canEdit($member) {
+    public function canEdit($member)
+    {
         return Permission::checkMember($member, 'OAUTH_PASSPORT_EDIT');
     }
 
     /**
      * Who can create a passport
      */
-    public function canCreate($member) {
+    public function canCreate($member)
+    {
         return Permission::checkMember($member, 'OAUTH_PASSPORT_EDIT');
     }
 
     /**
      * Who can delete a passport
      */
-    public function canDelete($member) {
+    public function canDelete($member)
+    {
         return Permission::checkMember($member, 'OAUTH_PASSPORT_EDIT');
     }
 
     /**
      * Who can view a passport
      */
-    public function canView($member) {
+    public function canView($member)
+    {
         return Permission::checkMember($member, 'OAUTH_PASSPORT_VIEW');
     }
 
     /**
      * Update fields for CMS
      */
-    public function updateCmsFields($fields) {
-        if($sourceField = $fields->dataFieldByName('OAuthSource')) {
-
+    public function updateCmsFields($fields)
+    {
+        if ($sourceField = $fields->dataFieldByName('OAuthSource')) {
             $providerFactory = Injector::inst()->get(ProviderFactory::class);
             $providers = $providerFactory->getProviders();
             $listProviders = [];
@@ -131,8 +139,8 @@ class PassportExtension extends DataExtension implements PermissionProvider {
                 'OKTA.PROVIDER_' . $this->owner->OAuthSource,
                 $this->owner->OAuthSource
             );
-            if(is_array($providers)) {
-                foreach($providers as $providerName => $provider) {
+            if (is_array($providers)) {
+                foreach ($providers as $providerName => $provider) {
                     $listProviders[ $providerName ] = _t(
                         'OKTA.PROVIDER_' . $providerName,
                         $providerName
@@ -148,17 +156,14 @@ class PassportExtension extends DataExtension implements PermissionProvider {
                     $this->owner->OAuthSource
                 )->setEmptyString('')
             );
-
         }
 
-        if(!$this->owner->isInDB()) {
+        if (!$this->owner->isInDB()) {
             $fields->removeByName('CreatedByMemberID');
-        } else if($createdByMemberField = $fields->dataFieldByName('CreatedByMemberID')) {
+        } elseif ($createdByMemberField = $fields->dataFieldByName('CreatedByMemberID')) {
             $createdByMemberField->setTitle(_t('OAUTH.CREATED_BY_MEMBER', 'Created by'));
             $fields->makeFieldReadonly('CreatedByMemberID');
         }
-
-
     }
 
     /**
@@ -177,6 +182,4 @@ class PassportExtension extends DataExtension implements PermissionProvider {
             ]
         ];
     }
-
-
 }

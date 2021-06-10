@@ -11,8 +11,8 @@ use SilverStripe\Core\Config\Configurable;
 /**
  * Creates an {@link \Okta\Client} using configuration supplied or stored
  */
-class Client {
-
+class Client
+{
     use Configurable;
 
     /**
@@ -35,12 +35,12 @@ class Client {
      * @param array $parameters to override relevant default_file_location and ALL config_file_location values
      * @return \Okta\Client
      */
-    final public static function create($parameters = []) : \Okta\Client {
-
+    final public static function create($parameters = []) : \Okta\Client
+    {
         $defaultFileLocation = self::config()->get('default_file_location');
 
-        if(is_string($defaultFileLocation)) {
-            if(!file_exists($defaultFileLocation) || !is_readable($defaultFileLocation)) {
+        if (is_string($defaultFileLocation)) {
+            if (!file_exists($defaultFileLocation) || !is_readable($defaultFileLocation)) {
                 throw new \Exception("The default file location {$defaultFileLocation} was not found or is not readable");
             }
         }
@@ -49,62 +49,62 @@ class Client {
         $clientBuilder = (new ClientBuilder(null, $defaultFileLocation));
 
         // the existence of parameters overrides config_file_location values
-        if(empty($parameters)) {
+        if (empty($parameters)) {
             $configFileLocation = self::config()->get('config_file_location');
-            if(!is_null($configFileLocation) && !is_string($configFileLocation)) {
+            if (!is_null($configFileLocation) && !is_string($configFileLocation)) {
                 throw new \InvalidArgumentException("The config_file_location provided must be NULL or a string");
             }
 
-            if(is_string($configFileLocation)) {
-                if(!file_exists($configFileLocation) || !is_readable($configFileLocation)) {
+            if (is_string($configFileLocation)) {
+                if (!file_exists($configFileLocation) || !is_readable($configFileLocation)) {
                     throw new \Exception("The location {$configFileLocation} was not found or is not readable");
                 }
 
-                $clientBuilder->setConfigFileLocation( $configFileLocation );
+                $clientBuilder->setConfigFileLocation($configFileLocation);
             }
         }
 
         $authMode = $parameters['authMode'] ?? '';
-        if($authMode) {
-            $clientBuilder->setAuthorizationMode( new AuthorizationMode( $authMode ) );
+        if ($authMode) {
+            $clientBuilder->setAuthorizationMode(new AuthorizationMode($authMode));
         }
 
         $clientBuilderId = $parameters['clientId'] ?? '';
-        if($clientBuilderId) {
-            $clientBuilder->setClientId( $clientBuilderId );
+        if ($clientBuilderId) {
+            $clientBuilder->setClientId($clientBuilderId);
         }
 
         $privateKey = $parameters['privateKey'] ?? '';
-        if($privateKey) {
-            $clientBuilder->setPrivateKey( $privateKey );
+        if ($privateKey) {
+            $clientBuilder->setPrivateKey($privateKey);
         }
 
         $scopes = $parameters['scopes'] ?? '';
-        if($scopes) {
-            $clientBuilder->setScopes( $scopes );
+        if ($scopes) {
+            $clientBuilder->setScopes($scopes);
         }
 
         $token = $parameters['token'] ?? '';
-        if($token) {
-            $clientBuilder->setToken( $token );
+        if ($token) {
+            $clientBuilder->setToken($token);
         }
 
         $orgUrl = $parameters['orgUrl'] ?? '';
-        if($orgUrl) {
-            $clientBuilder->setOrganizationUrl( $orgUrl );
+        if ($orgUrl) {
+            $clientBuilder->setOrganizationUrl($orgUrl);
         }
 
         $userAgent = $parameters['userAgent'] ?? '';
-        if($userAgent) {
-            $clientBuilder->setIntegrationUserAgent( $userAgent );
+        if ($userAgent) {
+            $clientBuilder->setIntegrationUserAgent($userAgent);
         }
 
-        if($cacheManager = self::getCacheManager()) {
-            $clientBuilder->setCacheManager( $cacheManager );
+        if ($cacheManager = self::getCacheManager()) {
+            $clientBuilder->setCacheManager($cacheManager);
         }
 
-        if($httpClient = self::getHttpClient()) {
-            $clientBuilder->setHttpClient( $httpClient );
+        if ($httpClient = self::getHttpClient()) {
+            $clientBuilder->setHttpClient($httpClient);
         }
 
         $client = $clientBuilder->build();
@@ -116,7 +116,8 @@ class Client {
      * If providing your own cache manager extend this class and override this method
      * @return null|CacheManager
      */
-    protected static function getCacheManager() {
+    protected static function getCacheManager()
+    {
         return null;
     }
 
@@ -124,8 +125,8 @@ class Client {
      * If providing your own HTTP client extend this class and override this method
      * @return null|HttpClient
      */
-    protected static function getHttpClient() {
+    protected static function getHttpClient()
+    {
         return null;
     }
-
 }

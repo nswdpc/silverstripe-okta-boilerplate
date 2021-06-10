@@ -1,4 +1,5 @@
 <?php
+
 namespace NSWDPC\Authentication\Okta;
 
 use SilverStripe\Core\Extension;
@@ -17,7 +18,8 @@ class LostPasswordHandlerExtension extends Extension
      * for any local member account they may have
      * @param Member|null $member
      */
-    public function forgotPassword(Member &$member = null) : bool {
+    public function forgotPassword(Member &$member = null) : bool
+    {
         if ($member && !Permission::checkMember($member, 'CMS_ACCESS')) {
             // Members without these permissions cannot
             $member = null;

@@ -1,4 +1,5 @@
 <?php
+
 namespace NSWDPC\Authentication\Okta;
 
 use Bigfork\SilverStripeOAuth\Client\Model\Passport;
@@ -39,8 +40,7 @@ class OAuthAdmin extends ModelAdmin
 
     public function getEditForm($id = null, $fields = null)
     {
-
-        if($this->modelClass == OAuthLog::class) {
+        if ($this->modelClass == OAuthLog::class) {
             OAuthLog::truncate();
         }
 
