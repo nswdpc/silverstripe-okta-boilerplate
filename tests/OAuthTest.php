@@ -209,14 +209,23 @@ class OAuthTest extends SapphireTest {
             'groups' => []
         ];
     }
+    
+    /**
+     * Set a session on the current controller
+     * @return void
+     */
+    protected function setSessionOnController(Session &$session) {
+        $controller = SilverstripeController::curr();
+        $controller->getRequest()->setSession($session);
+    }
 
     /**
      * Return an access token and provider for a supplied user and session
      */
     protected function setupForLoginHandler(Session $session, array $authenticatingUser) {
-        $controller = SilverstripeController::curr();
-        $controller->getRequest()->setSession($session);
 
+        $this->setSessionOnController($session);
+        
         $issuer = $this->getIssuer();
 
         $options = [
