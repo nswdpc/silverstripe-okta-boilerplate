@@ -75,7 +75,7 @@ class OAuthTest extends SapphireTest {
         ];
         $providers = [];
         $providers['OktaTest'] = new Okta( $options );
-        $factory = new ProviderFactory();
+        $factory = Injector::inst()->get(ProviderFactory::class);
         $factory->setProviders($providers);
 
         $provider = $factory->getProvider('OktaTest');
