@@ -16,24 +16,41 @@ class OktaAPITest extends SapphireTest {
 
     protected $usesDatabase = false;
 
+    public static function setUpBeforeClass()
+    {
+        parent::setUpBeforeClass();
+        
+        // turn off default_file_location for these tests
+        Config::inst()->update(Client::class, 'default_file_location', null);
+        
+        // set up config file location
+        $sample = dirname(__FILE__ ) . '/support/okta.yaml';
+        Config::inst()->update(
+            Client::class,
+            'config_file_location',
+            $sample
+        );
+    }
+    
+    protected function parseYamlConfig() : array {
+        $config = Config::inst()->get(
+            Client::class,
+            'config_file_location'
+        );
+        $parser = new YamlParser();
+        $parsed = $parser->parse( file_get_contents($config) );
+        return $parsed;
+    }
+    
     /**
      * Test API client creation
      */
     public function testClientCreation() {
 
-        $sample = dirname(__FILE__ ) . '/support/okta.yaml';
-
-        $parser = new YamlParser();
-        $parsed = $parser->parse( file_get_contents($sample) );
-
-        Config::modify()->set(
-            Client::class,
-            'config_file_location',
-            $sample
-        );
-
         $client = Client::create();
         $this->assertInstanceOf(OktaClient::class, $client);
+        
+        $parsed = $this->parseYamlConfig();
 
         $this->assertEquals($parsed['okta']['client']['token'], $client->getToken());
         $this->assertEquals($parsed['okta']['client']['orgUrl'], $client->getOrganizationUrl());
@@ -45,36 +62,22 @@ class OktaAPITest extends SapphireTest {
      */
     public function testClientCreationWithParameters() {
 
-        $sample = dirname(__FILE__ ) . '/support/okta.yaml';
-
-        $parser = new YamlParser();
-        $parsed = $parser->parse( file_get_contents($sample) );
-
-        Config::modify()->set(
-            Client::class,
-            'config_file_location',
-            $sample
-        );
-
-        Config::modify()->set(
-            Client::class,
-            'default_file_location',
-            $sample
-        );
-
         $parameters = [
             'token' => 'another-token',
             // Cannot test private key until below is merged
             // https://github.com/okta/okta-sdk-php/commit/2aff341fc00e5734e61c0985554dc318ebaea638
             'authMode' => AuthorizationMode::SSWS,
-            'userAgent'  => 'Auth/1.0'
+            'userAgent'  => 'Auth/1.0',
+            'orgUrl' => 'https://okta.example.com/'
         ];
 
         $client = Client::create($parameters);
 
         $this->assertInstanceOf(OktaClient::class, $client);
+        
+        $parsed = $this->parseYamlConfig();
 
-        $this->assertEquals($parsed['okta']['client']['orgUrl'], $client->getOrganizationUrl());// default file location retained
+        $this->assertEquals($parameters['orgUrl'], $client->getOrganizationUrl());// default file location retained
         $this->assertEquals($parameters['token'], $client->getToken());
         $this->assertEquals($parameters['userAgent'], $client->getIntegrationUserAgent());
         $this->assertInstanceOf(AuthorizationMode::class, $client->getAuthorizationMode());
