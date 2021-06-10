@@ -29,7 +29,8 @@ use SilverStripe\Security\RequestAuthenticationHandler;
 /**
  * Run test related to the Okta API using `okta/sdk`
  */
-class OAuthTest extends SapphireTest {
+class OAuthTest extends SapphireTest
+{
 
     /**
      * @inheritdoc
@@ -44,7 +45,8 @@ class OAuthTest extends SapphireTest {
     /**
      * Log out the currently signed in user, if any, before any tests
      */
-    public function setUp() {
+    public function setUp()
+    {
         parent::setUp();
         $this->logOut();
     }
@@ -60,7 +62,8 @@ class OAuthTest extends SapphireTest {
     /**
      * Return issuer URI parts
      */
-    protected function getIssuer() : array {
+    protected function getIssuer() : array
+    {
         $issuer = [
             'host' => 'something.example.com',
             'path' => '/oauth2',
@@ -72,7 +75,8 @@ class OAuthTest extends SapphireTest {
     /**
      * Test that we can create an authentication URL from the Okta configuration
      */
-    public function testOktaAuthenticateUrl() {
+    public function testOktaAuthenticateUrl()
+    {
         $issuer = $this->getIssuer();
         $options = [
             'clientId' => 'test-client-id',
@@ -81,7 +85,7 @@ class OAuthTest extends SapphireTest {
             'redirectUri' => 'https://localhost/oauth/callback/',
         ];
         $providers = [];
-        $providers['OktaTest'] = new Okta( $options );
+        $providers['OktaTest'] = new Okta($options);
         $factory = Injector::inst()->get(ProviderFactory::class);
         $factory->setProviders($providers);
 
@@ -128,10 +132,10 @@ class OAuthTest extends SapphireTest {
 
         $parts = parse_url($location);
 
-        $this->assertEquals( $issuer['scheme'], $parts['scheme']);
-        $this->assertEquals( $issuer['host'], $parts['host']);
-        $this->assertEquals( $issuer['path'] . '/v1/authorize', $parts['path']);
-        $this->assertNotEmpty( $parts['query']) ;
+        $this->assertEquals($issuer['scheme'], $parts['scheme']);
+        $this->assertEquals($issuer['host'], $parts['host']);
+        $this->assertEquals($issuer['path'] . '/v1/authorize', $parts['path']);
+        $this->assertNotEmpty($parts['query']) ;
 
         $query = [];
         parse_str($parts['query'], $query);
@@ -142,13 +146,13 @@ class OAuthTest extends SapphireTest {
         $this->assertNotEmpty($query['approval_prompt']);
         $this->assertEquals($options['clientId'], $query['client_id']);
         $this->assertEquals($options['redirectUri'], $query['redirect_uri']);
-
     }
 
     /**
      * Get a user with a 'corret' claim on an email (as in they own the SS member email address)
      */
-    protected function getCorrectUser() : array {
+    protected function getCorrectUser() : array
+    {
         return [
             'sub' => "some-okta-user-id",
             'given_name' => "Sandy",
@@ -167,7 +171,8 @@ class OAuthTest extends SapphireTest {
     /**
      * Get conflicting user, note same email as correct user ^
      */
-    protected function getConflictingUser() : array {
+    protected function getConflictingUser() : array
+    {
         return [
             'sub' => "conflicting-okta-user-id",
             'given_name' => "Sandy",
@@ -185,7 +190,8 @@ class OAuthTest extends SapphireTest {
     /**
      * Get a user with a bunch of groups to test  group assignment and sync on auth
      */
-    protected function getAssignGroupTestUser() : array {
+    protected function getAssignGroupTestUser() : array
+    {
         return [
             'sub' => "test-group-user-id",
             'given_name' => "Herman",
@@ -206,7 +212,8 @@ class OAuthTest extends SapphireTest {
     /**
      * Get a user with a bunch of groups to test  group assignment and sync on auth
      */
-    protected function getAssignNoGroupTestUser() : array {
+    protected function getAssignNoGroupTestUser() : array
+    {
         return [
             'sub' => "test-group-user-id",
             'given_name' => "Herman",
@@ -222,7 +229,8 @@ class OAuthTest extends SapphireTest {
      * Set a session on the current controller
      * @return void
      */
-    protected function setSessionOnController(Session &$session) {
+    protected function setSessionOnController(Session &$session)
+    {
         $controller = SilverstripeController::curr();
         $controller->getRequest()->setSession($session);
     }
@@ -230,8 +238,8 @@ class OAuthTest extends SapphireTest {
     /**
      * Return an access token and provider for a supplied user and session
      */
-    protected function setupForLoginHandler(Session &$session, array $authenticatingUser) {
-
+    protected function setupForLoginHandler(Session &$session, array $authenticatingUser)
+    {
         $this->setSessionOnController($session);
         
         $issuer = $this->getIssuer();
@@ -243,7 +251,7 @@ class OAuthTest extends SapphireTest {
             'redirectUri' => 'https://localhost/oauth/callback/',
         ];
 
-        $provider = new Okta( $options );
+        $provider = new Okta($options);
 
         $stream = Mockery::mock(StreamInterface::class);
         $stream
@@ -289,7 +297,8 @@ class OAuthTest extends SapphireTest {
         ];
     }
 
-    public function testOktaLoginHandlerFailWithRestrictedGroups() {
+    public function testOktaLoginHandlerFailWithRestrictedGroups()
+    {
         $session = new Session([]);
         $result = $this->setupForLoginHandler($session, $this->getCorrectUser());
 
@@ -319,12 +328,12 @@ class OAuthTest extends SapphireTest {
         
         // assert that the message contains the message id via regex
         $pattern = "/^.+\(#([0-9]+)\)$/s";
-        $this->assertTrue( preg_match($pattern, $sessionMessage, $matches) > 0, "Session message should match pattern {$pattern}");
+        $this->assertTrue(preg_match($pattern, $sessionMessage, $matches) > 0, "Session message should match pattern {$pattern}");
         $this->assertEquals('warning', $sessionMessageType);
-
     }
 
-    public function testOktaLoginHandlerSuccessWithRestrictedGroups() {
+    public function testOktaLoginHandlerSuccessWithRestrictedGroups()
+    {
         $session = new Session([]);
         $result = $this->setupForLoginHandler($session, $this->getCorrectUser());
 
@@ -364,15 +373,14 @@ class OAuthTest extends SapphireTest {
         $this->assertTrue($passport && $passport->isInDB());
 
         $this->assertEquals($passport->MemberID, $member->ID);
-
     }
 
 
     /**
      * That a user with the same email address can't link to current Member
      */
-    public function testOktaLoginHandlerConflictingUsers() {
-
+    public function testOktaLoginHandlerConflictingUsers()
+    {
         $session = new Session([]);
 
         $correct = $this->getCorrectUser();
@@ -456,15 +464,15 @@ class OAuthTest extends SapphireTest {
         
         // assert that the message contains the message id via regex
         $pattern = "/^.+\(#([0-9]+)\)$/s";
-        $this->assertTrue( preg_match($pattern, $sessionMessage, $matches) > 0, "Session message should match pattern {$pattern}");
+        $this->assertTrue(preg_match($pattern, $sessionMessage, $matches) > 0, "Session message should match pattern {$pattern}");
         $this->assertEquals('warning', $sessionMessageType);
     }
 
     /**
      * Test group assignment for an authenticating user with groups that intersect the current groups
      */
-    public function testOktaLoginHandlerGroupAssignment() {
-
+    public function testOktaLoginHandlerGroupAssignment()
+    {
         $session = new Session([]);
         $userWithGroups = $this->getAssignGroupTestUser();
         
@@ -488,7 +496,7 @@ class OAuthTest extends SapphireTest {
         );
         
         // create in DB
-        foreach($currentSystemGroups as $groupTitle) {
+        foreach ($currentSystemGroups as $groupTitle) {
             $createdGroup = Group::create([
                 'Title' => $groupTitle,
                 'IsOktaGroup' => 1,
@@ -546,18 +554,17 @@ class OAuthTest extends SapphireTest {
         );
         
         // all groups should be retained in SS, even if no longer linked to user
-        $allOktaGroups = array_unique(array_merge($userWithGroups['groups'],$currentSystemGroups));
+        $allOktaGroups = array_unique(array_merge($userWithGroups['groups'], $currentSystemGroups));
         $postLoginSystemGroups = Group::get()->filter(['IsOktaGroup' => 1])->exclude(['ID' => $rootOktaGroup->ID]);
         
         $this->assertEquals(count($allOktaGroups), $postLoginSystemGroups->count());
-
     }
     
     /**
      * Test handling when a user presents with no groups
      */
-    public function testOktaLoginHandlerNoGroupAssignment() {
-
+    public function testOktaLoginHandlerNoGroupAssignment()
+    {
         $session = new Session([]);
         $userWithNoGroups = $this->getAssignNoGroupTestUser();
 
@@ -578,7 +585,7 @@ class OAuthTest extends SapphireTest {
         );
         
         // create in DB
-        foreach($currentSystemGroups as $groupTitle) {
+        foreach ($currentSystemGroups as $groupTitle) {
             $createdGroup = Group::create([
                 'Title' => $groupTitle,
                 'IsOktaGroup' => 1,
@@ -627,11 +634,9 @@ class OAuthTest extends SapphireTest {
         );
         
         // all groups should be retained in SS, even if no longer linked to user
-        $allOktaGroups = array_unique(array_merge($userWithNoGroups['groups'],$currentSystemGroups));
+        $allOktaGroups = array_unique(array_merge($userWithNoGroups['groups'], $currentSystemGroups));
         $postLoginSystemGroups = Group::get()->filter(['IsOktaGroup' => 1])->exclude(['ID' => $rootOktaGroup->ID]);
         
         $this->assertEquals(count($allOktaGroups), $postLoginSystemGroups->count());
-
     }
-
 }

@@ -11,11 +11,12 @@ use SilverStripe\Security\PermissionRole;
 /**
  * Run test related to the Okta API using `okta/sdk`
  */
-class PermissionTest extends SapphireTest {
-    
+class PermissionTest extends SapphireTest
+{
     protected $usesDatabase = true;
 
-    public function testGroupPermission() {
+    public function testGroupPermission()
+    {
         try {
             $group = Group::create([
                 'Code' => 'oktagroup',
@@ -33,7 +34,8 @@ class PermissionTest extends SapphireTest {
         $this->assertEmpty($postGroup, "Group exists!");
     }
     
-    public function testGroupRoles() {
+    public function testGroupRoles()
+    {
         try {
             $group = Group::create([
                 'Code' => 'oktagroup',

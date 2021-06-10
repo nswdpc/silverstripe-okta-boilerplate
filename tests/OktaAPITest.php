@@ -12,8 +12,8 @@ use Symfony\Component\Yaml\Parser as YamlParser;
 /**
  * Run test related to the Okta API using `okta/sdk`
  */
-class OktaAPITest extends SapphireTest {
-
+class OktaAPITest extends SapphireTest
+{
     protected $usesDatabase = false;
 
     public static function setUpBeforeClass()
@@ -24,7 +24,7 @@ class OktaAPITest extends SapphireTest {
         Config::inst()->update(Client::class, 'default_file_location', null);
         
         // set up config file location
-        $sample = dirname(__FILE__ ) . '/support/okta.yaml';
+        $sample = dirname(__FILE__) . '/support/okta.yaml';
         Config::inst()->update(
             Client::class,
             'config_file_location',
@@ -32,21 +32,22 @@ class OktaAPITest extends SapphireTest {
         );
     }
     
-    protected function parseYamlConfig() : array {
+    protected function parseYamlConfig() : array
+    {
         $config = Config::inst()->get(
             Client::class,
             'config_file_location'
         );
         $parser = new YamlParser();
-        $parsed = $parser->parse( file_get_contents($config) );
+        $parsed = $parser->parse(file_get_contents($config));
         return $parsed;
     }
     
     /**
      * Test API client creation
      */
-    public function testClientCreation() {
-
+    public function testClientCreation()
+    {
         $client = Client::create();
         $this->assertInstanceOf(OktaClient::class, $client);
         
@@ -54,14 +55,13 @@ class OktaAPITest extends SapphireTest {
 
         $this->assertEquals($parsed['okta']['client']['token'], $client->getToken());
         $this->assertEquals($parsed['okta']['client']['orgUrl'], $client->getOrganizationUrl());
-
     }
 
     /**
      * Test API client creation with additional runtime parameters
      */
-    public function testClientCreationWithParameters() {
-
+    public function testClientCreationWithParameters()
+    {
         $parameters = [
             'token' => 'another-token',
             // Cannot test private key until below is merged
@@ -81,7 +81,5 @@ class OktaAPITest extends SapphireTest {
         $this->assertEquals($parameters['token'], $client->getToken());
         $this->assertEquals($parameters['userAgent'], $client->getIntegrationUserAgent());
         $this->assertInstanceOf(AuthorizationMode::class, $client->getAuthorizationMode());
-
     }
-
 }
