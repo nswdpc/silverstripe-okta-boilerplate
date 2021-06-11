@@ -4,8 +4,11 @@ namespace NSWDPC\Authentication\Okta;
 
 use Bigfork\SilverStripeOAuth\Client\Model\Passport;
 use SilverStripe\Core\Config\Config;
+use SilverStripe\Core\Convert;
+use SilverStripe\ORM\ArrayList;
 use SilverStripe\Security\Group;
 use SilverStripe\Security\Member;
+use SilverStripe\Security\Permission;
 
 /**
  * Synchronises the users assigned with the application
@@ -272,4 +275,50 @@ class OktaAppUserSync
         }
     }
     
+    /**
+     * Returns a list of stale members, which could be empty!
+     * Members with a CMS_ACCESS permission are not returned
+     * @return \SilverStripe\ORM\ArrayList
+     */
+    public function getStaleOktaMembers() : ArrayList {
+        $membersToRemove = ArrayList::create();
+        $days = intval(Config::inst()->get(Member::class, 'okta_lockout_after_days'));
+        if($days <= 0) {
+            return $filteredMembers;
+        }
+        $threshold = new \DateTime();
+        $threshold->modify("-{$days} day");
+        $datetime = $threshold->format('Y-m-d') . 'T00:00:00';
+        $members = Member::get()
+                    ->where(
+                        "OktaLastSync <> ''"
+                        . " AND OktaLastSync IS NOT NULL"
+                        . " AND OktaLastSync < '" . Convert::raw2sql( $datetime ) . "'"
+                    );
+        foreach($members as $member) {
+            if(!Permission::checkMember($member, 'CMS_ACCESS')) {
+                $membersToRemove->push($member);
+            }
+        }
+        return $membersToRemove;
+    }
+    
+    /**
+     * Remove any member that is consider a stale Okta user
+     * @param bool $dryRun when true, only return the user count delete total, don't actually delete Member records
+     * @return int
+     */
+    public function removeStaleOktaMembers($dryRun = false) : int {
+        $list = $this->getStaleOktaMembers();
+        $deleted = 0;
+        foreach($list as $member) {
+            // remove member and passports (at the least)
+            if(!$dryRun) {
+                $member->delete();
+            }
+            $deleted++;
+        }
+        return $deleted;
+    } 
+
 }
