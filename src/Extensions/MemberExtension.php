@@ -5,6 +5,9 @@ namespace NSWDPC\Authentication\Okta;
 use SilverStripe\ORM\DataExtension;
 use SilverStripe\ORM\ManyManyList;
 use SilverStripe\ORM\ValidationResult;
+use SilverStripe\Forms\ReadonlyField;
+use SilverStripe\Forms\CompositeField;
+use SilverStripe\Forms\CheckboxField;
 use SilverStripe\Security\Member;
 use Symbiote\MultiValueField\Fields\KeyValueField;
 
@@ -23,6 +26,16 @@ class MemberExtension extends DataExtension
         'OktaLastSync' => 'DBDatetime'
     ];
     
+    /**
+     * Handle member okta operations on write
+     */
+    public function onBeforeWrite() {
+        parent::onBeforeWrite();
+        if($this->owner->OktaLastSyncClear) {
+            $this->owner->OktaLastSync = null;
+        }
+    }
+    
     public function updateCmsFields($fields)
     {
         $fields->removeByName('Passports');
@@ -39,8 +52,26 @@ class MemberExtension extends DataExtension
         $fields->makeFieldReadonly('OktaProfile');
         
         if($oktaLastSyncField = $fields->dataFieldByName('OktaLastSync')) {
-            $fields->addFieldToTab('Root.Okta', $oktaLastSyncField);
-            $fields->makeFieldReadonly('OktaLastSync');
+            
+            $fields->removeByName('OktaLastSync');
+            $fields->addFieldToTab(
+                'Root.Okta', 
+                CompositeField::create(
+                    ReadonlyField::create(
+                        'OktaLastSync',
+                        _t('OKTA.LAST_SYNC_DATETIME', 'Okta sync. date'),
+                        $this->owner->OktaLastSync
+                    ),
+                    CheckboxField::create(
+                        'OktaLastSyncClear',
+                        _t(
+                            'OKTA.CLEAR_SYNC_DATETIME',
+                            'Clear this value'
+                        )
+                    )
+                )
+            );
+            
         }
             
     }
