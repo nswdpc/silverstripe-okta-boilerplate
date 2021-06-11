@@ -16,6 +16,7 @@ SilverStripe\Security\Group:
   extensions:
     - 'NSWDPC\Authentication\Okta\GroupExtension'
 SilverStripe\Security\Member:
+  okta_lockout_after_days: 0
   extensions:
     - 'NSWDPC\Authentication\Okta\MemberExtension'
 SilverStripe\Security\MemberAuthenticator\LostPasswordHandler:
