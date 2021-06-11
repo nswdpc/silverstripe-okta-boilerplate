@@ -18,6 +18,7 @@ use SilverStripe\Security\Member;
 class OktaLoginHandler extends LoginTokenHandler
 {
     use Configurable;
+    use OktaGroups;
 
     /**
      * @var bool
@@ -420,67 +421,7 @@ class OktaLoginHandler extends LoginTokenHandler
         // the goal here is to sync on auth the available Okta groups
         $groups = !empty($data['groups']) && is_array($data['groups']) ? $data['groups'] : [];
 
-        // @var \SilverStripe\ORM\ManyManyList
-        // the current member Okta groups
-        $currentMemberGroups = $member->getOktaGroups();
-        // store groups created or updated
-        $createdOrUpdatedGroups = [];
-
-        // the Okta user returned some groups
-        if (!empty($groups)) {
-            $inst = Group::create();
-            $parent = $inst->applyOktaRootGroup();
-            if ($parent && $parent->isInDB()) {
-                foreach ($data['groups'] as $oktaGroupName) {
-
-                    // check for existing group
-                    $group = Group::get()->filter([
-                        'Title' => $oktaGroupName,
-                        'IsOktaGroup' => 1
-                    ])->first();
-
-                    if (empty($group->ID)) {
-                        // create this local group
-                        $group = Group::create();
-                        $group->ParentID = $parent->ID;
-                        $group->IsOktaGroup = 1;
-                        $group->Title = $oktaGroupName;
-                        $group->Description = _t(
-                            'OKTA.GROUP_DESCRIPTION_IMPORT',
-                            'This group was imported from Okta'
-                        );
-                        $group->write();
-                    }
-
-                    // ensure Member linked to group
-                    $member->Groups()->add($group);
-
-                    // store created/update groups
-                    $createdOrUpdatedGroups[] = $group->ID;
-                }
-            }
-        }
-
-        // if the Member had any groups to start with
-        if ($currentMemberGroups->count() > 0) {
-
-            // check whether any groups were created or updated
-            if (!empty($createdOrUpdatedGroups)) {
-                // get the groups that were not created or updated
-                $groupsToUnlink = $currentMemberGroups->exclude(['ID' => $createdOrUpdatedGroups]);
-            } else {
-                // no local groups were created or updated, unlink all from the member groups list
-                $groupsToUnlink = $currentMemberGroups;
-            }
-
-            // remove the unlinked groups from the
-            foreach ($groupsToUnlink as $groupToUnlink) {
-                // the group is retained, only the link to the $member is removed
-                $currentMemberGroups->remove($groupToUnlink);
-            }
-        }
-
-        return $createdOrUpdatedGroups;
+        return $this->oktaUserMemberGroupAssignment($groups, $member);
     }
 
     /**

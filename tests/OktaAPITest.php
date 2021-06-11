@@ -2,7 +2,7 @@
 
 namespace NSWDPC\Authentication\Okta\Tests;
 
-use NSWDPC\Authentication\Okta\Client;
+use NSWDPC\Authentication\Okta\ClientFactory;
 use Okta\Client as OktaClient;
 use Okta\Utilities\AuthorizationMode;
 use SilverStripe\Core\Config\Config;
@@ -21,12 +21,12 @@ class OktaAPITest extends SapphireTest
         parent::setUpBeforeClass();
         
         // turn off default_file_location for these tests
-        Config::inst()->update(Client::class, 'default_file_location', null);
+        Config::inst()->update(ClientFactory::class, 'default_file_location', null);
         
         // set up config file location
         $sample = dirname(__FILE__) . '/support/okta.yaml';
         Config::inst()->update(
-            Client::class,
+            ClientFactory::class,
             'config_file_location',
             $sample
         );
@@ -35,7 +35,7 @@ class OktaAPITest extends SapphireTest
     protected function parseYamlConfig() : array
     {
         $config = Config::inst()->get(
-            Client::class,
+            ClientFactory::class,
             'config_file_location'
         );
         $parser = new YamlParser();
@@ -48,7 +48,7 @@ class OktaAPITest extends SapphireTest
      */
     public function testClientCreation()
     {
-        $client = Client::create();
+        $client = ClientFactory::create();
         $this->assertInstanceOf(OktaClient::class, $client);
         
         $parsed = $this->parseYamlConfig();
@@ -71,7 +71,7 @@ class OktaAPITest extends SapphireTest
             'orgUrl' => 'https://okta.example.com/'
         ];
 
-        $client = Client::create($parameters);
+        $client = ClientFactory::create($parameters);
 
         $this->assertInstanceOf(OktaClient::class, $client);
         

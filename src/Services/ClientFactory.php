@@ -11,7 +11,7 @@ use SilverStripe\Core\Config\Configurable;
 /**
  * Creates an {@link \Okta\Client} using configuration supplied or stored
  */
-class Client
+class ClientFactory
 {
     use Configurable;
 
@@ -69,9 +69,9 @@ class Client
             $clientBuilder->setAuthorizationMode(new AuthorizationMode($authMode));
         }
 
-        $clientBuilderId = $parameters['clientId'] ?? '';
-        if ($clientBuilderId) {
-            $clientBuilder->setClientId($clientBuilderId);
+        $clientId = $parameters['clientId'] ?? '';
+        if ($clientId) {
+            $clientBuilder->setClientId($clientId);
         }
 
         $privateKey = $parameters['privateKey'] ?? '';
