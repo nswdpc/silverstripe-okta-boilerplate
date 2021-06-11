@@ -11,6 +11,7 @@ use SilverStripe\Core\Config\Configurable;
 use SilverStripe\ORM\ValidationException;
 use SilverStripe\Security\Group;
 use SilverStripe\Security\Member;
+use SilverStripe\Security\Security;
 
 /**
  * Perform Okta login handling without user/member Email collisions
@@ -69,11 +70,39 @@ class OktaLoginHandler extends LoginTokenHandler
 
     /**
      * @inheritdoc
+     * Override parent::handleToken to:
+     * - reset the login failure code
+     * - work around some issues with validationCanLogin message handling
      */
     public function handleToken(AccessToken $token, AbstractProvider $provider)
     {
-        $this->setLoginFailureCode(null);//reset failure code on new attempt
-        return parent::handleToken($token, $provider);
+        try {
+            $this->setLoginFailureCode(null);//reset failure code on new attempt
+            // Find or create a member from the token
+            $member = $this->findOrCreateMember($token, $provider);
+        } catch (ValidationException $e) {
+            return Security::permissionFailure(null, $e->getMessage());
+        }
+
+        // Check whether the member can log in before we proceed
+        $result = $member->validateCanLogin();
+        if (!$result->isValid()) {
+            $message = implode("; ", array_map(
+                function ($message) {
+                    return $message['message'];
+                },
+                $result->getMessages()
+            ));
+            return Security::permissionFailure(
+                null,
+                $message
+            );
+        }
+
+        // Log the member in
+        $identityStore = Injector::inst()->get(IdentityStore::class);
+        $identityStore->logIn($member);
+        return null;
     }
 
     /**
