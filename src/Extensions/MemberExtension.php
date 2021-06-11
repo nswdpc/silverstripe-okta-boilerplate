@@ -29,6 +29,13 @@ class MemberExtension extends DataExtension
     ];
     
     /**
+     * @var array
+     */
+    private static $indexes = [
+        'OktaLastSync' => true
+    ];
+    
+    /**
      * Handle member okta operations on write
      */
     public function onBeforeWrite() {
