@@ -8,6 +8,8 @@ use SilverStripe\ORM\ValidationResult;
 use SilverStripe\Forms\ReadonlyField;
 use SilverStripe\Forms\CompositeField;
 use SilverStripe\Forms\CheckboxField;
+use SilverStripe\Forms\LabelField;
+use SilverStripe\Forms\LiteralField;
 use SilverStripe\Security\Member;
 use Symbiote\MultiValueField\Fields\KeyValueField;
 
@@ -36,43 +38,61 @@ class MemberExtension extends DataExtension
         }
     }
     
+    /**
+     * Reset values after write
+     */
+    public function onAfterWrite() {
+        parent::onAfterWrite();
+        $this->owner->OktaLastSyncClear = null;
+    }
+    
     public function updateCmsFields($fields)
     {
-        $fields->removeByName('Passports');
-        $fields->removeByName('OAuthSource');
-        
-        $fields->replaceField(
+        $fields->removeByName([
+            'Passports',
+            'OAuthSource',
             'OktaProfile',
-            $oktaProfileField = KeyValueField::create(
-                'OktaProfile',
-                _t('OKTA.PROFILE_FIELD_TITLE', 'Okta profile')
-            )
-        );
-        $fields->addFieldToTab('Root.Okta', $oktaProfileField);
-        $fields->makeFieldReadonly('OktaProfile');
+            'OktaLastSync'
+        ]);
         
-        if($oktaLastSyncField = $fields->dataFieldByName('OktaLastSync')) {
-            
-            $fields->removeByName('OktaLastSync');
-            $fields->addFieldToTab(
-                'Root.Okta', 
-                CompositeField::create(
-                    ReadonlyField::create(
-                        'OktaLastSync',
-                        _t('OKTA.LAST_SYNC_DATETIME', 'Okta sync. date'),
-                        $this->owner->OktaLastSync
-                    ),
-                    CheckboxField::create(
-                        'OktaLastSyncClear',
-                        _t(
-                            'OKTA.CLEAR_SYNC_DATETIME',
-                            'Clear this value'
-                        )
+        try {
+            $profileFieldsValue = json_encode(
+                $this->owner->OktaProfile->getValue(),
+                JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR
+            );
+        } catch (\Exception $e) {
+            $profileFieldsValue = '';
+        }
+        
+        $fields->addFieldToTab(
+            'Root.Okta', 
+            CompositeField::create(
+                LabelField::create(
+                    'OktaProfileLabel',
+                    _t('OKTA.PROFILE_FIELD_TITLE', 'Latest profile data')
+                ),
+                LiteralField::create(
+                    'OktaProfile',
+                    '<pre>'
+                    . htmlspecialchars($profileFieldsValue)
+                    . '</pre>'
+                ),
+                ReadonlyField::create(
+                    'OktaLastSync',
+                    _t('OKTA.LAST_SYNC_DATETIME', 'Last sync. date'),
+                    $this->owner->OktaLastSync
+                ),
+                CheckboxField::create(
+                    'OktaLastSyncClear',
+                    _t(
+                        'OKTA.CLEAR_SYNC_DATETIME',
+                        'Clear this value'
                     )
                 )
-            );
-            
-        }
+            )->setTitle(
+                _t('OKTA.OKTA_HEADING', 'Okta')
+            )
+        );
             
     }
     
