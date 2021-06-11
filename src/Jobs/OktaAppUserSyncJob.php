@@ -44,7 +44,7 @@ class OktaAppUserSyncJob extends AbstractQueuedJob
     }
 
     /**
-     * Run the task - given a group id, get all users
+     * Run the job
      */
     public function process() {
         try {
