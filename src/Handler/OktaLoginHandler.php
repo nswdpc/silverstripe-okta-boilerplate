@@ -225,7 +225,7 @@ class OktaLoginHandler extends LoginTokenHandler
             $passport = Passport::create([
                 'Identifier' => $identifier,
                 'OAuthSource' => $provider,
-                'Member' => $member->ID
+                'MemberID' => $member->ID
             ]);
             $passport->write();
             if (!$passport->isInDB()) {
