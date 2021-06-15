@@ -92,13 +92,11 @@ class SyncTest extends SapphireTest
         
         $this->assertEquals(0, $passports->count(), "Some passports remain for deleted members");
         
-        
         $remainingPassports = Passport::get()
-            ->filter('MemberID', $remainingMemberIds)
-            ->column('MemberID');
+            ->filter('MemberID', $remainingMemberIds);
         
         //based on fixture passport/member linkage, we should have 7 passports remaining
-        $this->assertEquals(7, count($remainingPassports));
+        $this->assertEquals(7, $remainingPassports->count());
         
     }
 
