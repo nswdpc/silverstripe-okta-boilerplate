@@ -2,10 +2,12 @@
 
 namespace NSWDPC\Authentication\Okta;
 
+use Bigfork\SilverStripeOAuth\Client\Model\Passport;
 use Bigfork\SilverStripeOAuth\Client\Factory\ProviderFactory;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Forms\DropdownField;
 use SilverStripe\ORM\DataExtension;
+use SilverStripe\ORM\ValidationException;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
 use SilverStripe\Security\PermissionProvider;
@@ -68,6 +70,54 @@ class PassportExtension extends DataExtension implements PermissionProvider
         'OAuthSource' => 'ExactMatchFilter',
         'Member.Email' => 'PartialMatchFilter'
     ];
+    
+    /**
+     * Validate the values provided prior to allowing write
+     */
+    public function validatePassportWrite() {
+        
+        // Validate: the Identifier/OAuthSource is unique
+        if($this->owner->Identifier && $this->owner->OAuthSource) {
+            $existing = Passport::get()->filter([
+                'Identifier' => $this->owner->Identifier,
+                'OAuthSource' => $this->owner->OAuthSource
+            ]);
+            if($this->owner->isInDB()) {
+                // exclude current record if it exists
+                $existing = $existing->exclude( [ "ID" => $this->owner->ID ] );
+            }
+            $existing = $existing->first();
+            if($existing && $existing->exists()) {
+                throw new ValidationException(
+                    OktaLoginHandler::getFailMessageForCode( OktaLoginHandler::FAIL_PASSPORT_CREATE_IDENT_COLLISION ),
+                    OktaLoginHandler::FAIL_PASSPORT_CREATE_IDENT_COLLISION
+                );
+            }
+        }
+        
+        // Validate: the MemberID/OAuthSource is unique
+        if($this->owner->MemberID && $this->owner->OAuthSource) {
+            // validate member/provider passport does not exist
+            $existing = Passport::get()->filter([
+                'MemberID' => $this->owner->MemberID,
+                'OAuthSource' => $this->owner->OAuthSource
+            ]);
+            if($this->owner->isInDB()) {
+                // exclude current record if it exists (updating current record)
+                $existing = $existing->exclude( ["ID" => $this->owner->ID ] );
+            }
+            $existing = $existing->first();
+            if($existing && $existing->exists()) {
+                throw new ValidationException(
+                    OktaLoginHandler::getFailMessageForCode( OktaLoginHandler::FAIL_USER_MEMBER_PASSPORT_MISMATCH ),
+                    OktaLoginHandler::FAIL_USER_MEMBER_PASSPORT_MISMATCH
+                );
+            }
+        }
+        
+        return true;
+        
+    }
 
     public function onBeforeWrite()
     {
@@ -76,6 +126,8 @@ class PassportExtension extends DataExtension implements PermissionProvider
             $member = Security::getCurrentUser();
             $this->owner->CreatedByMemberID = $member->ID ?? 0;
         }
+        // validate that the passport can be written
+        $this->validatePassportWrite();
     }
 
     public function getTitle()

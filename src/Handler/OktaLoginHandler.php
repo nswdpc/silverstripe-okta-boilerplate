@@ -56,6 +56,7 @@ class OktaLoginHandler extends LoginTokenHandler
     const FAIL_USER_MISSING_EMAIL = 103;
     const FAIL_USER_MEMBER_EMAIL_MISMATCH = 104;
     const FAIL_USER_MEMBER_PASSPORT_MISMATCH = 105;
+    const FAIL_PASSPORT_CREATE_IDENT_COLLISION = 106;
     const FAIL_NO_PROVIDER_NAME = 200;
     const FAIL_NO_PASSPORT_NO_MEMBER_CREATED = 300;
     const FAIL_PASSPORT_NO_MEMBER_CREATED = 301;
@@ -130,6 +131,9 @@ class OktaLoginHandler extends LoginTokenHandler
                 break;
             case self::FAIL_USER_MEMBER_PASSPORT_MISMATCH:
                 return _t('OAUTH.FAIL_' . $code, 'User/member/passport mismatch');
+                break;
+            case self::FAIL_PASSPORT_CREATE_IDENT_COLLISION:
+                return _t('OAUTH.FAIL_' . $code, 'Tried to create a passport when one existed for the identifier/provider');
                 break;
             case self::FAIL_NO_PROVIDER_NAME:
                 return _t('OAUTH.FAIL_' . $code, 'No provider name');
@@ -210,33 +214,38 @@ class OktaLoginHandler extends LoginTokenHandler
     }
 
     /**
-     * Get the passport for a provider/member combination
+     * Create a passport with the provided identifier, a provider string and a Member record
+     * See {@link NSWDPC\Authentication\Okta\PassportExtension::validatePassportWrite()}
      * @return Passport|null
      */
-    protected function getMemberPassport(Member $claimedMember, string $provider)
+    protected function createPassport(string $identifier, string $provider, Member $member) : Passport
     {
-        $passport = Passport::get()->filter([
-            'MemberID' => $claimedMember->ID,
-            'OAuthSource' => $provider
-        ])->first();
-        return $passport;
-    }
-
-    /**
-     * Given an identifier and a provider string, create a passport
-     * @return Passport|null
-     */
-    protected function createPassport(string $identifier, string $provider) : Passport
-    {
-        $passport = Passport::create([
-            'Identifier' => $identifier,
-            'OAuthSource' => $provider
-        ]);
-        $passport->write();
-        if (!$passport->isInDB()) {
-            return null;
-        } else {
-            return $passport;
+        try {
+            // create a passport
+            $passport = Passport::create([
+                'Identifier' => $identifier,
+                'OAuthSource' => $provider,
+                'Member' => $member->ID
+            ]);
+            $passport->write();
+            if (!$passport->isInDB()) {
+                return null;
+            } else {
+                return $passport;
+            }
+        } catch (ValidationException $e) {
+            // catch the validation exception thrown on write error
+            $this->setLoginFailureCode( $e->getCode(), $identifier);
+            // rethrow with the login exception message
+            throw new ValidationException(
+                _t(
+                    'OKTA.INVALID_MEMBER',
+                    '{getSupportMessage} (#{messageId})',
+                    [
+                        'messageId' => $this->getLoginFailureMessageId()
+                    ]
+                )
+            );    
         }
     }
 
@@ -367,27 +376,8 @@ class OktaLoginHandler extends LoginTokenHandler
                 );
             }
 
-            // validate whether a passport already exists for the member/provider
-            // this could occur if user B email address claims a member account
-            // with the same email address
-            $memberPassport = $this->getMemberPassport($member, $providerName);
-            if ($memberPassport && $memberPassport->exists()) {
-                $this->setLoginFailureCode(self::FAIL_USER_MEMBER_PASSPORT_MISMATCH, $user->getId());
-                throw new ValidationException(
-                    _t(
-                        'OKTA.INVALID_MEMBER',
-                        '{getSupportMessage} (#{messageId})',
-                        [
-                            'messageId' => $this->getLoginFailureMessageId()
-                        ]
-                    )
-                );
-            }
-
-            // Assign created member to passport
-            $passport = $this->createPassport($identifier, $providerName);
-            $passport->MemberID = $member->ID;
-            $passport->write();
+            // Assign member to created passport
+            $passport = $this->createPassport($identifier, $providerName, $member);
         } else {
 
             // Passport exists, validate it
