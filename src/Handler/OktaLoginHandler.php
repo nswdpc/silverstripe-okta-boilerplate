@@ -395,23 +395,7 @@ class OktaLoginHandler extends LoginTokenHandler
                     )
                 );
             }
-
-            // validate that the Member.Email matches the returned $user email
-            // this will be hit if someone's email changes at Okta
-            // TODO: sync job via API to pull in updated email address
-            if ($member->Email != $userEmail) {
-                $this->setLoginFailureCode(self::FAIL_USER_MEMBER_EMAIL_MISMATCH, $user->getId());
-                throw new ValidationException(
-                    _t(
-                        'OKTA.INVALID_MEMBER',
-                        '{getSupportMessage} (#{messageId})',
-                        [
-                            'messageId' => $this->getLoginFailureMessageId(),
-                            'getSupportMessage' => $this->getSupportMessage()
-                        ]
-                    )
-                );
-            }
+            
         }
 
         $this->assignGroups($user, $member);
