@@ -11,7 +11,6 @@ use SilverStripe\Forms\CheckboxField;
 use SilverStripe\Forms\LabelField;
 use SilverStripe\Forms\LiteralField;
 use SilverStripe\Security\Member;
-use Symbiote\MultiValueField\Fields\KeyValueField;
 
 
 /**
