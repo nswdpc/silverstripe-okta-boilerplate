@@ -28,7 +28,7 @@ Your service application should have the following:
 1. Login initiated by: choose a selection
 1. Initiate login URI. This is a URI a user can visit to initiate an Okta login automatically. Example below
 
-An `Initiate login URI` with profile, email, groups scopes. The Provider value must match the provider `name: 'Okta'` value from configuration.
+An `Initiate login URI` with profile, email and groups scopes. The Provider value must match the provider `name: 'Okta'` value from configuration.
 
 > https://mysite.example.com/oauth/authenticate/?provider=Okta&context=login&scope%5B0%5D=openid&scope%5B1%5D=profile&scope%5B2%5D=email&scope%5B3%5D=groups
 

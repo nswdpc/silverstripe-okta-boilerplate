@@ -37,9 +37,10 @@ After:
   - '#silverstripe-okta-api'
 ---
 # API client options
-NSWDPC\Authentication\Okta\Client:
+NSWDPC\Authentication\Okta\ClientFactory:
   default_file_location: '/path/to/okta.yaml'
   config_file_location: null
+  application_client_id: 'not-a-client-id'
 ---
 Name: app-okta-loginhandler
 After:

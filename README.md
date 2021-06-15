@@ -4,24 +4,29 @@ This module adds Okta OAuth2 authentication and group+role discovery to your Sil
 
 > :warning: 🧪 This module is under active development. Do not use it in production.
 
+See [considerations](./docs/en/099_considerations.md).
+
 ## Scope
 
 With this module you can
 
-+ Create an OAuth2 client via configuration using `bigfork/silverstripe-oauth-login`
-+ Create an Okta API client using `okta/sdk`
-+ Authenticate an Okta user that may or may not be a Silverstripe member via Okta OAuth
-+ Save Okta groups returned for a user as Silverstripe groups
-+ Optionally restrict that user via their returned Okta groups
++ Create an OAuth2 client via configuration using [bigfork/silverstripe-oauth-login](https://github.com/bigfork/silverstripe-oauth-login)
++ Create an Okta API client using [okta/sdk](https://github.com/okta/okta-sdk-php)
++ Authenticate an Okta user that may or may not be a Silverstripe member, via Okta OAuth
++ Save Okta groups returned for a user as Silverstripe group records, and link that user to them
++ Restrict Silverstripe login access to one or more configured Okta groups
++ Synchronise users via a queued job
++ Block sign-in for those Okta users who have stopped appearing for a configured time period in synchronisation results
++ Optionally remove users who have not synchronised after a certain time.
 
 ## You will need
 
 + An Okta account
-+ An Okta OAuth service application configured
++ An Okta OAuth service application configured with scopes granted
++ A valid groups claim to return some or all of the user's Okta groups
 + If you require multiple sites authenticating via Okta, a service application per site.
 + A `clientId` and `clientSecret` for Oauth
 + An API token to work with the Okta API
-
 
 ## Documentation
 
@@ -29,16 +34,20 @@ With this module you can
 
 ## Requirements
 
-See composer.json
+See [composer.json](./composer.json)
 
 ## Installation
 
-The only support method of installing this module is via composer
+Via composer:
 
 ```shell
 composer require nswdpc/silverstripe-okta-boilerplate
 ```
 After installing the module, run a `dev/build` then [start with the documentation](./docs/en/001_index.md).
+
+## TODO
+
++ Private Key authentication mode
 
 ## License
 
