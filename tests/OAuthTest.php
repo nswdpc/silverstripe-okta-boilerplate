@@ -10,7 +10,7 @@ use Foxworth42\OAuth2\Client\Provider\OktaUser;
 use GuzzleHttp\ClientInterface;
 use League\OAuth2\Client\Token\AccessToken;
 use Mockery;
-use NSWDPC\Authentication\Okta\Client;
+use NSWDPC\Authentication\Okta\ClientFactory;
 use NSWDPC\Authentication\Okta\OktaLoginHandler;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;

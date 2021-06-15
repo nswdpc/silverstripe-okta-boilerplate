@@ -7,11 +7,11 @@ Quick client creation can be done via the Client factory. It creates an \Okta\Cl
 ```php
 <?php
 
-use NSWDPC\Authentication\Okta\Client;
+use NSWDPC\Authentication\Okta\ClientFactory;
 
 $parameters = [];
 /* @var \Okta\Client */
-$client = Client::create($parameters);
+$client = ClientFactory::create($parameters);
 
 // get a user using the client
 $user = new \Okta\Users\User();
@@ -95,7 +95,7 @@ Name: app-okta-config
 After:
     - '#silverstripe-okta-boilerplate'
 ---
-NSWDPC\Authentication\Okta\Client:
+NSWDPC\Authentication\Okta\ClientFactory:
   default_file_location: '/another/path/to/okta.yaml'
 ```
 
@@ -107,18 +107,18 @@ Name: app-okta-config
 After:
     - '#silverstripe-okta-boilerplate'
 ---
-NSWDPC\Authentication\Okta\Client:
+NSWDPC\Authentication\Okta\ClientFactory:
   config_file_location: '/specific/okta.yaml'
 ```
 
 The configuration precedence, based on the `\Okta\ClientBuilder` convention when creating a `\Okta\Client` is:
 
 1. The `~/.okta/okta.yaml`, if available
-1. The `NSWDPC\Authentication\Okta\Client.default_file_location`, if available
+1. The `NSWDPC\Authentication\Okta\ClientFactory.default_file_location`, if available
 1. The OKTA_CLIENT_* environment variables, if set
 1. Either
-  1. The `NSWDPC\Authentication\Okta\Client.config_file_location`, if available OR
-  1. The `$parameters` passed to `NSWDPC\Authentication\Okta\Client::create($parameters)`
+  1. The `NSWDPC\Authentication\Okta\ClientFactory.config_file_location`, if available OR
+  1. The `$parameters` passed to `NSWDPC\Authentication\Okta\ClientFactory::create($parameters)`
 
 > Note: parameters and config_file_location are mutually exclusive
 
@@ -128,20 +128,20 @@ Of course, if you set your own configuration location, ensure that it is not in 
 
 You can provide your own CacheManager and HTTPClient class, if required.
 
-To do so, extend the `\NSWDPC\Authentication\Okta\Client` class and override the `getCacheManager` and `getHttpClient` methods. The ClientBuilder validates these values, if set.
+To do so, extend the `\NSWDPC\Authentication\Okta\ClientFactory` class and override the `getCacheManager` and `getHttpClient` methods. The ClientBuilder validates these values, if set.
 
 ```php
 <?php
 namespace My\App;
 
-use NSWDPC\Authentication\Okta\Client as TheirClient;
+use NSWDPC\Authentication\Okta\ClientFactory as TheirClientFactory;
 
-class MyClient extends TheirClient {
+class MyClientFactory extends TheirClientFactory {
 
     protected static function getHttpClient() {
         return my_http_client();
     }
 }
 
-$oktaClient = MyClient::create();
+$oktaClient = MyClientFactory::create();
 ```
