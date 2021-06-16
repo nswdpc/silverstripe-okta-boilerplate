@@ -288,7 +288,7 @@ class OktaAppUserSync
         $membersToRemove = ArrayList::create();
         $days = intval(Config::inst()->get(Member::class, 'okta_lockout_after_days'));
         if ($days <= 0) {
-            return $filteredMembers;
+            return $membersToRemove;
         }
         $threshold = new \DateTime();
         $threshold->modify("-{$days} day");
