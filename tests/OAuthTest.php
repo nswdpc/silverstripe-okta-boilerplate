@@ -322,6 +322,7 @@ class OAuthTest extends SapphireTest
 
         $this->assertInstanceOf(HTTPResponse::class, $response);
 
+        // the permission failure is a redirect code as not signed in
         $this->assertEquals(302, $response->getStatusCode(), "Authentication failure should be a 302 redirect");
         $sessionMessage = $session->get('Security.Message.message');
         $sessionMessageType = $session->get('Security.Message.type');
