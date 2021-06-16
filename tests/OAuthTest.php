@@ -458,6 +458,7 @@ class OAuthTest extends SapphireTest
 
         $this->assertEquals(OktaLoginHandler::FAIL_USER_MEMBER_PASSPORT_MISMATCH, $code);
         $this->assertInstanceOf(HTTPResponse::class, $conflictingResponse);
+        // permission failure is a 302 redirect when not signed in
         $this->assertEquals(302, $conflictingResponse->getStatusCode(), "Authentication failure should be a 302 redirect");
         $sessionMessage = $session->get('Security.Message.message');
         $sessionMessageType = $session->get('Security.Message.type');
