@@ -53,7 +53,7 @@ class OktaAppUserSyncJob extends AbstractQueuedJob
             $sync->run($this->report_only != 0);
             $successes = $sync->getSuccesses();
             $failures = $sync->getFailures();
-            $this->addMessage("Successes=" . count($success), "INFO");
+            $this->addMessage("Successes=" . count($successes), "INFO");
             $this->addMessage("Failures=" . count($failures), "INFO");
             foreach ($successes as $k=>$v) {
                 $this->addMessage("Success: {$k}/{$v}", "INFO");
