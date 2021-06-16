@@ -49,12 +49,18 @@ class OktaAppUserSync
     private $report = [];
     
     /**
+     * @var HttpClient
+     */
+    protected $httpClient = null;
+    
+    /**
      * Get the configured {@link \Okta\Client}, if not available create it from configuration
      */
     protected function getClient($parameters = []) : \Okta\Client
     {
         if (!$this->client) {
-            $this->client = ClientFactory::create($parameters);
+            $this->httpClient = new ProxiedCurlHttpClient();
+            $this->client = ClientFactory::create($parameters, $this->httpClient);
         }
         return $this->client;
     }
@@ -98,10 +104,12 @@ class OktaAppUserSync
     
     /**
      * Run the sync processing
+     * @see https://developer.okta.com/docs/reference/api/apps/#list-users-assigned-to-application
      * @param bool $dryRun when true, no changes are made to local members. A report is created and can be accessed via getReport()
+     * @param int $limit the number of records to return per page, if 0 the default Okta value is used (50 based on docs)
      * @throws \Exception
      */
-    public function run(bool $dryRun = false) : int
+    public function run(bool $dryRun = false, int $limit = 50) : int
     {
         $this->success = $this->fail = [];
         $this->dryRun = $dryRun;
@@ -111,30 +119,75 @@ class OktaAppUserSync
         
         // create/configure the Okta client
         $client = $this->getClient();
-
-        $appProperties = new \stdClass;
-        $appProperties->id = $this->getClientId();
         
-        if (empty($appProperties->id)) {
-            throw new \Exception("No App ClientId configured (ClientFactory.application_client_id)");
-        }
-        
-        $appResource = new \Okta\Applications\Application(null, $appProperties);
-        $options = [];
-        $appUsers = $appResource->getApplicationUsers($options);
+        $this->getAppUsers($limit);
         
         $dt = new \DateTime();
         $this->start = $dt->format('Y-m-d H:i:s');
-        $successCount = $this->processUsers($appUsers);
+        $successCount = $this->processAppUsers($this->appUsers);
         $failCount = count($this->fail);
         Logger::log("OKTA: processUsers complete, {$successCount} users successfully synced, {$failCount} fails", "INFO");
         return $successCount;
     }
     
     /**
-     * Process the collection of application users
+     * Collect all app users via pagination method
+     * @param
+     * @return void
      */
-    protected function processUsers(\Okta\Applications\Collection $appUsers)
+    private function getAppUsers(int $limit = 50) {
+        
+        // Initial set
+        $this->appUsers = new \Okta\Applications\Collection([]);
+        
+        // initial properties for App users request
+        $properties = new \stdClass;
+        $properties->id = $this->getClientId();
+        if (empty($properties->id)) {
+            throw new \Exception("No App ClientId configured (ClientFactory.application_client_id)");
+        }
+        $resource = new \Okta\Applications\Application(null, $properties);
+        
+        // initial options for initial request
+        $options = [
+            'query' => [
+                'limit' => $limit
+            ]
+        ];
+        $this->collectAppUsers($options, $resource);
+    }
+    
+    /**
+     * Get all appusers based on configuration
+     * @param array $options
+     * @param Okta\Applications\Application $resource
+     */
+    private function collectAppUsers(array $options, \Okta\Applications\Application $resource) {
+        // @var \Okta\Applications\Collection
+        $collection = $resource->getApplicationUsers($options);
+        if($collection instanceof \Okta\Applications\Collection) {
+            // merge the returned collection on
+            if(!$this->appUsers) {
+                $this->appUsers = $collection;
+            } else {
+                $this->appUsers = $this->appUsers->merge($collection);
+            }
+            try {
+                $options = $this->httpClient->getNextPageOptions();
+                // get the next set
+                $this->collectAppUsers(['query' => $options ], $resource);
+            } catch (\Exception $e) {
+                // getNextPageOptions threw an exception (or no more results)
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * Process the collection of application users
+     * @param \Okta\Applications\Collection $appUsers all the users in the application
+     */
+    protected function processAppUsers(\Okta\Applications\Collection $appUsers) : int
     {
         Logger::log("OKTA: Processing appUser collection count=" . count($appUsers), "INFO");
         foreach ($appUsers as $appUser) {
@@ -145,7 +198,7 @@ class OktaAppUserSync
                  * When no member is found or an error occurs, an Exception is thrown
                  * Processing continues to the next app user returned
                  */
-                $member = $this->processUser($appUser);
+                $member = $this->processAppUser($appUser);
                 Logger::log("OKTA: Processing appUser completed, got Member #{$member->ID}", "INFO");
                 $this->success[ $userId ] = $member->ID;
             } catch (OktaAppUserSyncException $e) {
@@ -160,12 +213,39 @@ class OktaAppUserSync
     }
     
     /**
-     * Process a single user return in the collection
+     * Collect all groups for a user
+     * @param array $options
+     * @param \Okta\Users\User $resource
+     * @param \Okta\Groups\Collection $userGroups
+     */
+    private function collectUserGroups(array $options, \Okta\Users\User $resource,  \Okta\Groups\Collection &$userGroups) {
+        // @var \Okta\Groups\Collection
+        if(!$resource->getId()) {
+            throw new \Exception("To get user groups, the user resource must have an Id");
+        }
+        $collection = $resource->getGroups($options);
+        if($collection instanceof \Okta\Groups\Collection) {
+            // merge the returned collection on
+            $userGroups = $userGroups->merge($collection);
+            try {
+                $options = $this->httpClient->getNextPageOptions();
+                // get the next set
+                $this->collectUserGroups(['query' => $options ], $resource, $userGroups);
+            } catch (\Exception $e) {
+                // getNextPageOptions threw an exception (or no more results)
+            }
+        }
+        return false;
+    }
+    
+    /**
+     * Process a single app user return in the collection
      * AppUser profile vs User profile
      * https://help.okta.com/en/prod/Content/Topics/users-groups-profiles/usgp-about-profiles.htm
-     * @throws
+     * @param \Okta\Applications\AppUser $appUser
+     * @throws OktaAppUserSyncException
      */
-    protected function processUser(\Okta\Applications\AppUser $appUser) : Member
+    protected function processAppUser(\Okta\Applications\AppUser $appUser) : Member
     {
         $userId = $appUser->getId();
 
@@ -173,8 +253,15 @@ class OktaAppUserSync
         $userResource = new \Okta\Users\User();
         $user = $userResource->get($userId);
         
-        // @var \Okta\Resource\AbstractCollection - user groups
-        $userGroups = $user->getGroups();
+        // initial request options
+        $options = [
+            'query' => [
+                'limit' => 50
+            ]
+        ];
+        // initially no groups
+        $userGroups = new \Okta\Groups\Collection([]);
+        $this->collectUserGroups($options, $user, $userGroups);
         
         // @var \Okta\Users\UserProfile
         $userProfile = $user->getProfile();
@@ -234,7 +321,7 @@ class OktaAppUserSync
         
         if ($this->dryRun) {
             $this->report[$userId][] = "Would write profile for Member #{$member->ID}";
-        //$this->report[$userId][] = print_r($userProfile, true);
+            //$this->report[$userId][] = print_r($userProfile, true);
         } else {
             $member->OktaProfile = $userProfile->__toString();
             $member->OktaLastSync = $this->start;
@@ -242,7 +329,7 @@ class OktaAppUserSync
         }
         
         $groups = [];
-        if ($userGroups instanceof \Okta\Resource\AbstractCollection) {
+        if ($userGroups instanceof \Okta\Groups\Collection) {
             
             // The group profile contains the group name
             foreach ($userGroups as $userGroup) {

@@ -2,7 +2,7 @@
 
 The Okta API can be used to retrieve information about your Okta users. It is not used in the authentication process.
 
-Quick client creation can be done via the Client factory. It creates an \Okta\Client based on the Silverstripe project configuration provided.
+Quick client creation can be done via the Client factory. It creates an \Okta\Client based on the Silverstripe project configuration provided. You can optionally pass your own HttpClient and/or CacheManager instance
 
 ```php
 <?php
@@ -12,6 +12,8 @@ use NSWDPC\Authentication\Okta\ClientFactory;
 $parameters = [];
 /* @var \Okta\Client */
 $client = ClientFactory::create($parameters);
+// Specify http client (\Http\Client\HttpClient) and/or a cache manager (\Okta\Cache\CacheManager)
+// $client = ClientFactory::create($parameters, $httpClient, $cacheManger);
 
 // get a user using the client
 $user = new \Okta\Users\User();
@@ -123,25 +125,3 @@ The configuration precedence, based on the `\Okta\ClientBuilder` convention when
 > Note: parameters and config_file_location are mutually exclusive
 
 Of course, if you set your own configuration location, ensure that it is not in the public web root and that permissions to the configuration file are set appropriately.
-
-### Cache manager and HTTP client
-
-You can provide your own CacheManager and HTTPClient class, if required.
-
-To do so, extend the `\NSWDPC\Authentication\Okta\ClientFactory` class and override the `getCacheManager` and `getHttpClient` methods. The ClientBuilder validates these values, if set.
-
-```php
-<?php
-namespace My\App;
-
-use NSWDPC\Authentication\Okta\ClientFactory as TheirClientFactory;
-
-class MyClientFactory extends TheirClientFactory {
-
-    protected static function getHttpClient() {
-        return my_http_client();
-    }
-}
-
-$oktaClient = MyClientFactory::create();
-```

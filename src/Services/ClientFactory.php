@@ -33,9 +33,11 @@ class ClientFactory
      * and use values from the configuration path.
      * AuthorizationMode::SSWS, AuthorizationMode::PRIVATE_KEY
      * @param array $parameters to override relevant default_file_location and ALL config_file_location values
+     * @param HttpClient $httpClient specify an alternative HttpClient
+     * @param CacheManager $cacheManager specify an alternative CacheManager
      * @return \Okta\Client
      */
-    final public static function create($parameters = []) : \Okta\Client
+    final public static function create($parameters = [], HttpClient $httpClient = null, CacheManager $cacheManager = null) : \Okta\Client
     {
         $defaultFileLocation = self::config()->get('default_file_location');
 
@@ -99,11 +101,11 @@ class ClientFactory
             $clientBuilder->setIntegrationUserAgent($userAgent);
         }
 
-        if ($cacheManager = self::getCacheManager()) {
+        if ($cacheManager instanceof CacheManager) {
             $clientBuilder->setCacheManager($cacheManager);
         }
 
-        if ($httpClient = self::getHttpClient()) {
+        if ($httpClient instanceof HttpClient) {
             $clientBuilder->setHttpClient($httpClient);
         }
 
@@ -112,21 +114,4 @@ class ClientFactory
         return $client;
     }
 
-    /**
-     * If providing your own cache manager extend this class and override this method
-     * @return null|CacheManager
-     */
-    protected static function getCacheManager()
-    {
-        return null;
-    }
-
-    /**
-     * If providing your own HTTP client extend this class and override this method
-     * @return null|HttpClient
-     */
-    protected static function getHttpClient()
-    {
-        return null;
-    }
 }
