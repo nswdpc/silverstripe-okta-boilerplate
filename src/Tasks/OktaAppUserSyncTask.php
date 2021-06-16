@@ -7,7 +7,6 @@ use SilverStripe\Dev\BuildTask;
 
 class OktaAppUserSyncTask extends BuildTask
 {
-
     protected $title = 'Okta App User Sync Task';
 
     protected $description = 'Retrieve application user information from Okta and sync to local DB';
@@ -22,10 +21,10 @@ class OktaAppUserSyncTask extends BuildTask
      * Run the task - given a group id, get all users
      * When commit=1 is provided, the changes found are committed
      */
-    public function run($request) {
+    public function run($request)
+    {
         try {
-            
-            if(!Director::is_cli()) {
+            if (!Director::is_cli()) {
                 print "This task can only be run via CLI\n";
                 return false;
             }
@@ -33,9 +32,9 @@ class OktaAppUserSyncTask extends BuildTask
             $commitChanges = $request->getVar('commit');
             $dryRun = ($commitChanges != 1);
             $sync = new OktaAppUserSync();
-            $sync->run( $dryRun );
+            $sync->run($dryRun);
             
-            if($dryRun) {
+            if ($dryRun) {
                 print "DRY RUN report:\n";
                 print_r($sync->getReport());
             }
@@ -46,14 +45,10 @@ class OktaAppUserSyncTask extends BuildTask
             print_r($sync->getFailures());
             
             return true;
-            
         } catch (\Exception $e) {
-            
             print $e->getMessage();
             print "\n";
             exit(1);
-            
         }
     }
-
 }

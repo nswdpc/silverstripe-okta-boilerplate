@@ -13,7 +13,6 @@ use Symbiote\QueuedJobs\Services\QueuedJob;
  */
 class OktaAppUserSyncJob extends AbstractQueuedJob
 {
-    
     use Configurable;
 
     /**
@@ -32,7 +31,8 @@ class OktaAppUserSyncJob extends AbstractQueuedJob
         return QueuedJob::QUEUED;
     }
     
-    public function getTitle() {
+    public function getTitle()
+    {
         return _t(
             'OKTA.APP_USER_SYNC_JOB',
             'Okta App User Sync Job report_only={report_only}, per_page={per_page}',
@@ -46,18 +46,19 @@ class OktaAppUserSyncJob extends AbstractQueuedJob
     /**
      * Run the job
      */
-    public function process() {
+    public function process()
+    {
         try {
             $sync = new OktaAppUserSync();
-            $sync->run( $this->report_only != 0 );
+            $sync->run($this->report_only != 0);
             $successes = $sync->getSuccesses();
             $failures = $sync->getFailures();
             $this->addMessage("Successes=" . count($success), "INFO");
             $this->addMessage("Failures=" . count($failures), "INFO");
-            foreach($successes as $k=>$v) {
+            foreach ($successes as $k=>$v) {
                 $this->addMessage("Success: {$k}/{$v}", "INFO");
             }
-            foreach($failures as $v) {
+            foreach ($failures as $v) {
                 $this->addMessage("Fail: {$v}", "INFO");
             }
             $this->isComplete = 1;
@@ -83,6 +84,4 @@ class OktaAppUserSyncJob extends AbstractQueuedJob
             $run_datetime->format('Y-m-d H:i:s')
         );
     }
-
-
 }

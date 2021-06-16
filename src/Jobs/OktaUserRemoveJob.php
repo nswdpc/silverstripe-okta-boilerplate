@@ -15,7 +15,7 @@ use Symbiote\QueuedJobs\Services\QueuedJob;
  * Members with:
  * - CMS_ACCESS permissions
  * - no last Okta sync date
- * ... are not removed 
+ * ... are not removed
  *
  * You can add this as a default job to your project by following the queued job documentation
  * https://github.com/symbiote/silverstripe-queuedjobs#default-jobs
@@ -30,7 +30,6 @@ use Symbiote\QueuedJobs\Services\QueuedJob;
  */
 class OktaUserRemoveJob extends AbstractQueuedJob
 {
-    
     use Configurable;
 
     /**
@@ -48,7 +47,8 @@ class OktaUserRemoveJob extends AbstractQueuedJob
         return QueuedJob::QUEUED;
     }
     
-    public function getTitle() {
+    public function getTitle()
+    {
         return _t(
             'OKTA.APP_USER_REMOVAL_JOB',
             'Okta App User Removal Job report_only={report_only}',
@@ -61,10 +61,11 @@ class OktaUserRemoveJob extends AbstractQueuedJob
     /**
      * Run the job
      */
-    public function process() {
+    public function process()
+    {
         try {
             $sync = new OktaAppUserSync();
-            $deleted = $sync->removeStaleOktaMembers( $this->report_only != 0 );
+            $deleted = $sync->removeStaleOktaMembers($this->report_only != 0);
             $this->addMessage("Removed {$deleted} members");
             $this->isComplete = 1;
         } catch (\Exception $e) {
@@ -89,6 +90,4 @@ class OktaUserRemoveJob extends AbstractQueuedJob
             $run_datetime->format('Y-m-d H:i:s')
         );
     }
-
-
 }

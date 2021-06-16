@@ -12,7 +12,6 @@ use SilverStripe\Forms\LabelField;
 use SilverStripe\Forms\LiteralField;
 use SilverStripe\Security\Member;
 
-
 /**
  * Updates member view in administration area
  */
@@ -37,9 +36,10 @@ class MemberExtension extends DataExtension
     /**
      * Handle member okta operations on write
      */
-    public function onBeforeWrite() {
+    public function onBeforeWrite()
+    {
         parent::onBeforeWrite();
-        if($this->owner->OktaLastSyncClear) {
+        if ($this->owner->OktaLastSyncClear) {
             $this->owner->OktaLastSync = null;
         }
     }
@@ -47,7 +47,8 @@ class MemberExtension extends DataExtension
     /**
      * Reset values after write
      */
-    public function onAfterWrite() {
+    public function onAfterWrite()
+    {
         parent::onAfterWrite();
         $this->owner->OktaLastSyncClear = null;
     }
@@ -71,7 +72,7 @@ class MemberExtension extends DataExtension
         }
         
         $fields->addFieldToTab(
-            'Root.Okta', 
+            'Root.Okta',
             CompositeField::create(
                 LabelField::create(
                     'OktaProfileLabel',
@@ -99,28 +100,28 @@ class MemberExtension extends DataExtension
                 _t('OKTA.OKTA_HEADING', 'Okta')
             )
         );
-            
     }
     
     /**
      * Extend {@link Member::validateCanLogin()} to block logins for anyone whose account has become stale
      * @return void
      */
-    public function canLogIn(ValidationResult &$result) {
+    public function canLogIn(ValidationResult &$result)
+    {
         
         /**
          * If the validation result is already a fail, go no further
          */
-        if(!$result->isValid()) {
+        if (!$result->isValid()) {
             return false;
         }
         
         $days = intval($this->owner->config()->get('okta_lockout_after_days'));
-        if($days <= 0) {
+        if ($days <= 0) {
             // if the configured days is 0 or less, OK
             return true;
         }
-        if(!$this->owner->OktaLastSync) {
+        if (!$this->owner->OktaLastSync) {
             // If the member has never been sync'd, allow
             return;
         }
@@ -128,9 +129,9 @@ class MemberExtension extends DataExtension
         // calculate datetime comparison
         try {
             $dt = new \DateTime();
-            $odt = new \DateTime( $this->owner->OktaLastSync );
+            $odt = new \DateTime($this->owner->OktaLastSync);
             $odt->modify("+1 {$days} day");
-            if($odt < $dt) {
+            if ($odt < $dt) {
                 // still not on or after today
                 $result->addError(
                     _t(

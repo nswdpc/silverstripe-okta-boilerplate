@@ -9,7 +9,8 @@ use SilverStripe\Security\Member;
  * This trait is used by Okta handlers that deal with linking an Okta user's groups
  * with their local Member Groups
  */
-trait OktaGroups {
+trait OktaGroups
+{
     
     /**
      * Given an array of Okta groups found for an user, assign those groups to the Member
@@ -18,7 +19,8 @@ trait OktaGroups {
      * @param Member $member
      * @return array values are created or updated Group.ID values for the $member
      */
-    protected function oktaUserMemberGroupAssignment(array $groups, Member $member) {
+    protected function oktaUserMemberGroupAssignment(array $groups, Member $member)
+    {
         
         // @var \SilverStripe\ORM\ManyManyList
         // the current member Okta groups
@@ -81,7 +83,5 @@ trait OktaGroups {
         }
 
         return $createdOrUpdatedGroups;
-        
     }
-    
 }

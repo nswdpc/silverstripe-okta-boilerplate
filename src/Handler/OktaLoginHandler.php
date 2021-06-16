@@ -235,7 +235,7 @@ class OktaLoginHandler extends LoginTokenHandler
             }
         } catch (ValidationException $e) {
             // catch the validation exception thrown on write error
-            $this->setLoginFailureCode( $e->getCode(), $identifier);
+            $this->setLoginFailureCode($e->getCode(), $identifier);
             // rethrow with the login exception message
             throw new ValidationException(
                 _t(
@@ -245,7 +245,7 @@ class OktaLoginHandler extends LoginTokenHandler
                         'messageId' => $this->getLoginFailureMessageId()
                     ]
                 )
-            );    
+            );
         }
     }
 

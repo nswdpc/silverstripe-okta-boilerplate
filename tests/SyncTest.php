@@ -23,12 +23,14 @@ class SyncTest extends SapphireTest
         './support/staleUserRemoval.yml'
     ];
     
-    public static function setupBeforeClass() {
+    public static function setupBeforeClass()
+    {
         parent::setupBeforeClass();
         Config::inst()->update(Member::class, 'okta_lockout_after_days', 30);
     }
     
-    protected function getLastOktaSyncDate($modifier) {
+    protected function getLastOktaSyncDate($modifier)
+    {
         $dt = new \DateTime();
         $dt->modify($modifier);
         return $dt->format('Y-m-d H:i:s');
@@ -51,7 +53,7 @@ class SyncTest extends SapphireTest
             'oktauser7' => '-32 days',// no remove, expired but admin
         ];
         
-        foreach($members as $memberIndex => $syncDateOffset) {
+        foreach ($members as $memberIndex => $syncDateOffset) {
             $member = $this->objFromFixture(Member::class, $memberIndex);
             $member->OktaLastSync = is_null($syncDateOffset) ? null : $this->getLastOktaSyncDate($syncDateOffset);
             $member->write();
@@ -67,14 +69,14 @@ class SyncTest extends SapphireTest
         
         $emails = [];
         $removedMemberIds = [];
-        foreach($list as $memberToBeRemoved) {
+        foreach ($list as $memberToBeRemoved) {
             $emails[] = $memberToBeRemoved->Email;
             $removedMemberIds[] = $memberToBeRemoved->ID;
         }
         sort($emails);
         sort($expected);
         
-        $this->assertEquals( $expected, $emails );
+        $this->assertEquals($expected, $emails);
         
         $deleted = $sync->removeStaleOktaMembers(false);
         
@@ -83,7 +85,7 @@ class SyncTest extends SapphireTest
         // get all members remaining
         $allMemberIds = Member::get()->column("ID");
         
-        $this->assertEmpty( array_intersect($allMemberIds, $removedMemberIds), "Some members still exist in the DB" );
+        $this->assertEmpty(array_intersect($allMemberIds, $removedMemberIds), "Some members still exist in the DB");
         
         $remainingMemberIds = array_diff($allMemberIds, $removedMemberIds);
         
@@ -97,7 +99,5 @@ class SyncTest extends SapphireTest
         
         //based on fixture passport/member linkage, we should have 7 passports remaining
         $this->assertEquals(7, $remainingPassports->count());
-        
     }
-
 }

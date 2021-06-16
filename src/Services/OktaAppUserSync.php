@@ -15,7 +15,6 @@ use SilverStripe\Security\Permission;
  */
 class OktaAppUserSync
 {
-    
     use OktaGroups;
     
     /**
@@ -35,7 +34,7 @@ class OktaAppUserSync
     
     
     /**
-     * @var bool 
+     * @var bool
      */
     private $dryRun = false;
     
@@ -52,8 +51,9 @@ class OktaAppUserSync
     /**
      * Get the configured {@link \Okta\Client}, if not available create it from configuration
      */
-    protected function getClient($parameters = []) : \Okta\Client {
-        if(!$this->client) {
+    protected function getClient($parameters = []) : \Okta\Client
+    {
+        if (!$this->client) {
             $this->client = ClientFactory::create($parameters);
         }
         return $this->client;
@@ -62,8 +62,9 @@ class OktaAppUserSync
     /**
      * Client ID for the application being synchronised
      */
-    protected function getClientId() : string {
-        return Config::inst()->get( ClientFactory::class, 'application_client_id' );
+    protected function getClientId() : string
+    {
+        return Config::inst()->get(ClientFactory::class, 'application_client_id');
     }
     
     /**
@@ -72,7 +73,8 @@ class OktaAppUserSync
      * Report is only gathered in dryRun mode
      * @return array
      */
-    public function getReport() : array {
+    public function getReport() : array
+    {
         return $this->report;
     }
     
@@ -80,7 +82,8 @@ class OktaAppUserSync
      * Return the users successfully sync as an array, keys are Okta user ids, values is the match Member.ID
      * @return array
      */
-    public function getSuccesses() : array {
+    public function getSuccesses() : array
+    {
         return $this->success;
     }
     
@@ -88,7 +91,8 @@ class OktaAppUserSync
      * Return the failed sync attempts, array of okta user id values
      * @return array
      */
-    public function getFailures() : array {
+    public function getFailures() : array
+    {
         return $this->fail;
     }
     
@@ -97,10 +101,11 @@ class OktaAppUserSync
      * @param bool $dryRun when true, no changes are made to local members. A report is created and can be accessed via getReport()
      * @throws \Exception
      */
-    public function run(bool $dryRun = false) : int {
+    public function run(bool $dryRun = false) : int
+    {
         $this->success = $this->fail = [];
         $this->dryRun = $dryRun;
-        if($this->dryRun) {
+        if ($this->dryRun) {
             Logger::log("OktaApplicationSynchroniser::run in dryRun mode", "DEBUG");
         }
         
@@ -110,7 +115,7 @@ class OktaAppUserSync
         $appProperties = new \stdClass;
         $appProperties->id = $this->getClientId();
         
-        if(empty($appProperties->id)) {
+        if (empty($appProperties->id)) {
             throw new \Exception("No App ClientId configured (ClientFactory.application_client_id)");
         }
         
@@ -129,10 +134,10 @@ class OktaAppUserSync
     /**
      * Process the collection of application users
      */
-    protected function processUsers(\Okta\Applications\Collection $appUsers) {
-        
+    protected function processUsers(\Okta\Applications\Collection $appUsers)
+    {
         Logger::log("OKTA: Processing appUser collection count=" . count($appUsers), "INFO");
-        foreach($appUsers as $appUser) {
+        foreach ($appUsers as $appUser) {
             try {
                 $userId = $appUser->getId();
                 /**
@@ -158,9 +163,10 @@ class OktaAppUserSync
      * Process a single user return in the collection
      * AppUser profile vs User profile
      * https://help.okta.com/en/prod/Content/Topics/users-groups-profiles/usgp-about-profiles.htm
-     * @throws 
+     * @throws
      */
-    protected function processUser(\Okta\Applications\AppUser $appUser) : Member {
+    protected function processUser(\Okta\Applications\AppUser $appUser) : Member
+    {
         $userId = $appUser->getId();
 
         // Get the corresponding user record
@@ -172,7 +178,7 @@ class OktaAppUserSync
         
         // @var \Okta\Users\UserProfile
         $userProfile = $user->getProfile();
-        if(!($userProfile instanceof \Okta\Users\UserProfile)) {
+        if (!($userProfile instanceof \Okta\Users\UserProfile)) {
             throw new OktaAppUserSyncException("AppUser {$userId} has no Okta user profile");
         }
         
@@ -182,7 +188,7 @@ class OktaAppUserSync
         
         // @var string
         $userEmail = $userProfile->getEmail();
-        if(!$userEmail) {
+        if (!$userEmail) {
             throw new OktaAppUserSyncException("AppUser {$userId} profile has no email value");
         }
         
@@ -191,16 +197,16 @@ class OktaAppUserSync
             'OAuthSource' => 'Okta' // @todo constant
         ])->first();
         
-        if(!$passport) {
+        if (!$passport) {
             throw new OktaAppUserSyncException("AppUser {$userId} has no Okta passport - not signed in yet?");
         }
         
         $member = Member::get()->filter('Email', $userEmail)->first();
-        if(!$member) {
+        if (!$member) {
             throw new OktaAppUserSyncException("AppUser {$userId} has no matching Member record.");
         }
         
-        if($passport->MemberID != $member->ID) {
+        if ($passport->MemberID != $member->ID) {
             throw new OktaAppUserSyncException("AppUser {$userId} Passport.MemberID #{$passport->MemberID}/Member #{$member->ID} - passport found mismatch with member found");
         }
         
@@ -212,25 +218,23 @@ class OktaAppUserSync
         ];
         
         // Apply profile fields to the Member record
-        foreach($mapping as $memberField => $fieldValue) {
-            
+        foreach ($mapping as $memberField => $fieldValue) {
             Logger::log("AppUser.id={$userId} mapping {$memberField} to {$fieldValue}", "DEBUG");
             
-            if(empty($fieldValue)) {
+            if (empty($fieldValue)) {
                 continue;
             }
             
-            if($this->dryRun) {
+            if ($this->dryRun) {
                 $this->report[$userId][] = "Member {$member->ID} set field {$memberField} to Okta value {$fieldValue}";
             } else {
                 $member->{$memberField} = $fieldValue;
             }
-            
         }
         
-        if($this->dryRun) {
+        if ($this->dryRun) {
             $this->report[$userId][] = "Would write profile for Member #{$member->ID}";
-            //$this->report[$userId][] = print_r($userProfile, true);
+        //$this->report[$userId][] = print_r($userProfile, true);
         } else {
             $member->OktaProfile = $userProfile->__toString();
             $member->OktaLastSync = $this->start;
@@ -238,37 +242,36 @@ class OktaAppUserSync
         }
         
         $groups = [];
-        if($userGroups instanceof \Okta\Resource\AbstractCollection) {
+        if ($userGroups instanceof \Okta\Resource\AbstractCollection) {
             
             // The group profile contains the group name
-            foreach($userGroups as $userGroup) {
+            foreach ($userGroups as $userGroup) {
                 $groupProfile = $userGroup->getProfile();
                 $groups[ $userGroup->getId() ] = $groupProfile->getName();
             }
             
-            if($this->dryRun) {
-                foreach($groups as $groupId => $groupName) {
+            if ($this->dryRun) {
+                foreach ($groups as $groupId => $groupName) {
                     $this->report[$userId][] = "AppUser.id={$userId} Member #{$member->ID} returned Okta group '{$groupName}'";
                 }
             } else {
                 // @var array
                 $createdOrUpdatedGroups = $this->oktaUserMemberGroupAssignment($groups, $member);
-                foreach($createdOrUpdatedGroups as $createdOrUpdatedGroup) {
+                foreach ($createdOrUpdatedGroups as $createdOrUpdatedGroup) {
                     Logger::log("AppUser.id={$userId} Member {$member->ID} is assigned local Okta group {$createdOrUpdatedGroup}", "DEBUG");
                 }
             }
-            
         }
         
         return $member;
-        
     }
     
     /**
      * Ensure that a profile has HTML removed
      */
-    private function sanitiseProfileValue($value) : string {
-        if(is_scalar($value)) {
+    private function sanitiseProfileValue($value) : string
+    {
+        if (is_scalar($value)) {
             return trim(strip_tags($value));
         } else {
             return '';
@@ -280,10 +283,11 @@ class OktaAppUserSync
      * Members with a CMS_ACCESS permission are not returned
      * @return \SilverStripe\ORM\ArrayList
      */
-    public function getStaleOktaMembers() : ArrayList {
+    public function getStaleOktaMembers() : ArrayList
+    {
         $membersToRemove = ArrayList::create();
         $days = intval(Config::inst()->get(Member::class, 'okta_lockout_after_days'));
-        if($days <= 0) {
+        if ($days <= 0) {
             return $filteredMembers;
         }
         $threshold = new \DateTime();
@@ -293,10 +297,10 @@ class OktaAppUserSync
                     ->where(
                         "OktaLastSync <> ''"
                         . " AND OktaLastSync IS NOT NULL"
-                        . " AND OktaLastSync < '" . Convert::raw2sql( $datetime ) . "'"
+                        . " AND OktaLastSync < '" . Convert::raw2sql($datetime) . "'"
                     );
-        foreach($members as $member) {
-            if(!Permission::checkMember($member, 'CMS_ACCESS')) {
+        foreach ($members as $member) {
+            if (!Permission::checkMember($member, 'CMS_ACCESS')) {
                 $membersToRemove->push($member);
             }
         }
@@ -308,17 +312,17 @@ class OktaAppUserSync
      * @param bool $dryRun when true, only return the user count delete total, don't actually delete Member records
      * @return int
      */
-    public function removeStaleOktaMembers($dryRun = false) : int {
+    public function removeStaleOktaMembers($dryRun = false) : int
+    {
         $list = $this->getStaleOktaMembers();
         $deleted = 0;
-        foreach($list as $member) {
+        foreach ($list as $member) {
             // remove member and passports (at the least)
-            if(!$dryRun) {
+            if (!$dryRun) {
                 $member->delete();
             }
             $deleted++;
         }
         return $deleted;
-    } 
-
+    }
 }
