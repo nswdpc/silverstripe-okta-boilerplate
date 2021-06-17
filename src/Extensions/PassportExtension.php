@@ -70,13 +70,13 @@ class PassportExtension extends DataExtension implements PermissionProvider
         'OAuthSource' => 'ExactMatchFilter',
         'Member.Email' => 'PartialMatchFilter'
     ];
-    
+
     /**
      * Validate the values provided prior to allowing write
      */
     public function validatePassportWrite()
     {
-        
+
         // Validate: the Identifier/OAuthSource is unique
         if ($this->owner->Identifier && $this->owner->OAuthSource) {
             $existing = Passport::get()->filter([
@@ -95,7 +95,7 @@ class PassportExtension extends DataExtension implements PermissionProvider
                 );
             }
         }
-        
+
         // Validate: the MemberID/OAuthSource is unique
         if ($this->owner->MemberID && $this->owner->OAuthSource) {
             // validate member/provider passport does not exist
@@ -115,7 +115,7 @@ class PassportExtension extends DataExtension implements PermissionProvider
                 );
             }
         }
-        
+
         return true;
     }
 
@@ -230,6 +230,10 @@ class PassportExtension extends DataExtension implements PermissionProvider
             ],
             'OAUTH_PASSPORT_EDIT' => [
                 'name' => _t('OAUTH.PERMISSION_CED', 'Create, edit and delete OAuth passports'),
+                'category' => 'OAuth',
+            ],
+            'OAUTH_SYNC_REPORT_VIEW' => [
+                'name' => _t('OAUTH.SYNC_REPORT_VIEW', 'View sync report'),
                 'category' => 'OAuth',
             ]
         ];

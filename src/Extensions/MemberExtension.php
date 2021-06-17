@@ -17,7 +17,7 @@ use SilverStripe\Security\Member;
  */
 class MemberExtension extends DataExtension
 {
-    
+
     /**
      * @var array
      */
@@ -25,14 +25,14 @@ class MemberExtension extends DataExtension
         'OktaProfile' => 'MultiValueField',
         'OktaLastSync' => 'DBDatetime'
     ];
-    
+
     /**
      * @var array
      */
     private static $indexes = [
         'OktaLastSync' => true
     ];
-    
+
     /**
      * Handle member okta operations on write
      */
@@ -43,7 +43,7 @@ class MemberExtension extends DataExtension
             $this->owner->OktaLastSync = null;
         }
     }
-    
+
     /**
      * Reset values after write
      */
@@ -52,7 +52,20 @@ class MemberExtension extends DataExtension
         parent::onAfterWrite();
         $this->owner->OktaLastSyncClear = null;
     }
-    
+
+    /**
+     * Get a passport for the member
+     * @param string $provider the provider name
+     */
+    public function getPassport(string $provider)
+    {
+        if ($passports = $this->owner->Passports()) {
+            return $passports->filter('OAuthSource', $provider)->first();
+        } else {
+            return null;
+        }
+    }
+
     public function updateCmsFields($fields)
     {
         $fields->removeByName([
@@ -61,7 +74,7 @@ class MemberExtension extends DataExtension
             'OktaProfile',
             'OktaLastSync'
         ]);
-        
+
         try {
             $profileFieldsValue = json_encode(
                 $this->owner->OktaProfile->getValue(),
@@ -70,7 +83,7 @@ class MemberExtension extends DataExtension
         } catch (\Exception $e) {
             $profileFieldsValue = '';
         }
-        
+
         $fields->addFieldToTab(
             'Root.Okta',
             CompositeField::create(
@@ -101,21 +114,21 @@ class MemberExtension extends DataExtension
             )
         );
     }
-    
+
     /**
      * Extend {@link Member::validateCanLogin()} to block logins for anyone whose account has become stale
      * @return void
      */
     public function canLogIn(ValidationResult &$result)
     {
-        
+
         /**
          * If the validation result is already a fail, go no further
          */
         if (!$result->isValid()) {
             return false;
         }
-        
+
         $days = intval($this->owner->config()->get('okta_lockout_after_days'));
         if ($days <= 0) {
             // if the configured days is 0 or less, OK
@@ -125,7 +138,7 @@ class MemberExtension extends DataExtension
             // If the member has never been sync'd, allow
             return;
         }
-        
+
         // calculate datetime comparison
         try {
             $dt = new \DateTime();
