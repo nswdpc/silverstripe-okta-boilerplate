@@ -160,7 +160,7 @@ class OAuthLog extends DataObject implements PermissionProvider
                 'category' => 'OAuth',
             ],
             'OAUTH_LOG_VIEW' => [
-                'name' => _t('OAUTH.LOG_VIEW', 'Delete OAuth logs'),
+                'name' => _t('OAUTH.LOG_VIEW', 'View OAuth logs'),
                 'category' => 'OAuth',
             ]
         ];
