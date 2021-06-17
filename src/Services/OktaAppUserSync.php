@@ -135,7 +135,8 @@ class OktaAppUserSync
      * @param
      * @return void
      */
-    private function getAppUsers(int $limit = 50) {
+    private function getAppUsers(int $limit = 50)
+    {
         
         // Initial set
         $this->appUsers = new \Okta\Applications\Collection([]);
@@ -162,12 +163,13 @@ class OktaAppUserSync
      * @param array $options
      * @param Okta\Applications\Application $resource
      */
-    private function collectAppUsers(array $options, \Okta\Applications\Application $resource) {
+    private function collectAppUsers(array $options, \Okta\Applications\Application $resource)
+    {
         // @var \Okta\Applications\Collection
         $collection = $resource->getApplicationUsers($options);
-        if($collection instanceof \Okta\Applications\Collection) {
+        if ($collection instanceof \Okta\Applications\Collection) {
             // merge the returned collection on
-            if(!$this->appUsers) {
+            if (!$this->appUsers) {
                 $this->appUsers = $collection;
             } else {
                 $this->appUsers = $this->appUsers->merge($collection);
@@ -218,13 +220,14 @@ class OktaAppUserSync
      * @param \Okta\Users\User $resource
      * @param \Okta\Groups\Collection $userGroups
      */
-    private function collectUserGroups(array $options, \Okta\Users\User $resource,  \Okta\Groups\Collection &$userGroups) {
+    private function collectUserGroups(array $options, \Okta\Users\User $resource, \Okta\Groups\Collection &$userGroups)
+    {
         // @var \Okta\Groups\Collection
-        if(!$resource->getId()) {
+        if (!$resource->getId()) {
             throw new \Exception("To get user groups, the user resource must have an Id");
         }
         $collection = $resource->getGroups($options);
-        if($collection instanceof \Okta\Groups\Collection) {
+        if ($collection instanceof \Okta\Groups\Collection) {
             // merge the returned collection on
             $userGroups = $userGroups->merge($collection);
             try {
@@ -321,7 +324,7 @@ class OktaAppUserSync
         
         if ($this->dryRun) {
             $this->report[$userId][] = "Would write profile for Member #{$member->ID}";
-            //$this->report[$userId][] = print_r($userProfile, true);
+        //$this->report[$userId][] = print_r($userProfile, true);
         } else {
             $member->OktaProfile = $userProfile->__toString();
             $member->OktaLastSync = $this->start;

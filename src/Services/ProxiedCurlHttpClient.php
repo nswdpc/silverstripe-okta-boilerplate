@@ -11,7 +11,8 @@ use Psr\Http\Message\ResponseInterface;
  * @see https://github.com/okta/okta-sdk-php/issues/74
  * @see https://github.com/okta/okta-sdk-php/pull/105/commits/8289d88bdffb7ec7f21504e235eead8cfae64b86
  */
-class ProxiedCurlHttpClient extends CurlHttpClient {
+class ProxiedCurlHttpClient extends CurlHttpClient
+{
     
     /**
      * @var ResponseInterface
@@ -29,15 +30,17 @@ class ProxiedCurlHttpClient extends CurlHttpClient {
     /**
      * Return the intercepted response
      */
-    public function getLastResponse() {
+    public function getLastResponse()
+    {
         return $this->proxiedResponse;
     }
     
     /**
      * Get the Link header
      */
-    public function getLinkHeader() {
-        if($this->getLastResponse()) {
+    public function getLinkHeader()
+    {
+        if ($this->getLastResponse()) {
             return $this->getLastResponse()->getHeader("Link");
         }
     }
@@ -48,21 +51,22 @@ class ProxiedCurlHttpClient extends CurlHttpClient {
      * @return array query string options
      * @throws \Exception
      */
-    public function getNextPageOptions() : array {
+    public function getNextPageOptions() : array
+    {
         $links = $this->getLinkHeader();
-        if(empty($links) || !is_array($links)) {
+        if (empty($links) || !is_array($links)) {
             throw new \Exception("No Link header value returned containing multiple links");
         }
         
         // Return the header containing rel="next"
-        $filterer = function($v, $k) {
+        $filterer = function ($v, $k) {
             $parts = explode(";", $v);
             return isset($parts[1]) && trim($parts[1]) == "rel=\"next\"";
         };
-        $result = array_filter( $links, $filterer, ARRAY_FILTER_USE_BOTH);
+        $result = array_filter($links, $filterer, ARRAY_FILTER_USE_BOTH);
         
         // only one next value is allowed
-        if(count($result) !== 1) {
+        if (count($result) !== 1) {
             throw new \Exception("No results from array_filter");
         }
         
@@ -71,12 +75,11 @@ class ProxiedCurlHttpClient extends CurlHttpClient {
         $nextLink = substr($link, 1, strrpos($link, ">") -1);
         $parts = parse_url($nextLink);
         
-        if(!empty($parts['query'])) {
+        if (!empty($parts['query'])) {
             parse_str($parts["query"], $query);
             return $query;
         }
         
         throw new \Exception("No query string returned in next link");
     }
-
 }

@@ -113,5 +113,4 @@ class ClientFactory
 
         return $client;
     }
-
 }
