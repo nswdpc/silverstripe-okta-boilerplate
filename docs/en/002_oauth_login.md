@@ -1,11 +1,10 @@
 # Create an Okta Oauth2 client
 
-Client creation is handled by the `bigfork/silverstripe-oauth-login` module. See [config.yml](../../_config/config.yml) for an example configuration.
+Client creation is handled by the `bigfork/silverstripe-oauth-login` module. See [oauth-login.yml](../../_config/oauth-login.yml) for an example configuration.
 
-You can override this in your own project to provide clientId, clientSecret, scopes and other values.
+## Authenticator
 
-See [oauth-login.yml](../../_config/oauth-login.yml) for the base configuration.
-
+The module configures and provides an extension to the OAuth authenticator. This authenticator provides a logout handler.
 
 ## Required configuration values
 

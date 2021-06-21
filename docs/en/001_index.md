@@ -10,13 +10,13 @@
 This module uses the following libraries and Silverstripe vendor modules to provide sign-in via a configured Okta OAuth2 service application.
 
 + [bigfork/silverstripe-oauth-login](https://github.com/bigfork/silverstripe-oauth-login) + dependencies
-+ [foxworth42/oauth2-okta](https://github.com/foxworth42/oauth2-okta), a [league/oauth2-client](https://github.com/thephpleague/oauth2-client)
++ [foxworth42/oauth2-okta](https://github.com/foxworth42/oauth2-okta), a [league/oauth2-client](https://github.com/thephpleague/oauth2-client) client
 + [okta/sdk](https://github.com/okta/okta-sdk-php)
-+ silverstripe/framework ^4.7
++ [silverstripe/framework](https://github.com/silverstripe/silverstripe-framework)
 
 Configuring your Okta OAuth service application is outside the scope of this document. [Okta provides good documentation](https://developer.okta.com/docs/guides/implement-oauth-for-okta/create-oauth-app/).
 
-Your service application should have the following:
+Your service application should provide or be configured with the following:
 
 1. A `Client ID`
 1. A `Client secret`
@@ -28,7 +28,17 @@ Your service application should have the following:
 1. Login initiated by: choose a selection
 1. Initiate login URI. This is a URI a user can visit to initiate an Okta login automatically. Example below
 
-An `Initiate login URI` with profile, email and groups scopes. The Provider value must match the provider `name: 'Okta'` value from configuration.
+## Sign-in URI
+
+Example: https://mysite.example/oauth/callback
+
+## Sign-out URI
+
+Example: https://mysite.example/Security/logout
+
+### Initiate login URI
+
+An `Initiate login URI` with `openid`, `profile`, `email` and `groups` scopes should be provided. The Provider value must match the provider `name: 'Okta'` value from configuration. For this module it is `Okta`. If your project modifies this, it needs to be modified in the URI as well:
 
 > https://mysite.example.com/oauth/authenticate/?provider=Okta&context=login&scope%5B0%5D=openid&scope%5B1%5D=profile&scope%5B2%5D=email&scope%5B3%5D=groups
 

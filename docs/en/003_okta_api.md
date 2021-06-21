@@ -2,7 +2,7 @@
 
 The Okta API can be used to retrieve information about your Okta users. It is not used in the authentication process.
 
-Quick client creation can be done via the Client factory. It creates an \Okta\Client based on the Silverstripe project configuration provided. You can optionally pass your own HttpClient and/or CacheManager instance.
+Quick client creation can be done via the ClientFactory class. It creates an \Okta\Client based on the Silverstripe project configuration provided. You can optionally pass your own HttpClient and/or CacheManager instance.
 
 ```php
 <?php
@@ -40,9 +40,22 @@ $parameters = [
 ];
 ```
 
-## Configuration
+## Configuration files
 
-If no configuration is provided `~/.okta/okta.yaml` and/or environment variables will be used.
+If no configuration is provided ...
+
+```yaml
+---
+Name: app-okta-config
+After:
+    - '#silverstripe-okta-boilerplate'
+---
+NSWDPC\Authentication\Okta\ClientFactory:
+  default_file_location: null
+  config_file_location: null
+```
+
+... `~/.okta/okta.yaml` and/or environment variables will be used.
 
 ### okta.yaml
 
