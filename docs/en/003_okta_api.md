@@ -2,7 +2,7 @@
 
 The Okta API can be used to retrieve information about your Okta users. It is not used in the authentication process.
 
-Quick client creation can be done via the Client factory. It creates an \Okta\Client based on the Silverstripe project configuration provided. You can optionally pass your own HttpClient and/or CacheManager instance
+Quick client creation can be done via the Client factory. It creates an \Okta\Client based on the Silverstripe project configuration provided. You can optionally pass your own HttpClient and/or CacheManager instance.
 
 ```php
 <?php

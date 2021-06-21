@@ -6,9 +6,9 @@ You may have success using this module with other OAuth provider clients configu
 
 The Okta login handler provided in this module works on the basis that:
 
-1. The Okta user's email address is returned during the authentication process
+1. The Okta user's preferred username is returned during the authentication process
 1. Some or all of the Okta user's groups are returned during the authentication process
-1. One person is the owner of the Okta account and Silverstripe Member record, linked by the same email address.
+1. One person is the owner of the Okta account and Silverstripe Member record, and that the Okta preferred_username is matched with the Silverstripe Member.Email value
 
 ## Extensions
 

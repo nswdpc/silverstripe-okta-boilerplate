@@ -1,5 +1,7 @@
 ---
 Name: silverstripe-okta-api
+After:
+    - '#silverstripe-okta-config'
 ---
 # API client options
 NSWDPC\Authentication\Okta\ClientFactory:

@@ -51,7 +51,7 @@ Bigfork\SilverStripeOAuth\Client\Authenticator\Authenticator:
 Bigfork\SilverStripeOAuth\Client\Mapper\GenericMemberMapper:
   mapping:
     'Okta':
-      # Member.field : Provider.field mapping
-      'Email': 'Email'
+      # Member.field : Provider method mapping
+      'Email': 'PreferredUsername'
       'FirstName': 'FirstName'
       'Surname': 'Surname'

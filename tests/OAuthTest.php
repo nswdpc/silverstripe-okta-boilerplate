@@ -159,7 +159,7 @@ class OAuthTest extends SapphireTest
             'family_name' => "Okta-User",
             'name' => "Sandy Okta-User",
             'email' => "sandy.oktauser@example.com",
-            'preferred_username' => "sandy.oktauser",
+            'preferred_username' => "sandy.oktauser@example.com",
             'groups' => [
                 'everyone',
                 'some-group',
@@ -179,7 +179,7 @@ class OAuthTest extends SapphireTest
             'family_name' => "NotSandy",
             'name' => "Sandy NotSandy",
             'email' => "sandy.oktauser@example.com",
-            'preferred_username' => "sandy.notsandy",
+            'preferred_username' => "sandy.notsandy@example.com",
             'groups' => [
                 'some-group',
                 'external-group'
@@ -198,7 +198,7 @@ class OAuthTest extends SapphireTest
             'family_name' => "Gruppe",
             'name' => "Herman Gruppe",
             'email' => "Herman.Gruppe@example.com",
-            'preferred_username' => "herman.gruppe",
+            'preferred_username' => "herman.gruppe@example.com",
             'groups' => [
                 'group 1',
                 'group 10',
@@ -208,7 +208,7 @@ class OAuthTest extends SapphireTest
             ]
         ];
     }
-    
+
     /**
      * Get a user with a bunch of groups to test  group assignment and sync on auth
      */
@@ -220,11 +220,11 @@ class OAuthTest extends SapphireTest
             'family_name' => "Keine-Gruppe",
             'name' => "Herman Keine-Gruppe",
             'email' => "Herman.Keine-Gruppe@example.com",
-            'preferred_username' => "herman.keine-gruppe",
+            'preferred_username' => "herman.keine-gruppe@example.com",
             'groups' => []
         ];
     }
-    
+
     /**
      * Set a session on the current controller
      * @return void
@@ -241,7 +241,7 @@ class OAuthTest extends SapphireTest
     protected function setupForLoginHandler(Session &$session, array $authenticatingUser)
     {
         $this->setSessionOnController($session);
-        
+
         $issuer = $this->getIssuer();
 
         $options = [
@@ -326,7 +326,7 @@ class OAuthTest extends SapphireTest
         $this->assertEquals(302, $response->getStatusCode(), "Authentication failure should be a 302 redirect");
         $sessionMessage = $session->get('Security.Message.message');
         $sessionMessageType = $session->get('Security.Message.type');
-        
+
         // assert that the message contains the message id via regex
         $pattern = "/^.+\(#([0-9]+)\)$/s";
         $this->assertTrue(preg_match($pattern, $sessionMessage, $matches) > 0, "Session message should match pattern {$pattern}");
@@ -436,34 +436,36 @@ class OAuthTest extends SapphireTest
         // handle token for user with conflicting email address
         $handler = new OktaLoginHandler();
         $conflictingResponse = $handler->handleToken($result['accessToken'], $result['provider']);
-        $code = $handler->getLoginFailureCode();
 
-        // check correct passport hasn't changed
+        // check correct passport hasn't changed for correct user
         $postCorrectPassport = Passport::get()->filter([
             'OAuthSource' => $oauthsource,
             'Identifier' => $correct['sub']
         ])->first();
         $this->assertTrue($postCorrectPassport && $postCorrectPassport->isInDB());
+        // check member record is linked correctly
         $this->assertEquals($postCorrectPassport->MemberID, $correctMember->ID);
 
-        // check that a passport was not created for the conflicting user
+        // check that a passport was created for the conflicting user
         $conflictingPassport = Passport::get()->filter([
             'OAuthSource' => $oauthsource,
             'Identifier' => $conflicting['sub']
         ])->first();
-        $this->assertTrue(empty($conflictingPassport->ID));
+        $this->assertNotEmpty($conflictingPassport->ID);
+
+        // not the same passport as the the correct user passport
+        $this->assertNotEquals($conflictingPassport->ID, $postCorrectPassport->ID);
 
         // check member hasn't changed
         $checkMember = Member::get()->filter('Email', $correct['email'])->first();
         $this->assertEquals($checkMember->ID, $correctMember->ID);
 
-        $this->assertEquals(OktaLoginHandler::FAIL_USER_MEMBER_PASSPORT_MISMATCH, $code);
-        $this->assertInstanceOf(HTTPResponse::class, $conflictingResponse);
-        // permission failure is a 302 redirect when not signed in
-        $this->assertEquals(302, $conflictingResponse->getStatusCode(), "Authentication failure should be a 302 redirect");
+        // verify member different
+        $this->assertNotEquals($postCorrectPassport->MemberID, $conflictingPassport->MemberID);
+
         $sessionMessage = $session->get('Security.Message.message');
         $sessionMessageType = $session->get('Security.Message.type');
-        
+
         // assert that the message contains the message id via regex
         $pattern = "/^.+\(#([0-9]+)\)$/s";
         $this->assertTrue(preg_match($pattern, $sessionMessage, $matches) > 0, "Session message should match pattern {$pattern}");
@@ -477,13 +479,13 @@ class OAuthTest extends SapphireTest
     {
         $session = new Session([]);
         $userWithGroups = $this->getAssignGroupTestUser();
-        
+
         $userGroupCount = count($userWithGroups['groups']);
         $this->assertTrue($userGroupCount > 0, "For this test, the getAssignGroupTestUser test user should have some groups");
 
         // create a local Member, assign some groups
         $member = Member::create();
-        $member->Email = $userWithGroups['email'];
+        $member->Email = $userWithGroups['preferred_username'];
         $member->write();
 
         $inst = Group::create();
@@ -491,12 +493,12 @@ class OAuthTest extends SapphireTest
 
         // current SS groups to create, as Okta linked groups
         $currentSystemGroups = ['group 10','group 11','group 12','group 13'];
-        
+
         $this->assertEquals(
             0,
             $member->getOktaGroups()->count()
         );
-        
+
         // create in DB
         foreach ($currentSystemGroups as $groupTitle) {
             $createdGroup = Group::create([
@@ -542,26 +544,26 @@ class OAuthTest extends SapphireTest
         $this->assertEmpty($message);
         $this->assertNull($code);
 
-        $postLoginMember = Member::get()->filter('Email', $userWithGroups['email'])->first();
+        $postLoginMember = Member::get()->filter('Email', $userWithGroups['preferred_username'])->first();
         $this->assertTrue($postLoginMember && $postLoginMember->isInDB());
         $this->assertEquals($member->ID, $postLoginMember->ID);
-        
+
         $postLoginGroups = $postLoginMember->getOktaGroups();
-        
+
         // the members post login groups should now match the groups present
         $this->assertEquals(
             $userWithGroups['groups'],
             $postLoginGroups->sort('Title')->column('Title'),
             'The Okta groups supplied by the user do not match the post login groups associated with the member'
         );
-        
+
         // all groups should be retained in SS, even if no longer linked to user
         $allOktaGroups = array_unique(array_merge($userWithGroups['groups'], $currentSystemGroups));
         $postLoginSystemGroups = Group::get()->filter(['IsOktaGroup' => 1])->exclude(['ID' => $rootOktaGroup->ID]);
-        
+
         $this->assertEquals(count($allOktaGroups), $postLoginSystemGroups->count());
     }
-    
+
     /**
      * Test handling when a user presents with no groups
      */
@@ -572,7 +574,7 @@ class OAuthTest extends SapphireTest
 
         // create a local Member, assign some groups
         $member = Member::create();
-        $member->Email = $userWithNoGroups['email'];
+        $member->Email = $userWithNoGroups['preferred_username'];
         $member->write();
 
         $inst = Group::create();
@@ -580,12 +582,12 @@ class OAuthTest extends SapphireTest
 
         // current SS groups to create, as Okta linked groups
         $currentSystemGroups = ['group 20','group 21','group 22','group 23'];
-        
+
         $this->assertEquals(
             0,
             $member->getOktaGroups()->count()
         );
-        
+
         // create in DB
         foreach ($currentSystemGroups as $groupTitle) {
             $createdGroup = Group::create([
@@ -620,25 +622,25 @@ class OAuthTest extends SapphireTest
         $this->assertEmpty($message);
         $this->assertNull($code);
 
-        $postLoginMember = Member::get()->filter('Email', $userWithNoGroups['email'])->first();
+        $postLoginMember = Member::get()->filter('Email', $userWithNoGroups['preferred_username'])->first();
         $this->assertTrue($postLoginMember && $postLoginMember->isInDB());
         $this->assertEquals($member->ID, $postLoginMember->ID);
-        
+
         $postLoginGroups = $postLoginMember->getOktaGroups();
-        
+
         $this->assertEmpty($postLoginGroups->column('Title'));
-        
+
         // the members post login groups should now match the groups present
         $this->assertEquals(
             $userWithNoGroups['groups'],
             $postLoginGroups->sort('Title')->column('Title'),
             'The Okta groups supplied by the user do not match the post login groups associated with the member'
         );
-        
+
         // all groups should be retained in SS, even if no longer linked to user
         $allOktaGroups = array_unique(array_merge($userWithNoGroups['groups'], $currentSystemGroups));
         $postLoginSystemGroups = Group::get()->filter(['IsOktaGroup' => 1])->exclude(['ID' => $rootOktaGroup->ID]);
-        
+
         $this->assertEquals(count($allOktaGroups), $postLoginSystemGroups->count());
     }
 }

@@ -28,22 +28,23 @@ class OktaAppUserSyncTask extends BuildTask
                 print "This task can only be run via CLI\n";
                 return false;
             }
-            
+
             $commitChanges = $request->getVar('commit');
+            $limit = $request->getVar('limit');
             $dryRun = ($commitChanges != 1);
             $sync = new OktaAppUserSync();
-            $sync->run($dryRun, 50);
-            
+            $sync->run($dryRun, ($limit > 0 ? $limit : 50));
+
             if ($dryRun) {
                 print "DRY RUN report:\n";
                 print_r($sync->getReport());
             }
-            
+
             print "SUCCESS\n";
             print_r($sync->getSuccesses());
             print "FAIL\n";
             print_r($sync->getFailures());
-            
+
             return true;
         } catch (\Exception $e) {
             print $e->getMessage();

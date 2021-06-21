@@ -16,7 +16,7 @@ use SilverStripe\Security\Member;
 use SilverStripe\Security\Security;
 
 /**
- * Perform Okta login handling without user/member Email collisions
+ * Perform Okta login handling
  */
 class OktaLoginHandler extends LoginTokenHandler
 {
@@ -57,6 +57,7 @@ class OktaLoginHandler extends LoginTokenHandler
     const FAIL_USER_MEMBER_EMAIL_MISMATCH = 104;
     const FAIL_USER_MEMBER_PASSPORT_MISMATCH = 105;
     const FAIL_PASSPORT_CREATE_IDENT_COLLISION = 106;
+    const FAIL_USER_MISSING_USERNAME = 107;
     const FAIL_NO_PROVIDER_NAME = 200;
     const FAIL_NO_PASSPORT_NO_MEMBER_CREATED = 300;
     const FAIL_PASSPORT_NO_MEMBER_CREATED = 301;
@@ -125,6 +126,9 @@ class OktaLoginHandler extends LoginTokenHandler
                 break;
             case self::FAIL_USER_MISSING_EMAIL:
                 return _t('OAUTH.FAIL_' . $code, 'User missing email');
+                break;
+            case self::FAIL_USER_MISSING_USERNAME:
+                return _t('OAUTH.FAIL_' . $code, 'User missing username');
                 break;
             case self::FAIL_USER_MEMBER_EMAIL_MISMATCH:
                 return _t('OAUTH.FAIL_' . $code, 'User/member email mismatch');
@@ -242,7 +246,8 @@ class OktaLoginHandler extends LoginTokenHandler
                     'OKTA.INVALID_MEMBER',
                     '{getSupportMessage} (#{messageId})',
                     [
-                        'messageId' => $this->getLoginFailureMessageId()
+                        'messageId' => $this->getLoginFailureMessageId(),
+                        'getSupportMessage' => $this->getSupportMessage()
                     ]
                 )
             );
@@ -327,9 +332,9 @@ class OktaLoginHandler extends LoginTokenHandler
         $identifier = $user->getId();
         $providerName = $session->get('oauth2.provider');
 
-        $userEmail = $user->getEmail();
-        if (!$userEmail) {
-            $this->setLoginFailureCode(self::FAIL_USER_MISSING_EMAIL, $user->getId());
+        $userUsername = $user->getPreferredUsername();
+        if (!$userUsername) {
+            $this->setLoginFailureCode(self::FAIL_USER_MISSING_USERNAME, $user->getId());
             throw new ValidationException(
                 _t(
                     'OKTA.GENERAL_SESSION_ERROR',
@@ -361,7 +366,7 @@ class OktaLoginHandler extends LoginTokenHandler
         if (!$passport) {
             // Create the new member (or link to a matching one if config allows)
             $member = $this->createMember($token, $provider);
-            // handle no member being created/linked
+            // Handle the local member no longer existing
             if (!$member) {
                 $this->setLoginFailureCode(self::FAIL_NO_PASSPORT_NO_MEMBER_CREATED, $user->getId());
                 throw new ValidationException(
@@ -369,7 +374,8 @@ class OktaLoginHandler extends LoginTokenHandler
                         'OKTA.INVALID_MEMBER',
                         '{getSupportMessage} (#{messageId})',
                         [
-                            'messageId' => $this->getLoginFailureMessageId()
+                            'messageId' => $this->getLoginFailureMessageId(),
+                            'getSupportMessage' => $this->getSupportMessage()
                         ]
                     )
                 );
@@ -390,7 +396,8 @@ class OktaLoginHandler extends LoginTokenHandler
                             'OKTA.INVALID_MEMBER',
                             '{getSupportMessage} (#{messageId})',
                             [
-                                'messageId' => $this->getLoginFailureMessageId()
+                                'messageId' => $this->getLoginFailureMessageId(),
+                                'getSupportMessage' => $this->getSupportMessage()
                             ]
                         )
                     );
@@ -444,14 +451,14 @@ class OktaLoginHandler extends LoginTokenHandler
         $session = $this->getSession();
         $providerName = $session->get('oauth2.provider');
         $user = $provider->getResourceOwner($token);
-        $userEmail = $user->getEmail();
+        $userUsername = $user->getPreferredUsername();
 
-        // require a user email for this operation
-        if (!$userEmail) {
-            $this->setLoginFailureCode(self::FAIL_USER_MISSING_EMAIL, $user->getId());
+        // require a user username for this operation
+        if (!$userUsername) {
+            $this->setLoginFailureCode(self::FAIL_USER_MISSING_USERNAME, $user->getId());
             throw new ValidationException(
                 _t(
-                    'OKTA.NO_EMAIL_RETURNED',
+                    'OKTA.NO_USERNAME_RETURNED',
                     '{getSupportMessage} (#{messageId})',
                     [
                         'messageId' => $this->getLoginFailureMessageId(),
@@ -477,9 +484,9 @@ class OktaLoginHandler extends LoginTokenHandler
         }
 
         /* @var Member|null */
-        $member = Member::get()->filter('Email', $userEmail)->first();
+        $member = Member::get()->filter('Email', $userUsername)->first();
         if (!$member) {
-            // no existing member for the user's email address, can create one
+            // no existing member for the user's username, can create one
             $member = Member::create();
             $member = $this->getMapper($providerName)->map($member, $user);
             // Retained for compat with LoginTokenHandler
