@@ -22,7 +22,7 @@ class AccessSupportAssistance implements TemplateGlobalProvider
      * Return the assistance link, entitised for a template
      */
     public static function get_assistance_link() {
-        return htmlspecialchars(Config::inst()->get(self::class, 'assistance_link'));
+        return htmlspecialchars(self::config()->get('assistance_link'));
     }
 
     /**
