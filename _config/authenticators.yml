@@ -17,4 +17,4 @@ SilverStripe\Core\Injector\Injector:
   SilverStripe\Security\Security:
     properties:
       Authenticators:
-        oauth: '%$Bigfork\SilverStripeOAuth\Client\Authenticator\Authenticator'
+        oauth: '%$NSWDPC\Authentication\Okta\Authenticator'
