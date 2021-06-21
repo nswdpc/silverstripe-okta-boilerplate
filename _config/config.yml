@@ -9,3 +9,8 @@ SilverStripe\Security\Group:
     Description: 'This is the parent group for all groups imported from Okta'
     IsOktaGroup: 1
     Locked: 1
+---
+Name: silverstripe-okta-support-assistance
+---
+NSWDPC\Authentication\Okta\AccessSupportAssistance:
+  assistance_link: ''
