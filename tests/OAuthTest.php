@@ -463,13 +463,13 @@ class OAuthTest extends SapphireTest
         // verify member different
         $this->assertNotEquals($postCorrectPassport->MemberID, $conflictingPassport->MemberID);
 
-        $sessionMessage = $session->get('Security.Message.message');
-        $sessionMessageType = $session->get('Security.Message.type');
+        $message = $session->get('Security.Message.message');
+        $type = $session->get('Security.Message.type');
 
-        // assert that the message contains the message id via regex
-        $pattern = "/^.+\(#([0-9]+)\)$/s";
-        $this->assertTrue(preg_match($pattern, $sessionMessage, $matches) > 0, "Session message should match pattern {$pattern}");
-        $this->assertEquals('warning', $sessionMessageType);
+        $code = $handler->getLoginFailureCode();
+
+        $this->assertEmpty($message);
+        $this->assertNull($code);
     }
 
     /**
