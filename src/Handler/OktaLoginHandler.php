@@ -25,9 +25,9 @@ class OktaLoginHandler extends LoginTokenHandler
 
     /**
      * @var bool
-     * If true, link to an existing member based on Email address
-     * Note: this assumes that the owner of the Okta email address is the owner of
-     * the Silvertripe Member.Email address
+     * If true, link to an existing member based on Email/Okta username
+     * Note: this assumes that the owner of the Okta username is the owner of
+     * the Silverstripe Member.Email address
      * If you cannot ensure that, set this value in your project configuration to false
      */
     private static $link_existing_member = true;
@@ -366,8 +366,8 @@ class OktaLoginHandler extends LoginTokenHandler
         if (!$passport) {
             // Create the new member (or link to a matching one if config allows)
             $member = $this->createMember($token, $provider);
-            // Handle the local member no longer existing
             if (!$member) {
+                // Failed to create or find member
                 $this->setLoginFailureCode(self::FAIL_NO_PASSPORT_NO_MEMBER_CREATED, $user->getId());
                 throw new ValidationException(
                     _t(
@@ -484,6 +484,7 @@ class OktaLoginHandler extends LoginTokenHandler
         }
 
         /* @var Member|null */
+        // the incoming userUsername is mapped to the Email field in the member
         $member = Member::get()->filter('Email', $userUsername)->first();
         if (!$member) {
             // no existing member for the user's username, can create one
