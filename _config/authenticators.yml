@@ -1,0 +1,20 @@
+---
+Name: silverstripe-okta-authenticator
+After:
+  - '#oauthauthenticator'
+  - '#mfa-authenticator'
+---
+SilverStripe\Core\Injector\Injector:
+  SilverStripe\Security\Security:
+    properties:
+      Authenticators: null
+---
+Name: silverstripe-okta-only-authenticator
+After:
+  - '#silverstripe-okta-authenticator'
+---
+SilverStripe\Core\Injector\Injector:
+  SilverStripe\Security\Security:
+    properties:
+      Authenticators:
+        oauth: '%$Bigfork\SilverStripeOAuth\Client\Authenticator\Authenticator'
