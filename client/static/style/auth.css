@@ -1,0 +1,20 @@
+main.login-form h2 {
+  font-size : 1.75rem;
+}
+main.login-form h3 {
+  font-size : 1.5rem;
+}
+main.login-form form {
+  margin : 0 0 1rem 0;
+}
+
+main.login-form form fieldset {
+  display: block;
+}
+
+main.login-form .form-tab {
+  margin : 0 0 1rem 0;
+}
+main.login-form .form-tab:last-child {
+  margin-bottom : 0;
+}

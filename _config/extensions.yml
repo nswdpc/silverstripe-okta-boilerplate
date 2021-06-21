@@ -18,3 +18,6 @@ SilverStripe\Security\MemberAuthenticator\LostPasswordHandler:
 Bigfork\SilverStripeOAuth\Client\Form\LoginForm:
   extensions:
     - 'NSWDPC\Authentication\Okta\OAuthLoginFormExtension'
+SilverStripe\Security\Security:
+  extensions:
+    - 'NSWDPC\Authentication\Okta\SecurityControllerExtension'
