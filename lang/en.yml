@@ -1,0 +1,20 @@
+en_GB:
+  SilverStripe\Security\Security:
+    ALREADYLOGGEDIN: "You don't have access to this page as your account lacks the required permissions to gain access. If you believe this to be an error, please contact website support."
+    LOGGEDOUT: "You have been logged out."
+    NOTEPAGESECURED: 'The URL you have requested is secured. Sign in to gain access.'
+    LOGIN: 'Sign in'
+  OAuth:
+    LOGOUT: 'Sign out'
+  SilverStripe\LoginForms:
+    LOGIN: 'Sign in'
+en:
+  SilverStripe\Security\Security:
+    ALREADYLOGGEDIN: "You don't have access to this page as your account lacks the required permissions to gain access. If you believe this to be an error, please contact website support."
+    LOGGEDOUT: "You have been logged out."
+    NOTEPAGESECURED: 'The URL you have requested is secured. Sign in to gain access.'
+    LOGIN: 'Sign in'
+  OAuth:
+    LOGOUT: 'Sign out'
+  SilverStripe\LoginForms:
+    LOGIN: 'Sign in'
