@@ -6,6 +6,14 @@ Client creation is handled by the `bigfork/silverstripe-oauth-login` module. See
 
 The module configures and provides an extension to the OAuth authenticator. This authenticator provides a logout handler.
 
+### Turn ON the Member Authenticator
+
+By default, the module resets all authenticators. To enable local user access, add the following environment variable to your project:
+
+```
+ALLOW_MEMBER_AUTHENTICATOR=1
+```
+
 ## Required configuration values
 
 + `clientId` your Okta clientId for the app in question

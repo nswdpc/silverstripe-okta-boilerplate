@@ -1,10 +1,8 @@
 # 🧪 Okta authentication boilerplate
 
-This module adds Okta OAuth2 authentication and group+role discovery to your Silverstripe website
+This module adds Okta OAuth2 authentication and group discovery to your Silverstripe website
 
 > :warning: 🧪 This module is under active development. Do not use it in production.
-
-See [considerations](./docs/en/099_considerations.md).
 
 ## Scope
 
@@ -18,6 +16,7 @@ With this module you can
 + Synchronise users via a queued job
 + Block sign-in for those Okta users who have stopped appearing for a configured time period in synchronisation results
 + Optionally remove users who have not synchronised after a certain time.
++ Optionally disallow/allow the default member authenticator
 
 ## You will need
 
