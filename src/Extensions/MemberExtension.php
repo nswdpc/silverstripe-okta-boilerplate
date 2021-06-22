@@ -11,6 +11,7 @@ use SilverStripe\Forms\CheckboxField;
 use SilverStripe\Forms\LabelField;
 use SilverStripe\Forms\LiteralField;
 use SilverStripe\Security\Member;
+use SilverStripe\Security\Permission;
 
 /**
  * Updates member view in administration area
@@ -70,6 +71,7 @@ class MemberExtension extends DataExtension
     {
         $fields->removeByName([
             'Passports',
+            'Okta',
             'OAuthSource',
             'OktaProfile',
             'OktaLastSync'
@@ -84,35 +86,37 @@ class MemberExtension extends DataExtension
             $profileFieldsValue = '';
         }
 
-        $fields->addFieldToTab(
-            'Root.Okta',
-            CompositeField::create(
-                LabelField::create(
-                    'OktaProfileLabel',
-                    _t('OKTA.PROFILE_FIELD_TITLE', 'Latest profile data')
-                ),
-                LiteralField::create(
-                    'OktaProfile',
-                    '<pre>'
-                    . htmlspecialchars($profileFieldsValue)
-                    . '</pre>'
-                ),
-                ReadonlyField::create(
-                    'OktaLastSync',
-                    _t('OKTA.LAST_SYNC_DATETIME', 'Last sync. date'),
-                    $this->owner->OktaLastSync
-                ),
-                CheckboxField::create(
-                    'OktaLastSyncClear',
-                    _t(
-                        'OKTA.CLEAR_SYNC_DATETIME',
-                        'Clear this value'
+        if( Permission::checkMember($this->owner, 'ADMIN') ) {
+            $fields->addFieldToTab(
+                'Root.Okta',
+                CompositeField::create(
+                    LabelField::create(
+                        'OktaProfileLabel',
+                        _t('OKTA.PROFILE_FIELD_TITLE', 'Latest profile data')
+                    ),
+                    LiteralField::create(
+                        'OktaProfile',
+                        '<pre>'
+                        . htmlspecialchars($profileFieldsValue)
+                        . '</pre>'
+                    ),
+                    ReadonlyField::create(
+                        'OktaLastSync',
+                        _t('OKTA.LAST_SYNC_DATETIME', 'Last sync. date'),
+                        $this->owner->OktaLastSync
+                    ),
+                    CheckboxField::create(
+                        'OktaLastSyncClear',
+                        _t(
+                            'OKTA.CLEAR_SYNC_DATETIME',
+                            'Clear this value'
+                        )
                     )
+                )->setTitle(
+                    _t('OKTA.OKTA_HEADING', 'Okta')
                 )
-            )->setTitle(
-                _t('OKTA.OKTA_HEADING', 'Okta')
-            )
-        );
+            );
+        }
     }
 
     /**
