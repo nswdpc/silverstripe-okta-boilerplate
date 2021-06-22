@@ -364,7 +364,7 @@ class OktaLoginHandler extends LoginTokenHandler
         /** @var Passport $passport */
         $passport = $this->getPassport($identifier, $providerName);
         if (!$passport) {
-            // Create the new member (or link to a matching one if config allows)
+            // Passport does not exists, create or find member linked to Okta username
             $member = $this->createMember($token, $provider);
             if (!$member) {
                 // Failed to create or find member
@@ -383,28 +383,23 @@ class OktaLoginHandler extends LoginTokenHandler
             // Assign member to created passport
             $passport = $this->createPassport($identifier, $providerName, $member);
         } else {
-            // Passport exists
-            $member = $passport->Member();
-            // Handle the local member no longer existing
+            // Passport exists, create or find member linked to Okta username
+            $member = $this->createMember($token, $provider);
             if (!$member) {
-                $member = $this->createMember($token, $provider);
-                // handle no member being created/linked
-                if (!$member) {
-                    $this->setLoginFailureCode(self::FAIL_PASSPORT_NO_MEMBER_CREATED, $user->getId());
-                    throw new ValidationException(
-                        _t(
-                            'OKTA.INVALID_MEMBER',
-                            '{getSupportMessage} (#{messageId})',
-                            [
-                                'messageId' => $this->getLoginFailureMessageId(),
-                                'getSupportMessage' => $this->getSupportMessage()
-                            ]
-                        )
-                    );
-                }
-                $passport->MemberID = $member->ID;
-                $passport->write();
+                $this->setLoginFailureCode(self::FAIL_PASSPORT_NO_MEMBER_CREATED, $user->getId());
+                throw new ValidationException(
+                    _t(
+                        'OKTA.INVALID_MEMBER',
+                        '{getSupportMessage} (#{messageId})',
+                        [
+                            'messageId' => $this->getLoginFailureMessageId(),
+                            'getSupportMessage' => $this->getSupportMessage()
+                        ]
+                    )
+                );
             }
+            $passport->MemberID = $member->ID;
+            $passport->write();
         }
 
         $this->assignGroups($user, $member);
