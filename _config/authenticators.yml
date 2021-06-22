@@ -1,17 +1,19 @@
 ---
-Name: silverstripe-okta-authenticator
+Name: silverstripe-okta-reset-authenticator
 After:
   - '#oauthauthenticator'
   - '#mfa-authenticator'
+Except:
+  envvarset: 'ALLOW_MEMBER_AUTHENTICATOR'
 ---
 SilverStripe\Core\Injector\Injector:
   SilverStripe\Security\Security:
     properties:
       Authenticators: null
 ---
-Name: silverstripe-okta-only-authenticator
+Name: silverstripe-okta-authenticator
 After:
-  - '#silverstripe-okta-authenticator'
+  - '#silverstripe-okta-reset-authenticator'
 ---
 SilverStripe\Core\Injector\Injector:
   SilverStripe\Security\Security:
