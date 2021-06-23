@@ -49,6 +49,7 @@ class OAuthAdmin extends ModelAdmin
         $config = $grid->getConfig();
         $config->removeComponentsByType(GridFieldPrintButton::class);
         $config->removeComponentsByType(GridFieldExportButton::class);
+        $config->removeComponentsByType(GridFieldAddNewButton::class);
         return $form;
     }
 }

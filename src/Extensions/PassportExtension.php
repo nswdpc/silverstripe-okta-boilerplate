@@ -147,19 +147,19 @@ class PassportExtension extends DataExtension implements PermissionProvider
     }
 
     /**
-     * Who can edit a passport
+     * Members cannot edit a passport record
      */
     public function canEdit($member)
     {
-        return Permission::checkMember($member, 'OAUTH_PASSPORT_EDIT');
+        return false;
     }
 
     /**
-     * Who can create a passport
+     * Members cannot create a passport record
      */
     public function canCreate($member)
     {
-        return Permission::checkMember($member, 'OAUTH_PASSPORT_EDIT');
+        return false;
     }
 
     /**
@@ -187,15 +187,17 @@ class PassportExtension extends DataExtension implements PermissionProvider
             $providerFactory = Injector::inst()->get(ProviderFactory::class);
             $providers = $providerFactory->getProviders();
             $listProviders = [];
-            $listProviders[ $this->owner->OAuthSource ] = _t(
-                'OKTA.PROVIDER_' . $this->owner->OAuthSource,
-                $this->owner->OAuthSource
-            );
+            if($this->owner->OAuthSource) {
+                $listProviders[ $this->owner->OAuthSource ] = _t(
+                    'OKTA.PROVIDER_' . $this->owner->OAuthSource,
+                    $this->owner->OAuthSource
+                );
+            }
             if (is_array($providers)) {
                 foreach ($providers as $providerName => $provider) {
                     $listProviders[ $providerName ] = _t(
                         'OKTA.PROVIDER_' . $providerName,
-                        $providerName
+                        $providerName ?? 'Unknown provider'
                     );
                 }
             }
@@ -229,7 +231,7 @@ class PassportExtension extends DataExtension implements PermissionProvider
                 'category' => 'OAuth',
             ],
             'OAUTH_PASSPORT_EDIT' => [
-                'name' => _t('OAUTH.PERMISSION_CED', 'Create, edit and delete OAuth passports'),
+                'name' => _t('OAUTH.PERMISSION_CED', 'Create and delete OAuth passports'),
                 'category' => 'OAuth',
             ],
             'OAUTH_SYNC_REPORT_VIEW' => [
