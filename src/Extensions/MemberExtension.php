@@ -12,11 +12,12 @@ use SilverStripe\Forms\LabelField;
 use SilverStripe\Forms\LiteralField;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
+use SilverStripe\Security\PermissionProvider;
 
 /**
  * Updates member view in administration area
  */
-class MemberExtension extends DataExtension
+class MemberExtension extends DataExtension implements PermissionProvider
 {
 
     /**
@@ -172,4 +173,21 @@ class MemberExtension extends DataExtension
     {
         return $this->owner->DirectGroups()->filter(['IsOktaGroup' => 1]);
     }
+
+    /**
+     * Provide permissions
+     */
+    public function providePermissions()
+    {
+        return [
+            'OKTA_LOCAL_PASSWORD_RESET' => [
+                'name' => _t('OKTA.ALLOW_LOCAL_PASSWORD_RESET', 'Allow local password reset'),
+                'category' => _t(
+                    'SilverStripe\\Security\\Permission.PERMISSIONS_CATEGORY',
+                    'Roles and access permissions'
+                ),
+            ]
+        ];
+    }
+
 }

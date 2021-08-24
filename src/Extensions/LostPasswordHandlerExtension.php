@@ -14,16 +14,19 @@ class LostPasswordHandlerExtension extends Extension
 
     /**
      * Veto or allow forgotPassword requests for a member
-     * If a user is removed from Okta we need to block local access
-     * for any local member account they may have
      * @param Member|null $member
      */
     public function forgotPassword(Member &$member = null) : bool
     {
+        if($member && Permission::checkMember($member, 'OKTA_LOCAL_PASSWORD_RESET')) {
+            // Members with this permission may reset a local password
+            return true;
+        }
+        // Failing that, members without CMS_ACCESS_ permissions cannot trigger a password reset
         if ($member && !Permission::checkMember($member, 'CMS_ACCESS')) {
-            // Members without these permissions cannot
             $member = null;
         }
+
         return true;
     }
 }
