@@ -152,7 +152,7 @@ class PermissionTest extends SapphireTest
 
         $email = $this->findEmail($isEditor->Email);
 
-        $this->assertNotEmpty($email, "A password reset email should have been sent for isEditor");
+        $this->assertEmpty($email, "A password reset email should not have been sent for isEditor is no extra permission attached");
 
 
     }

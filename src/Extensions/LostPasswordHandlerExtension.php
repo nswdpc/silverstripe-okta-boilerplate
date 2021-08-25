@@ -21,12 +21,10 @@ class LostPasswordHandlerExtension extends Extension
         if($member && Permission::checkMember($member, 'OKTA_LOCAL_PASSWORD_RESET')) {
             // Members with this permission may reset a local password
             return true;
-        }
-        // Failing that, members without CMS_ACCESS_ permissions cannot trigger a password reset
-        if ($member && !Permission::checkMember($member, 'CMS_ACCESS')) {
+        } else {
+            // remove the member record
             $member = null;
         }
-
         return true;
     }
 }
