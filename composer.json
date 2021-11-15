@@ -36,10 +36,5 @@
         "friendsofphp/php-cs-fixer": "^2.18",
         "symbiote/silverstripe-phpstan": "^4",
         "silverstripe/sqlite3": "^2"
-    },
-    "config": {
-        "process-timeout": 600
-    },
-    "prefer-stable": true,
-    "minimum-stability": "dev"
+    }
 }
