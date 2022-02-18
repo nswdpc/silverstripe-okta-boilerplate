@@ -9,6 +9,7 @@ use SilverStripe\Security\MemberAuthenticator\LogoutHandler;
 
 /**
  * Extend the default OAuth authenticator to provide a logout service
+ * @note this can be removed when https://github.com/bigfork/silverstripe-oauth-login/issues/23 is resolved
  */
 class Authenticator extends OAuthAuthenticator
 {
