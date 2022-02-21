@@ -91,6 +91,34 @@ class OAuthTest extends SapphireTest
         return $issuer;
     }
 
+    public function testGroupCodeChange() {
+
+        $code = 'test';
+
+        $group = Group::create([
+            'Title' => 'Test',
+            'Code' => $code,
+            'Description' => 'Testing group'
+        ]);
+
+        $group->write();
+
+        $this->assertEquals($code, $group->Code);
+
+        $groupSaved = Group::get()->filter( [ 'Code' => $code ] )->first();
+
+        $this->assertEquals($code, $groupSaved->Code);
+
+        $groupSaved->setField('Code', $code);
+
+        $this->assertEquals($code, $groupSaved->Code);
+
+        $groupSaved->write();
+
+        $this->assertEquals($code, $groupSaved->Code);
+
+    }
+
     public function testApplyOktaRootGroup() {
         $parent = Group::config()->get('okta_group');
 
