@@ -32,7 +32,12 @@ class GroupExtension extends DataExtension
         'IsOktaGroup' => true, // query on IsOktaGroup
         'Title' => true // need to query on title
     ];
-    
+
+    /**
+     * Default group title, if none provided in configuration
+     */
+    const DEFAULT_GROUP_TITLE = 'Okta';
+
     /**
      * Handle pre-write logic for OktaGroups
      * Any group that is marked an Okta group may not be assigned permissions or roles
@@ -99,31 +104,34 @@ class GroupExtension extends DataExtension
      * Create or update the default root Okta group configured, if set
      * @return Group|null
      */
-    public function applyOktaRootGroup()
+    public function applyOktaRootGroup() : ?Group
     {
         $parent = $this->owner->config()->get('okta_group');
         if (empty($parent['Code'])) {
-            return;
+            return null;
         }
-        $group = Group::get()->filter([ 'Code' => Convert::raw2url($parent['Code']) ])->first();
+        $code = Convert::raw2url($parent['Code']);
+        $group = Group::get()->filter([ 'Code' => $code ])->first();
+        $title = trim( !empty($parent['Title']) ? $parent['Title'] : '' );
+        if($title == '') {
+            $title = self::DEFAULT_GROUP_TITLE;
+        }
+        // Create a new group if none exists
         if (!$group) {
-            $group = Group::create($parent);
-            $group->IsOktaGroup = 1;
-            $group->ParentID = 0;
-            $group->write();
-        } else {
-            if (isset($parent['Title'])) {
-                $group->Title = $parent['Title'];
-            }
-            if (isset($parent['Description'])) {
+            $group = Group::create();
+            if (!empty($parent['Description'])) {
                 $group->Description = $parent['Description'];
             }
-            $group->Locked = $parent['Locked'] ?? 1;
-            $group->Code = $parent['Code'];
-            $group->IsOktaGroup = 1;
-            $group->ParentID = 0;
-            $group->write();
         }
+        // Allow group title updates from configuration
+        $group->Title = $title;
+        $group->IsOktaGroup = 1;
+        $group->ParentID = 0;
+        $group->Locked = $parent['Locked'] ?? 1;
+        // ensure code is set as it is stored in configuration
+        $group->setField('Code', $code);
+        $group->write();
         return $group;
     }
+
 }

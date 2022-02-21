@@ -13,6 +13,7 @@ use Mockery;
 use NSWDPC\Authentication\Okta\ClientFactory;
 use NSWDPC\Authentication\Okta\OktaLoginHandler;
 use NSWDPC\Authentication\Okta\OktaLinker;
+use NSWDPC\Authentication\Okta\GroupExtension;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
 use SilverStripe\Control\Controller as SilverstripeController;
@@ -29,7 +30,7 @@ use SilverStripe\Security\RequestAuthenticationHandler;
 use SilverStripe\Security\Security;
 
 /**
- * Run test related to the Okta API using `okta/sdk`
+ * OAuth (Okta) tests
  */
 class OAuthTest extends SapphireTest
 {
@@ -45,11 +46,27 @@ class OAuthTest extends SapphireTest
     protected $autoFollowRedirection = false;
 
     /**
+     * @var array
+     */
+    protected $rootOktaGroup = [
+        'Code' => 'okta-root-test',
+        'Title' => 'Okta test group',
+        'Description' => 'This is the parent group for all groups imported from Okta - testing',
+        'IsOktaGroup' => 1,
+        'Locked' => 1
+    ];
+
+    /**
      * Log out the currently signed in user, if any, before any tests
      */
-    public function setUp()
+    public function setUp() : void
     {
         parent::setUp();
+        Config::modify()->set(
+            Group::class,
+            'okta_group',
+            $this->rootOktaGroup
+        );
         $this->logOut();
     }
 
@@ -72,6 +89,21 @@ class OAuthTest extends SapphireTest
             'scheme' => 'https'
         ];
         return $issuer;
+    }
+
+    public function testApplyOktaRootGroup() {
+        $parent = Group::config()->get('okta_group');
+
+        $inst = Group::create();
+        /** @var Group **/
+        $rootOktaGroup = $inst->applyOktaRootGroup();
+
+        $this->assertInstanceOf(Group::class, $rootOktaGroup, "Root Okta Group is a group");
+        $this->assertEquals($parent['Code'], $rootOktaGroup->Code, "Codes match");
+        $this->assertEquals($parent['Title'], $rootOktaGroup->Title, "Titles match");
+        $this->assertEquals(1, $rootOktaGroup->IsOktaGroup, "IsOktaGroup value match");
+        $this->assertEquals(0, $rootOktaGroup->ParentID, "ParentID is zero");
+        $this->assertEquals(1, $rootOktaGroup->Locked, "Group is locked");
     }
 
     /**
