@@ -4,6 +4,7 @@ namespace NSWDPC\Authentication\Okta;
 
 use Bigfork\SilverStripeOAuth\Client\Model\Passport;
 use SilverStripe\Core\Config\Config;
+use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Convert;
 use SilverStripe\ORM\ArrayList;
 use SilverStripe\Security\Group;
@@ -15,7 +16,10 @@ use SilverStripe\Security\Permission;
  */
 class OktaAppUserSync
 {
+
     use OktaGroups;
+
+    use Configurable;
 
     /**
      * A user assigned to an application directly
@@ -52,6 +56,13 @@ class OktaAppUserSync
      * @var HttpClient
      */
     protected $httpClient = null;
+
+    /**
+     * @var bool
+     * When true, Member records will be created from sync data
+     * When false, only those members who have signed in will be created
+     */
+    private static $create_users = true;
 
     /**
      * Get the configured {@link \Okta\Client}, if not available create it from configuration
@@ -242,6 +253,38 @@ class OktaAppUserSync
     }
 
     /**
+     * Retrieve a member record via userUsername
+     * @param string username (as email)
+     */
+    protected function getMemberByEmail(string $userUsername) : ?Member {
+        // Retrieve member based on matching username
+        $member = Member::get()->filter('Email', $userUsername)->first();
+        return $member ? $member : null;
+    }
+
+    /**
+     * Retrieve or create a member record via userUsername
+     * @param string username (as email)
+     */
+    protected function findOrCreateMemberByEmail(string $userUsername) : Member {
+        $member = $this->getMemberByEmail($userUsername);
+        if(!$member) {
+            $member = Member::create([
+                'Email' => $userUsername
+            ]);
+            if($this->dryRun) {
+                Logger::log("AppUser would create Member #{$member->ID}", "DEBUG");
+            } else {
+                $member->write();
+                Logger::log("AppUser created Member #{$member->ID}", "DEBUG");
+            }
+        } else {
+            Logger::log("AppUser found Member #{$member->ID}", "DEBUG");
+        }
+        return $member;
+    }
+
+    /**
      * Process a single app user return in the collection
      * AppUser profile vs User profile
      * https://help.okta.com/en/prod/Content/Topics/users-groups-profiles/usgp-about-profiles.htm
@@ -282,23 +325,31 @@ class OktaAppUserSync
             throw new OktaAppUserSyncException("AppUser {$userId} profile has no username value");
         }
 
-        $passport = Passport::get()->filter([
-            'Identifier' => $userId,
-            'OAuthSource' => 'Okta' // @todo constant
-        ])->first();
 
-        if (!$passport) {
-            throw new OktaAppUserSyncException("AppUser {$userId} has no Okta passport - not signed in yet?");
-        }
+        $createUser = $this->config()->get('create_users');
+        if(!$createUser) {
 
-        // Retrieve member based on matching username
-        $member = Member::get()->filter('Email', $userUsername)->first();
-        if (!$member) {
-            throw new OktaAppUserSyncException("AppUser {$userId} has no matching Member record using {$userUsername}");
-        }
+            $passport = Passport::get()->filter([
+                'Identifier' => $userId,
+                'OAuthSource' => 'Okta' // @todo constant
+            ])->first();
 
-        if ($passport->MemberID != $member->ID) {
-            throw new OktaAppUserSyncException("AppUser {$userId} Passport.MemberID #{$passport->MemberID}/Member #{$member->ID} - passport found mismatch with member found");
+            if (!$passport) {
+                throw new OktaAppUserSyncException("AppUser {$userId} has no Okta passport - not signed in yet?");
+            }
+
+            $member = $this->getMemberByEmail($userUsername);
+            if (!$member) {
+                throw new OktaAppUserSyncException("AppUser {$userId} has no matching Member record using {$userUsername}");
+            }
+
+            if ($passport->MemberID != $member->ID) {
+                throw new OktaAppUserSyncException("AppUser {$userId} Passport.MemberID #{$passport->MemberID}/Member #{$member->ID} - passport found mismatch with member found");
+            }
+
+        } else {
+            Logger::log("AppUser create users on - bypass passport check", "DEBUG");
+            $member = $this->findOrCreateMemberByEmail($userUsername);
         }
 
         // Allowed map fields, @todo use MemberMapper similar to OAuth
