@@ -12,6 +12,7 @@ use League\OAuth2\Client\Token\AccessToken;
 use Mockery;
 use NSWDPC\Authentication\Okta\ClientFactory;
 use NSWDPC\Authentication\Okta\OktaLoginHandler;
+use NSWDPC\Authentication\Okta\OktaLinker;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\StreamInterface;
 use SilverStripe\Control\Controller as SilverstripeController;
@@ -25,6 +26,7 @@ use SilverStripe\ORM\ValidationResult;
 use SilverStripe\Security\Group;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\RequestAuthenticationHandler;
+use SilverStripe\Security\Security;
 
 /**
  * Run test related to the Okta API using `okta/sdk`
@@ -310,7 +312,8 @@ class OAuthTest extends SapphireTest
             'Site group 1'
         ];
 
-        Config::inst()->set(OktaLoginHandler::class, 'link_existing_member', true);
+        Config::inst()->set(OktaLinker::class, 'update_existing_member', true);
+        Config::inst()->set(OktaLinker::class, 'link_via_email', false);
         Config::inst()->set(OktaLoginHandler::class, 'apply_group_restriction', true);
         Config::inst()->set(OktaLoginHandler::class, 'site_restricted_groups', $restrictedGroups);
 
@@ -336,7 +339,8 @@ class OAuthTest extends SapphireTest
     public function testOktaLoginHandlerSuccessWithRestrictedGroups()
     {
         $session = new Session([]);
-        $result = $this->setupForLoginHandler($session, $this->getCorrectUser());
+        $user = $this->getCorrectUser();
+        $result = $this->setupForLoginHandler($session, $user);
 
         $oauthsource = 'Okta';
         $session->set('oauth2.provider', $oauthsource);
@@ -346,7 +350,8 @@ class OAuthTest extends SapphireTest
             'another-group'
         ];
 
-        Config::inst()->set(OktaLoginHandler::class, 'link_existing_member', true);
+        Config::inst()->set(OktaLinker::class, 'update_existing_member', true);
+        Config::inst()->set(OktaLinker::class, 'link_via_email', false);
         Config::inst()->set(OktaLoginHandler::class, 'apply_group_restriction', true);
         Config::inst()->set(OktaLoginHandler::class, 'site_restricted_groups', $restrictedGroups);
 
@@ -363,12 +368,12 @@ class OAuthTest extends SapphireTest
         $this->assertEmpty($message);
         $this->assertNull($code);
 
-        $member = Member::get()->filter('Email', 'sandy.oktauser@example.com')->first();
+        $member = Member::get()->filter('OktaProfileLogin', $user['preferred_username'])->first();
         $this->assertTrue($member && $member->isInDB());
 
         $passport = Passport::get()->filter([
             'OAuthSource' => $oauthsource,
-            'Identifier' => "some-okta-user-id"
+            'Identifier' => $user['sub']
         ])->first();
 
         $this->assertTrue($passport && $passport->isInDB());
@@ -395,7 +400,8 @@ class OAuthTest extends SapphireTest
             'some-group'
         ];
 
-        Config::inst()->set(OktaLoginHandler::class, 'link_existing_member', true);
+        Config::inst()->set(OktaLinker::class, 'update_existing_member', true);
+        Config::inst()->set(OktaLinker::class, 'link_via_email', false);
         Config::inst()->set(OktaLoginHandler::class, 'apply_group_restriction', true);
         Config::inst()->set(OktaLoginHandler::class, 'site_restricted_groups', $restrictedGroups);
 
@@ -412,7 +418,7 @@ class OAuthTest extends SapphireTest
         $this->assertEmpty($message);
         $this->assertNull($code);
 
-        $correctMember = Member::get()->filter('Email', $correct['email'])->first();
+        $correctMember = Member::get()->filter('OktaProfileLogin', $correct['preferred_username'])->first();
         $this->assertTrue($correctMember && $correctMember->isInDB());
 
         $correctPassport = Passport::get()->filter([
@@ -429,6 +435,7 @@ class OAuthTest extends SapphireTest
         $session->set('oauth2.provider', $oauthsource);
         $conflicting = $this->getConflictingUser();
 
+        // assert that an email conflict will occur
         $this->assertEquals($conflicting['email'], $correct['email']);
 
         $result = $this->setupForLoginHandler($session, $conflicting);
@@ -436,6 +443,17 @@ class OAuthTest extends SapphireTest
         // handle token for user with conflicting email address
         $handler = new OktaLoginHandler();
         $conflictingResponse = $handler->handleToken($result['accessToken'], $result['provider']);
+
+        $this->assertInstanceOf(HTTPResponse::class, $conflictingResponse);
+        $this->assertEquals(302, $conflictingResponse->getStatusCode(), "Conflicting response failure should be a 302 redirect");
+
+        $message = $session->get('Security.Message.message');
+        $type = $session->get('Security.Message.type');
+
+        $this->assertEquals("warning", $type);
+
+        $conflictingMember = Member::get()->filter('OktaProfileLogin', $conflicting['preferred_username'])->first();
+        $this->assertFalse( $conflictingMember && $conflictingMember->isInDB() );
 
         // check correct passport hasn't changed for correct user
         $postCorrectPassport = Passport::get()->filter([
@@ -451,25 +469,12 @@ class OAuthTest extends SapphireTest
             'OAuthSource' => $oauthsource,
             'Identifier' => $conflicting['sub']
         ])->first();
-        $this->assertNotEmpty($conflictingPassport->ID);
-
-        // not the same passport as the the correct user passport
-        $this->assertNotEquals($conflictingPassport->ID, $postCorrectPassport->ID);
+        $this->assertNull($conflictingPassport);
 
         // check member hasn't changed
-        $checkMember = Member::get()->filter('Email', $correct['email'])->first();
+        $checkMember = Member::get()->filter('OktaProfileLogin', $correct['preferred_username'])->first();
         $this->assertEquals($checkMember->ID, $correctMember->ID);
 
-        // verify member different
-        $this->assertNotEquals($postCorrectPassport->MemberID, $conflictingPassport->MemberID);
-
-        $message = $session->get('Security.Message.message');
-        $type = $session->get('Security.Message.type');
-
-        $code = $handler->getLoginFailureCode();
-
-        $this->assertEmpty($message);
-        $this->assertNull($code);
     }
 
     /**
@@ -477,6 +482,12 @@ class OAuthTest extends SapphireTest
      */
     public function testOktaLoginHandlerGroupAssignment()
     {
+
+        Config::inst()->set(OktaLinker::class, 'update_existing_member', true);
+        Config::inst()->set(OktaLinker::class, 'link_via_email', false);
+        Config::inst()->set(OktaLoginHandler::class, 'apply_group_restriction', true);
+        Config::inst()->set(OktaLoginHandler::class, 'site_restricted_groups', []);
+
         $session = new Session([]);
         $userWithGroups = $this->getAssignGroupTestUser();
 
@@ -485,7 +496,8 @@ class OAuthTest extends SapphireTest
 
         // create a local Member, assign some groups
         $member = Member::create();
-        $member->Email = $userWithGroups['preferred_username'];
+        $member->Email = $userWithGroups['email'];
+        $member->OktaProfileLogin = $userWithGroups['preferred_username'];
         $member->write();
 
         $inst = Group::create();
@@ -526,7 +538,8 @@ class OAuthTest extends SapphireTest
             'group 1'
         ];
 
-        Config::inst()->set(OktaLoginHandler::class, 'link_existing_member', true);
+        Config::inst()->set(OktaLinker::class, 'update_existing_member', true);
+        Config::inst()->set(OktaLinker::class, 'link_via_email', false);
         Config::inst()->set(OktaLoginHandler::class, 'apply_group_restriction', true);
         Config::inst()->set(OktaLoginHandler::class, 'site_restricted_groups', $restrictedGroups);
 
@@ -544,7 +557,7 @@ class OAuthTest extends SapphireTest
         $this->assertEmpty($message);
         $this->assertNull($code);
 
-        $postLoginMember = Member::get()->filter('Email', $userWithGroups['preferred_username'])->first();
+        $postLoginMember = Member::get()->filter('OktaProfileLogin', $userWithGroups['preferred_username'])->first();
         $this->assertTrue($postLoginMember && $postLoginMember->isInDB());
         $this->assertEquals($member->ID, $postLoginMember->ID);
 
@@ -569,12 +582,19 @@ class OAuthTest extends SapphireTest
      */
     public function testOktaLoginHandlerNoGroupAssignment()
     {
+
+        Config::inst()->set(OktaLinker::class, 'update_existing_member', true);
+        Config::inst()->set(OktaLinker::class, 'link_via_email', false);
+        Config::inst()->set(OktaLoginHandler::class, 'apply_group_restriction', true);
+        Config::inst()->set(OktaLoginHandler::class, 'site_restricted_groups', []);
+
         $session = new Session([]);
         $userWithNoGroups = $this->getAssignNoGroupTestUser();
 
         // create a local Member, assign some groups
         $member = Member::create();
-        $member->Email = $userWithNoGroups['preferred_username'];
+        $member->Email =
+        $member->OktaProfileLogin = $userWithNoGroups['preferred_username'];
         $member->write();
 
         $inst = Group::create();
@@ -604,7 +624,8 @@ class OAuthTest extends SapphireTest
         $session->set('oauth2.provider', $oauthsource);
 
         // set configuration for no group restriction
-        Config::inst()->set(OktaLoginHandler::class, 'link_existing_member', true);
+        Config::inst()->set(OktaLinker::class, 'update_existing_member', true);
+        Config::inst()->set(OktaLinker::class, 'link_via_email', false);
         Config::inst()->set(OktaLoginHandler::class, 'apply_group_restriction', false);
         Config::inst()->set(OktaLoginHandler::class, 'site_restricted_groups', []);
 
@@ -622,7 +643,7 @@ class OAuthTest extends SapphireTest
         $this->assertEmpty($message);
         $this->assertNull($code);
 
-        $postLoginMember = Member::get()->filter('Email', $userWithNoGroups['preferred_username'])->first();
+        $postLoginMember = Member::get()->filter('OktaProfileLogin', $userWithNoGroups['preferred_username'])->first();
         $this->assertTrue($postLoginMember && $postLoginMember->isInDB());
         $this->assertEquals($member->ID, $postLoginMember->ID);
 

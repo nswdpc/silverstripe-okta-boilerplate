@@ -27,8 +27,6 @@ Bigfork\SilverStripeOAuth\Client\Authenticator\Authenticator:
 Bigfork\SilverStripeOAuth\Client\Mapper\GenericMemberMapper:
   mapping:
     'Okta':
-      # Map the Member fields to the Okta provider methods eg. getPreferredUsername()
-      'Email': 'PreferredUsername'
       'FirstName': 'FirstName'
       'Surname': 'Surname'
 ---
@@ -48,8 +46,14 @@ After:
 ---
 # Oauth login handler
 NSWDPC\Authentication\Okta\OktaLoginHandler:
-  link_existing_member: true
   apply_group_restriction: true
   site_restricted_groups:
     - 'An Okta group the user has to be in'
+---
+Name: app-okta-linker
+After:
+  - silverstripe-okta-linker
+---
+NSWDPC\Authentication\Okta\OktaLinker:
+  update_existing_member: true
 ```

@@ -83,38 +83,6 @@ class OktaAppUserSync extends OktaAppClient
     }
 
     /**
-     * Retrieve a member record via userUsername
-     * @param string username (as email)
-     */
-    protected function getMemberByEmail(string $userUsername) : ?Member {
-        // Retrieve member based on matching username
-        $member = Member::get()->filter('Email', $userUsername)->first();
-        return $member ? $member : null;
-    }
-
-    /**
-     * Retrieve or create a member record via userUsername
-     * @param string username (as email)
-     */
-    protected function findOrCreateMemberByEmail(string $userUsername) : Member {
-        $member = $this->getMemberByEmail($userUsername);
-        if(!$member) {
-            $member = Member::create([
-                'Email' => $userUsername
-            ]);
-            if($this->dryRun) {
-                Logger::log("AppUser would create Member #{$member->ID}", "DEBUG");
-            } else {
-                $member->write();
-                Logger::log("AppUser created Member #{$member->ID}", "DEBUG");
-            }
-        } else {
-            Logger::log("AppUser found Member #{$member->ID}", "DEBUG");
-        }
-        return $member;
-    }
-
-    /**
      * Process a single app user return in the collection
      * AppUser profile vs User profile
      * https://help.okta.com/en/prod/Content/Topics/users-groups-profiles/usgp-about-profiles.htm
@@ -147,14 +115,23 @@ class OktaAppUserSync extends OktaAppClient
         Logger::log("AppUser.id={$appUser->getId()} User.id={$user->getId()} scope={$appUserScope}", "DEBUG");
 
         // @var string
-        $userUsername = $userProfile->getLogin();
-        if (!$userUsername) {
+        $userLogin = $userProfile->getLogin();
+        if (!$userLogin) {
             throw new OktaAppUserSyncException("AppUser {$userId} profile has no username value");
         }
 
+        // @var string
+        $userEmail = $userProfile->getEmail();
+        if (!$userLogin) {
+            throw new OktaAppUserSyncException("AppUser {$userId} profile has no email value");
+        }
+
+        $oktaLinker = new OktaLinker();
 
         $createUser = $this->config()->get('create_users');
         if(!$createUser) {
+
+            Logger::log("AppUser create users off - passport check", "DEBUG");
 
             $passport = Passport::get()->filter([
                 'Identifier' => $userId,
@@ -165,45 +142,26 @@ class OktaAppUserSync extends OktaAppClient
                 throw new OktaAppUserSyncException("AppUser {$userId} has no Okta passport - not signed in yet?");
             }
 
-            $member = $this->getMemberByEmail($userUsername);
+            // find a new member, do not create a new one if none found
+            $member = $oktaLinker->linkViaUserProfile($userProfile, false);
             if (!$member) {
-                throw new OktaAppUserSyncException("AppUser {$userId} has no matching Member record using {$userUsername}");
+                throw new OktaAppUserSyncException("AppUser {$userId} has no matching Member record using login={$userLogin},email={$userEmail}");
             }
 
-            if ($passport->MemberID != $member->ID) {
+            if ($member->isInDB() && ($passport->MemberID != $member->ID)) {
                 throw new OktaAppUserSyncException("AppUser {$userId} Passport.MemberID #{$passport->MemberID}/Member #{$member->ID} - passport found mismatch with member found");
             }
 
         } else {
             Logger::log("AppUser create users on - bypass passport check", "DEBUG");
-            $member = $this->findOrCreateMemberByEmail($userUsername);
-        }
-
-        // Allowed map fields, @todo use MemberMapper similar to OAuth
-        // at this point we just retrieve name from Okta and save that to keep in sync
-        $mapping = [
-            'FirstName' => $this->sanitiseProfileValue($userProfile->getFirstName()),
-            'Surname' => $this->sanitiseProfileValue($userProfile->getLastName())
-        ];
-
-        // Apply profile fields to the Member record
-        foreach ($mapping as $memberField => $fieldValue) {
-            Logger::log("AppUser.id={$userId} mapping {$memberField} to {$fieldValue}", "DEBUG");
-
-            if (empty($fieldValue)) {
-                continue;
-            }
-
-            if ($this->dryRun) {
-                $this->report[$userId][] = "Member {$member->ID} set field {$memberField} to Okta value {$fieldValue}";
-            } else {
-                $member->{$memberField} = $fieldValue;
+            $member = $oktaLinker->linkViaUserProfile($userProfile, true);
+            if (!$member) {
+                throw new OktaAppUserSyncException("AppUser {$userId} could not link/create member from profile login={$userLogin},email={$userEmail}");
             }
         }
 
         if ($this->dryRun) {
             $this->report[$userId][] = "Would write profile for Member #{$member->ID}";
-        //$this->report[$userId][] = print_r($userProfile, true);
         } else {
             $member->OktaProfile = $userProfile->__toString();
             $member->OktaLastSync = $this->start;

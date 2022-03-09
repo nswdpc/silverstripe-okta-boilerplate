@@ -14,3 +14,8 @@ Name: silverstripe-okta-support-assistance
 ---
 NSWDPC\Authentication\Okta\AccessSupportAssistance:
   assistance_link: ''
+---
+Name: silverstripe-okta-linker
+---
+NSWDPC\Authentication\Okta\OktaLinker:
+  update_existing_member: true

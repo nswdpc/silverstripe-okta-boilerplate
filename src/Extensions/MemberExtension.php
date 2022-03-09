@@ -13,6 +13,7 @@ use SilverStripe\Forms\LiteralField;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
 use SilverStripe\Security\PermissionProvider;
+use SilverStripe\Security\Security;
 
 /**
  * Updates member view in administration area
@@ -25,6 +26,8 @@ class MemberExtension extends DataExtension implements PermissionProvider
      */
     private static $db = [
         'OktaProfile' => 'MultiValueField',
+        // see https://developer.okta.com/docs/reference/api/users/#profile-object
+        'OktaProfileLogin' => 'Varchar(100)',
         'OktaLastSync' => 'DBDatetime'
     ];
 
@@ -32,7 +35,13 @@ class MemberExtension extends DataExtension implements PermissionProvider
      * @var array
      */
     private static $indexes = [
-        'OktaLastSync' => true
+        'OktaLastSync' => true,
+        'OktaProfileLogin' => [
+            'type' => 'unique',
+            'columns' => [
+                'OktaProfileLogin'
+            ]
+        ]
     ];
 
     /**
@@ -74,6 +83,7 @@ class MemberExtension extends DataExtension implements PermissionProvider
             'Passports',
             'Okta',
             'OAuthSource',
+            'OktaProfileLogin',
             'OktaProfile',
             'OktaLastSync'
         ]);
@@ -87,10 +97,14 @@ class MemberExtension extends DataExtension implements PermissionProvider
             $profileFieldsValue = '';
         }
 
-        if( Permission::checkMember($this->owner, 'ADMIN') ) {
+        if( Permission::checkMember( Security::getCurrentUser(), 'ADMIN') ) {
             $fields->addFieldToTab(
                 'Root.Okta',
                 CompositeField::create(
+                    ReadonlyField::create(
+                        'OktaProfileLogin',
+                        _t('OKTA.PROFILE_LOGIN', 'Okta login')
+                    ),
                     LabelField::create(
                         'OktaProfileLabel',
                         _t('OKTA.PROFILE_FIELD_TITLE', 'Latest profile data')
