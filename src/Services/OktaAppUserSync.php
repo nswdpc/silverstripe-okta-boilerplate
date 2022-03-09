@@ -40,9 +40,6 @@ class OktaAppUserSync extends OktaAppClient
             Logger::log("OktaApplicationSynchroniser::run in dryRun mode", "DEBUG");
         }
 
-        // create/configure the Okta client
-        $client = $this->getClient();
-
         $this->getAppUsers($limit, $queryOptions);
 
         $dt = new \DateTime();
@@ -84,16 +81,16 @@ class OktaAppUserSync extends OktaAppClient
 
     /**
      * Process a single app user return in the collection
-     * AppUser profile vs User profile
-     * https://help.okta.com/en/prod/Content/Topics/users-groups-profiles/usgp-about-profiles.htm
+     * AppUser profile vs User profile: https://help.okta.com/en/prod/Content/Topics/users-groups-profiles/usgp-about-profiles.htm
      * @param \Okta\Applications\AppUser $appUser
      * @throws OktaAppUserSyncException
      */
     protected function processAppUser(\Okta\Applications\AppUser $appUser) : Member
     {
 
-        // Get the user record, incl Okta userId
-        $user = $this->getUser($appUser);
+        // Get the user record, via Okta App userId
+        // https://developer.okta.com/docs/reference/api/apps/#application-user-properties
+        $user = $this->getUser($appUser->getId());
         $userId = $user->getId();
 
         // Collect user groups
@@ -163,7 +160,7 @@ class OktaAppUserSync extends OktaAppClient
         if ($this->dryRun) {
             $this->report[$userId][] = "Would write profile for Member #{$member->ID}";
         } else {
-            $member->OktaProfile = $userProfile->__toString();
+            $member->OktaProfile->setValue( $userProfile->__toString() );
             $member->OktaLastSync = $this->start;
             $member->write();
         }
@@ -240,4 +237,5 @@ class OktaAppUserSync extends OktaAppClient
         }
         return $deleted;
     }
+
 }

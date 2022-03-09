@@ -6,7 +6,7 @@ use SilverStripe\Control\HTTPRequest;
 use SilverStripe\Security\Member;
 
 /**
- * Search for users in Okta via Okta API
+ * Search for users in an Okta Application via Okta API
  * @author James
  */
 class OktaAppUserSearch extends OktaAppClient
@@ -22,8 +22,6 @@ class OktaAppUserSearch extends OktaAppClient
     public function search(array $queryOptions) : ?\Okta\Applications\Collection {
         // Initial set
         $this->appUsers = new \Okta\Applications\Collection([]);
-        // create/configure the Okta client
-        $client = $this->getClient();
         // options for the search
         $limit = $this->defaultLimit;
         // ensure values are correctly encoded
