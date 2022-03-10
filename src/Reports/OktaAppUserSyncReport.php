@@ -4,6 +4,7 @@ namespace SilverStripe\CMS\Reports;
 
 use SilverStripe\Admin\SecurityAdmin;
 use SilverStripe\Control\Controller;
+use SilverStripe\Forms\CheckboxField;
 use SilverStripe\Forms\DropdownField;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\DateField;
@@ -38,9 +39,15 @@ class OktaAppUserSyncReport extends Report
      */
     public function sourceRecords($params, $sort, $limit)
     {
+
         $list = Member::get()->sort([ 'OktaLastSync' => 'DESC' ]);
         if (empty($params['OktaLastSyncFilter'])) {
             $params['OktaLastSyncFilter'] = 'recent';
+        }
+
+        // filter those members marked as unlinked
+        if(!empty($params['WasUnlinkedFromOkta'])) {
+            $list = $list->where('OktaUnlinkedWhen IS NOT NULL');
         }
 
         // filter the list
@@ -90,7 +97,7 @@ class OktaAppUserSyncReport extends Report
                     'recent' => _t('OKTA.SYNC_DATE_RECENT', 'Sync in the last 2 days'),
                     'range' =>  _t('OKTA.SYNC_DATE_RECENT', 'Select a date range (below)')
                 ]
-            ),
+            )->setEmptyString(''),
             DateField::create(
                 'OktaLastSyncStart',
                 _t('OKTA.SYNC_DATE_LOWER_BOUND', 'Last sync is on or after this date')
@@ -98,6 +105,10 @@ class OktaAppUserSyncReport extends Report
             DateField::create(
                 'OktaLastSyncEnd',
                 _t('OKTA.SYNC_DATE_UPPER_BOUND', 'Last sync is on or before this date')
+            ),
+            CheckboxField::create(
+                'WasUnlinkedFromOkta',
+                _t('OKTA.SYNC_WAS_UNLINKED', 'The member was unlinked from Okta')
             )
         );
     }

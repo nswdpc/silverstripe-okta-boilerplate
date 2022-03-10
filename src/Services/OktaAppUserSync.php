@@ -35,7 +35,7 @@ class OktaAppUserSync extends OktaAppClient
     public function run(bool $dryRun = false, int $limit = 50, array $queryOptions = []) : int
     {
         $this->success = $this->fail = [];
-        $this->dryRun = $dryRun;
+        $this->setIsDryRun($dryRun);
         if ($this->dryRun) {
             Logger::log("OktaApplicationSynchroniser::run in dryRun mode", "DEBUG");
         }
@@ -46,7 +46,45 @@ class OktaAppUserSync extends OktaAppClient
         $successCount = $this->processAppUsers($this->appUsers);
         $failCount = count($this->fail);
         Logger::log("OKTA: processUsers complete, {$successCount} users successfully synced, {$failCount} fails", "INFO");
+        $unlinkedMembers = $this->handleUnlinkedMembers();
+        Logger::log("OKTA: processUsers {$unlinkedMembers} unlinked member(s) found", "INFO");
         return $successCount;
+    }
+
+    /**
+     * Remove Okta values from members no longer linked to the configured application
+     * Based on the value of their last sync date in this operation
+     * @return int the number of Members no longer found in the configured application
+     */
+    protected function handleUnlinkedMembers() : int {
+        if($members = $this->getUnlinkedMembers($this->start)) {
+            foreach($members as $member) {
+                if(!$this->dryRun) {
+                    $passports = $member->Passports()->filter(['OAuthSource' => 'Okta']);
+                    foreach($passports as $passport) {
+                        $passport->delete();
+                    }
+                    // Members without permissions are removed
+                    $permissions = Permission::permissions_for_member($member);
+                    if (empty($permissions)) {
+                        Logger::log("OKTA: handleUnlinkedMembers removing unlinked member #{$member->ID}", "NOTICE");
+                        $member->delete();
+                    } else {
+                        // Unlinked Okta values
+                        Logger::log("OKTA: handleUnlinkedMembers removing okta values from member #{$member->ID}", "INFO");
+                        $member->OktaLastSync = '';
+                        $member->OktaUnlinkedWhen = $this->startFormatted();
+                        $member->OktaProfile->setValue('');
+                        $member->write();
+                    }
+                } else {
+                    $this->report["Member #{$member->ID}"][] = "Not linked to application";
+                }
+            }
+            return $members->count();
+        } else {
+            return 0;
+        }
     }
 
     /**
@@ -161,6 +199,7 @@ class OktaAppUserSync extends OktaAppClient
         } else {
             $member->OktaProfile->setValue( $userProfile->__toString() );
             $member->OktaLastSync = $this->startFormatted();
+            $member->OktaUnlinkedWhen = null;// remove any previous value, if the user was unlinked
             $member->write();
         }
 
@@ -187,57 +226,6 @@ class OktaAppUserSync extends OktaAppClient
         }
 
         return $member;
-    }
-
-    /**
-     * Returns a list of stale members, which could be empty!
-     * Members with a CMS_ACCESS permission are not returned
-     * @return \SilverStripe\ORM\ArrayList
-     */
-    public function getStaleOktaMembers(int $limit = 0) : ArrayList
-    {
-        $membersToRemove = ArrayList::create();
-        $days = intval(Config::inst()->get(Member::class, 'okta_lockout_after_days'));
-        if ($days <= 0) {
-            return $membersToRemove;
-        }
-        $threshold = new \DateTime();
-        $threshold->modify("-{$days} day");
-        $datetime = $threshold->format('Y-m-d') . 'T00:00:00';
-        $members = Member::get()
-                    ->where(
-                        "OktaLastSync <> ''"
-                        . " AND OktaLastSync IS NOT NULL"
-                        . " AND OktaLastSync < '" . Convert::raw2sql($datetime) . "'"
-                    )->sort('OktaLastSync ASC');
-        foreach ($members as $member) {
-            if (!Permission::checkMember($member, 'CMS_ACCESS')) {
-                $membersToRemove->push($member);
-            }
-        }
-        if($limit > 0) {
-            $membersToRemove = $membersToRemove->limit($limit);
-        }
-        return $membersToRemove;
-    }
-
-    /**
-     * Remove any member that is consider a stale Okta user
-     * @param bool $dryRun when true, only return the user count delete total, don't actually delete Member records
-     * @return int
-     */
-    public function removeStaleOktaMembers($dryRun = false) : int
-    {
-        $list = $this->getStaleOktaMembers();
-        $deleted = 0;
-        foreach ($list as $member) {
-            // remove member and passports (at the least)
-            if (!$dryRun) {
-                $member->delete();
-            }
-            $deleted++;
-        }
-        return $deleted;
     }
 
 }

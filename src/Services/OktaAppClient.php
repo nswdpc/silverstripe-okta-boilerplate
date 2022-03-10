@@ -2,7 +2,10 @@
 
 namespace NSWDPC\Authentication\Okta;
 
+use SilverStripe\Core\Convert;
 use SilverStripe\Core\Config\Config;
+use SilverStripe\Security\Member;
+use SilverStripe\ORM\DataList;
 
 /**
  * Class providing common methods for Okta Application search, sync etc
@@ -106,6 +109,54 @@ abstract class OktaAppClient extends OktaClient
             }
         }
         return false;
+    }
+
+    /**
+     * Get a list of members with an OktaLastSync before the provided DateTime
+     * AND who are no longer linked to the configured Okta application clientId
+     * For instance if a user was removed from the application, they will stop syncing
+     * and their related Member record will be picked up here
+     * @param DateTime check for members last sync'd before this datetime
+     * @return DataList|null if null, there are no stale members to unlink
+     */
+    protected function getUnlinkedMembers(\DateTime $before) : ?DataList {
+        // Members who have been sync'd
+        $members = $this->getSyncedMembers();
+        // last synced before the provided DateTime
+        $members = $members->filter([ "OktaLastSync:LessThan" => $before->format('Y-m-d H:i:s') ]);
+        $members = $members->setQueriedColumns(['OktaProfileLogin','OktaLastSync']);
+        if($members->count() == 0) {
+            // there are no stale members to unlink
+            return null;
+        }
+        $clientId = $this->getClientId();
+        $userResource = $this->getUserResource();
+        $applicationResource = $this->getApplicationResource();
+        $unlinkedMemberIds = [];
+        foreach($members as $member) {
+            try {
+                $identifier = $member->OktaProfileLogin;
+                $user = $userResource->get($identifier);
+                if($user) {
+                    $userId = $user->getId();
+                    try {
+                        $appUser = $applicationResource->getApplicationUser($userId);
+                    } catch (\Exception $e) {
+                        // mark this user as being unlinked
+                        $unlinkedMemberIds[] = $member->ID;
+                    }
+                }
+            } catch (\Exception $e) {
+                // User not found, ignore
+            }
+        }
+        $unlinkedMembers = null;
+        if(!empty($unlinkedMemberIds)) {
+            // return the subset of the stale members
+            // the segment not returned still exist in the application
+            $unlinkedMembers = $members->filter(['ID' => $unlinkedMemberIds]);
+        }
+        return $unlinkedMembers;
     }
 
 }

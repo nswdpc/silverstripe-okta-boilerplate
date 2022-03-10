@@ -3,6 +3,8 @@
 namespace NSWDPC\Authentication\Okta;
 
 use SilverStripe\Core\Config\Configurable;
+use SilverStripe\ORM\DataList;
+use SilverStripe\Security\Member;
 
 /**
  * Class providing common methods for accessing Okta resources
@@ -62,11 +64,20 @@ abstract class OktaClient
 
 
     /**
-     * Create the Okta client immediately
+     * Set up Okta client and parameters
      */
-    public function __construct() {
+    public function __construct($isDryRun = false) {
         $this->start = new \DateTime();
+        $this->setIsDryRun($isDryRun);
         $this->getClient();
+    }
+
+    /**
+     * Trigger whether operations make changes or report-only
+     */
+    public function setIsDryRun(bool $is) : self {
+        $this->dryRun = $is;
+        return $this;
     }
 
     /**
@@ -116,6 +127,23 @@ abstract class OktaClient
     public function getFailures() : array
     {
         return $this->fail;
+    }
+
+    /**
+     * Return members with an OktaLoginProfile value
+     */
+    final protected function getLinkedMembers() : DataList {
+        return Member::get()->exclude([ "OktaProfileLogin" => ["",null] ]);
+    }
+
+    /**
+     * Return members with an OktaLoginProfile value who have a OktaLastSync datetime
+     */
+    final protected function getSyncedMembers() : DataList {
+        $members = $this->getLinkedMembers();
+        $members = $members->exclude([ "OktaLastSync" => ["",null] ]);
+        $members = $members->sort('OktaLastSync ASC');
+        return $members;
     }
 
     /**

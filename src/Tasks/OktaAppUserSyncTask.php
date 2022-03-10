@@ -32,7 +32,7 @@ class OktaAppUserSyncTask extends BuildTask
             $commitChanges = $request->getVar('commit');
             $limit = $request->getVar('limit');
             $dryRun = ($commitChanges != 1);
-            $sync = new OktaAppUserSync();
+            $sync = new OktaAppUserSync($dryRun);
             $sync->run($dryRun, ($limit > 0 ? $limit : 50));
 
             if ($dryRun) {

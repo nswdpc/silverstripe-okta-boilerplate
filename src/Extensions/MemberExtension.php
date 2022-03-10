@@ -28,7 +28,8 @@ class MemberExtension extends DataExtension implements PermissionProvider
         'OktaProfile' => 'MultiValueField',
         // see https://developer.okta.com/docs/reference/api/users/#profile-object
         'OktaProfileLogin' => 'Varchar(100)',
-        'OktaLastSync' => 'DBDatetime'
+        'OktaLastSync' => 'DBDatetime',
+        'OktaUnlinkedWhen' => 'DBDatetime'
     ];
 
     /**
@@ -36,6 +37,7 @@ class MemberExtension extends DataExtension implements PermissionProvider
      */
     private static $indexes = [
         'OktaLastSync' => true,
+        'OktaUnlinkedWhen' => true,
         'OktaProfileLogin' => [
             'type' => 'unique',
             'columns' => [
@@ -85,7 +87,8 @@ class MemberExtension extends DataExtension implements PermissionProvider
             'OAuthSource',
             'OktaProfileLogin',
             'OktaProfile',
-            'OktaLastSync'
+            'OktaLastSync',
+            'OktaUnlinkedWhen'
         ]);
 
         try {
@@ -115,18 +118,24 @@ class MemberExtension extends DataExtension implements PermissionProvider
                         . htmlspecialchars($profileFieldsValue)
                         . '</pre>'
                     ),
-                    ReadonlyField::create(
-                        'OktaLastSync',
-                        _t('OKTA.LAST_SYNC_DATETIME', 'Last sync. date'),
-                        $this->owner->OktaLastSync
-                    ),
-                    CheckboxField::create(
-                        'OktaLastSyncClear',
-                        _t(
-                            'OKTA.CLEAR_SYNC_DATETIME',
-                            'Clear this value'
+                    CompositeField::create(
+                        ReadonlyField::create(
+                            'OktaLastSync',
+                            _t('OKTA.LAST_SYNC_DATETIME', 'Last sync. date'),
+                            $this->owner->OktaLastSync
+                        ),
+                        CheckboxField::create(
+                            'OktaLastSyncClear',
+                            _t(
+                                'OKTA.CLEAR_SYNC_DATETIME',
+                                'Clear this value'
+                            )
                         )
-                    )
+                    ),
+                    ReadonlyField::create(
+                        'OktaUnlinkedWhen',
+                        _t('OKTA.UNLINKED_DATETIME', 'When this member was unlinked from an Okta profile')
+                    ),
                 )->setTitle(
                     _t('OKTA.OKTA_HEADING', 'Okta')
                 )
