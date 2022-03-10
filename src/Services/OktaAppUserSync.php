@@ -195,7 +195,7 @@ class OktaAppUserSync extends OktaAppClient
      * Members with a CMS_ACCESS permission are not returned
      * @return \SilverStripe\ORM\ArrayList
      */
-    public function getStaleOktaMembers() : ArrayList
+    public function getStaleOktaMembers(int $limit = 0) : ArrayList
     {
         $membersToRemove = ArrayList::create();
         $days = intval(Config::inst()->get(Member::class, 'okta_lockout_after_days'));
@@ -210,11 +210,14 @@ class OktaAppUserSync extends OktaAppClient
                         "OktaLastSync <> ''"
                         . " AND OktaLastSync IS NOT NULL"
                         . " AND OktaLastSync < '" . Convert::raw2sql($datetime) . "'"
-                    );
+                    )->sort('OktaLastSync ASC');
         foreach ($members as $member) {
             if (!Permission::checkMember($member, 'CMS_ACCESS')) {
                 $membersToRemove->push($member);
             }
+        }
+        if($limit > 0) {
+            $membersToRemove = $membersToRemove->limit($limit);
         }
         return $membersToRemove;
     }
