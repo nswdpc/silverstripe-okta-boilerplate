@@ -74,7 +74,7 @@ class OktaAppUserSync extends OktaAppClient
                         Logger::log("OKTA: handleUnlinkedMembers removing okta values from member #{$member->ID}", "INFO");
                         $member->OktaLastSync = '';
                         $member->OktaUnlinkedWhen = $this->startFormatted();
-                        $member->OktaProfile->setValue('');
+                        $member->OktaProfile = null;
                         $member->write();
                     }
                 } else {
@@ -197,7 +197,7 @@ class OktaAppUserSync extends OktaAppClient
         if ($this->dryRun) {
             $this->report[$userId][] = "Would write profile for Member #{$member->ID}";
         } else {
-            $member->OktaProfile->setValue( $userProfile->__toString() );
+            $member->OktaProfile = $userProfile;
             $member->OktaLastSync = $this->startFormatted();
             $member->OktaUnlinkedWhen = null;// remove any previous value, if the user was unlinked
             $member->write();

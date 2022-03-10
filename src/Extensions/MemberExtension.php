@@ -5,6 +5,7 @@ namespace NSWDPC\Authentication\Okta;
 use SilverStripe\ORM\DataExtension;
 use SilverStripe\ORM\ManyManyList;
 use SilverStripe\ORM\ValidationResult;
+use SilverStripe\ORM\FieldType\DBField;
 use SilverStripe\Forms\ReadonlyField;
 use SilverStripe\Forms\CompositeField;
 use SilverStripe\Forms\CheckboxField;
@@ -14,6 +15,7 @@ use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
 use SilverStripe\Security\PermissionProvider;
 use SilverStripe\Security\Security;
+use Symbiote\MultiValueField\ORM\FieldType\MultiValueField;
 
 /**
  * Updates member view in administration area
@@ -45,6 +47,13 @@ class MemberExtension extends DataExtension implements PermissionProvider
             ]
         ]
     ];
+
+    /**
+     * Default profile fields stored during sync
+     * See: https://developer.okta.com/docs/reference/api/users/#default-profile-properties
+     * @var array
+     */
+    private static $profile_fields = [];
 
     /**
      * Handle member okta operations on write
@@ -79,6 +88,36 @@ class MemberExtension extends DataExtension implements PermissionProvider
         }
     }
 
+    /**
+     * Setter for OktaProfile multivalue field
+     * The passed value can either be an array or an {@link \Okta\Users\UserProfile}
+     * The configuration value of `Silverstripe\Security\Members.profile_fields`
+     * determines what profile fields are stored
+     */
+    public function setOktaProfile($value) {
+        $profileValue = [];
+        $profileFields = $this->owner->config()->get('profile_fields');
+        if(!is_array($profileFields)) {
+            $profileFields = [];
+        }
+        if($value instanceof \Okta\Users\UserProfile) {
+            foreach($profileFields as $profileField) {
+                $profileValue[ $profileField ] = $value->getProperty($profileField);
+            }
+        } else if(is_array($value)) {
+            // Parameter is a key value pair
+            foreach($profileFields as $profileField) {
+                $profileValue[ $profileField ] = isset($value[ $profileField ]) ? $value[ $profileField ] : null;
+            }
+        }
+        asort($profileValue);
+        $this->owner->setField(
+            'OktaProfileValue',
+            DBField::create_field( MultiValueField::class, $profileValue )
+        );
+        return true;
+    }
+
     public function updateCmsFields($fields)
     {
         $fields->removeByName([
@@ -91,13 +130,16 @@ class MemberExtension extends DataExtension implements PermissionProvider
             'OktaUnlinkedWhen'
         ]);
 
+
         try {
-            $profileFieldsValue = json_encode(
-                $this->owner->OktaProfile->getValue(),
-                JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR
-            );
+            $profileFieldsValue = _t('OKTA.PROFILE_FIELD_TITLE', 'No Okta profile, yet');
+            if($this->owner->OktaProfile instanceof MultiValueField) {
+                $profileFieldsValue = json_encode(
+                    $this->owner->OktaProfile->getValue(),
+                    JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR
+                );
+            }
         } catch (\Exception $e) {
-            $profileFieldsValue = '';
         }
 
         if( Permission::checkMember( Security::getCurrentUser(), 'ADMIN') ) {

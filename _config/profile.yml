@@ -1,0 +1,27 @@
+---
+Name: silverstripe-okta-profile
+---
+# Specify profile fields to be stored in OktaProfile
+SilverStripe\Security\Member:
+  profile_fields:
+    - secondEmail
+    - honorificPrefix
+    - honorificSuffix
+    - title
+    - displayName
+    - nickName
+    - primaryPhone
+    - mobilePhone
+    - streetAddress
+    - city
+    - state
+    - zipCode
+    - countryCode
+    - preferredLanguage
+    - locale
+    - timezone
+    - organization
+    - division
+    - department
+    - managerId
+    - manager
