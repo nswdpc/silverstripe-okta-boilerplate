@@ -41,9 +41,9 @@ abstract class OktaClient
     protected $dryRun = false;
 
     /**
-     * @var string
+     * @var \DateTime
      */
-    protected $start = '';
+    protected $start = null;
 
     /**
      * @var HttpClient
@@ -65,6 +65,7 @@ abstract class OktaClient
      * Create the Okta client immediately
      */
     public function __construct() {
+        $this->start = new \DateTime();
         $this->getClient();
     }
 
@@ -78,6 +79,14 @@ abstract class OktaClient
             $this->client = ClientFactory::create($parameters, $this->httpClient);
         }
         return $this->client;
+    }
+
+    /**
+     * Format the operation start \DateTime into a string
+     * @return string
+     */
+    protected function startFormatted(string $format = "Y-m-d H:i:s") : string {
+        return $this->start->format($format);
     }
 
     /**

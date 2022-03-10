@@ -42,8 +42,7 @@ class OktaAppUserSync extends OktaAppClient
 
         $this->getAppUsers($limit, $queryOptions);
 
-        $dt = new \DateTime();
-        $this->start = $dt->format('Y-m-d H:i:s');
+        $this->start = new \DateTime();
         $successCount = $this->processAppUsers($this->appUsers);
         $failCount = count($this->fail);
         Logger::log("OKTA: processUsers complete, {$successCount} users successfully synced, {$failCount} fails", "INFO");
@@ -161,7 +160,7 @@ class OktaAppUserSync extends OktaAppClient
             $this->report[$userId][] = "Would write profile for Member #{$member->ID}";
         } else {
             $member->OktaProfile->setValue( $userProfile->__toString() );
-            $member->OktaLastSync = $this->start;
+            $member->OktaLastSync = $this->startFormatted();
             $member->write();
         }
 
