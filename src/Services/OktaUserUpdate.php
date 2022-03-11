@@ -51,7 +51,7 @@ class OktaUserUpdate extends OktaClient
             $dt = new \DateTime();
             $member->FirstName = $userProfile->getFirstName();
             $member->Surname = $userProfile->getLastName();
-            $member->OktaProfile = $userProfile;
+            $member->OktaProfileValue = $userProfile;
             $member->OktaLastSync = $dt->format('Y-m-d H:i:s');
             $member->write();
 
