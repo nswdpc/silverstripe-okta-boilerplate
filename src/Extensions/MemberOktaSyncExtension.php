@@ -21,7 +21,13 @@ class MemberOktaSyncExtension extends Extension
      */
     public function doOktaSync($data, $form) {
         $member = $this->owner->getRecord();
-        if($member instanceof Member) {
+        if(
+            ($member instanceof Member)
+            &&
+            $member->isInDB()
+            &&
+            $member->OktaProfileLogin
+        ) {
             try {
                 $client = new OktaUserUpdate();
                 $client->updateMember( $member );
@@ -51,11 +57,14 @@ class MemberOktaSyncExtension extends Extension
 
     /**
      * Add an Okta sync button to a Member record when the login value is available
+     * and the member exists
      */
     public function updateFormActions($actions) {
         $record = $this->owner->getRecord();
         if(
-            (($record instanceof Member) || $record->isInDB())
+            ($record instanceof Member)
+            &&
+            $record->isInDB()
             &&
             $record->OktaProfileLogin
         ) {
@@ -67,7 +76,14 @@ class MemberOktaSyncExtension extends Extension
                 )
             )->addExtraClass('btn-hide-outline font-icon-sync')
             ->setUseButtonTag(true);
-            $actions->insertAfter('action_doDelete', $action);
+
+            $hasDelete = $actions->fieldByName('action_doDelete');
+            if($hasDelete) {
+                $actions->insertAfter('action_doDelete', $action);
+            } else {
+                $actions->insertAfter('MajorActions', $action);
+            }
+
         }
     }
 }
