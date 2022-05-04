@@ -18,7 +18,12 @@ class OktaAppUserSyncJob extends AbstractQueuedJob
     /**
      * @var int
      */
-    private static $requeue_in_seconds = 300;
+    private static $requeue_in_seconds_after = 300;
+
+    /**
+     * @var int
+     */
+    private static $requeue_in_seconds = 86400;
 
     /**
      * Create the job with args
@@ -118,10 +123,20 @@ class OktaAppUserSyncJob extends AbstractQueuedJob
      */
     public function afterComplete()
     {
-        $seconds = (int)$this->config()->get('requeue_in_seconds');
-        if ($seconds <= 0) {
-            // default every 5mins if not configured
-            $seconds = 300;
+        if($this->cursor_after) {
+            // Cursor present, process next batch in a shorter time
+            $seconds = (int)$this->config()->get('requeue_in_seconds_after');
+            if ($seconds <= 0) {
+                // default every 5mins if not configured
+                $seconds = 300;
+            }
+        } else {
+            // No cursor, starting from the start again
+            $seconds = (int)$this->config()->get('requeue_in_seconds');
+            if ($seconds <= 0) {
+                // default every 1 day if not configured
+                $seconds = 86400;
+            }
         }
         $run_datetime = new \DateTime();
         $run_datetime->modify("+{$seconds} seconds");
