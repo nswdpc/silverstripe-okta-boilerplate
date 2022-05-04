@@ -94,16 +94,16 @@ class OktaLinker {
         // Attempt to find Member via Member.OktaProfileLogin
         $member = self::linkLoginLogin($userLogin);
         if($member) {
-            Logger::log("OktaLinker: found via linkLoginLogin login={$userLogin} email={$userEmail}", "DEBUG");
+            // Logger::log("OktaLinker: found via linkLoginLogin", "DEBUG");
         } else if(!$member && self::config()->get('link_via_email')) {
-            Logger::log("OktaLinker: link_via_email=on", "DEBUG");
+            // Logger::log("OktaLinker: link_via_email=on", "DEBUG");
             // Attempt to find Member via Member.Email
             $member = self::linkLoginEmail($userLogin);
         }
 
         if (!$member && $createIfNotExisting) {
             // Create a new Member if allowed
-            Logger::log("OktaLinker: create new member login={$userLogin} email={$userEmail}", "DEBUG");
+            // Logger::log("OktaLinker: create new member login={$userLogin} email={$userEmail}", "DEBUG");
             $member = Member::create();
             $member->FirstName = $userFirstName;
             $member->Surname = $userSurname;
@@ -113,7 +113,7 @@ class OktaLinker {
             $member->OAuthSource = null;
         } else if ($member && self::config()->get('update_existing_member')) {
             // Member exists, update base fields from the provider
-            Logger::log("OktaLinker: link current member login={$userLogin} email={$userEmail}", "DEBUG");
+            // Logger::log("OktaLinker: link current member login={$userLogin} email={$userEmail}", "DEBUG");
             $member->FirstName = $userFirstName;
             $member->Surname = $userSurname;
             $member->OAuthSource = null;
@@ -121,7 +121,7 @@ class OktaLinker {
                 $member->OktaProfileLogin = $userLogin;
             }
         }
-        Logger::log("OktaLinker: returning a " . ($member ? 'member' : 'null'), "DEBUG");
+        // Logger::log("OktaLinker: returning a " . ($member ? 'member' : 'null'), "DEBUG");
         return $member;
     }
 

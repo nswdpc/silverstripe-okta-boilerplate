@@ -77,7 +77,7 @@ class OktaLoginHandler extends LoginTokenHandler
             // Find or create a member from the token
             $member = $this->findOrCreateMember($token, $provider);
         } catch (ValidationException $e) {
-            Logger::log("Permission failure: " . $e->getMessage());
+            // Logger::log("Permission failure: " . $e->getMessage());
             return Security::permissionFailure(null, $e->getMessage());
         }
 
@@ -167,7 +167,6 @@ class OktaLoginHandler extends LoginTokenHandler
         }
         $this->loginFailureMessageId = $messageId;
         $this->loginFailureCode = $code;
-        Logger::log("setLoginFailureCode: {$code}");
     }
 
     /**
@@ -358,7 +357,7 @@ class OktaLoginHandler extends LoginTokenHandler
         /** @var Passport $passport */
         $passport = $this->getPassport($identifier, $providerName);
         if (!$passport) {
-            Logger::log("findOrCreateMember no passport");
+            // Logger::log("findOrCreateMember no passport");
             // Passport does not exist, create or find member linked to Okta username
             $member = $this->createMember($token, $provider);
             if (!$member) {
@@ -378,7 +377,7 @@ class OktaLoginHandler extends LoginTokenHandler
             // Assign member to created passport
             $passport = $this->createPassport($identifier, $providerName, $member);
         } else {
-            Logger::log("findOrCreateMember use current passport");
+            // Logger::log("findOrCreateMember use current passport");
             // Passport exists, create or find member linked to Okta username
             $member = $this->createMember($token, $provider);
             if (!$member) {

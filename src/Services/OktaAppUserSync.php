@@ -34,9 +34,11 @@ class OktaAppUserSync extends OktaAppClient
     {
         $this->success = $this->fail = [];
 
+        /*
         if ($this->dryRun) {
             Logger::log("OktaApplicationSynchroniser::run in dryRun mode", "DEBUG");
         }
+        */
 
         $this->getAppUsers($queryOptions);
 
@@ -91,7 +93,7 @@ class OktaAppUserSync extends OktaAppClient
      */
     protected function processAppUsers(\Okta\Applications\Collection $appUsers) : int
     {
-        Logger::log("OKTA: Processing appUser collection count=" . count($appUsers), "INFO");
+        // Logger::log("OKTA: Processing appUser collection count=" . count($appUsers), "INFO");
         foreach ($appUsers as $appUser) {
             try {
                 $userId = $appUser->getId();
@@ -144,7 +146,7 @@ class OktaAppUserSync extends OktaAppClient
 
         // @var string - either USER or GROUP
         $appUserScope = $appUser->getScope();
-        Logger::log("AppUser.id={$appUser->getId()} User.id={$user->getId()} scope={$appUserScope}", "DEBUG");
+        // Logger::log("AppUser.id={$appUser->getId()} User.id={$user->getId()} scope={$appUserScope}", "DEBUG");
 
         // @var string
         $userLogin = $userProfile->getLogin();
@@ -163,7 +165,7 @@ class OktaAppUserSync extends OktaAppClient
         $createUser = $this->config()->get('create_users');
         if(!$createUser) {
 
-            Logger::log("AppUser create users off - passport check", "DEBUG");
+            Logger::log("OKTA: create users off - passport check", "INFO");
 
             $passport = Passport::get()->filter([
                 'Identifier' => $userId,
@@ -185,7 +187,7 @@ class OktaAppUserSync extends OktaAppClient
             }
 
         } else {
-            Logger::log("AppUser create users on - bypass passport check", "DEBUG");
+            Logger::log("OKTA: create users on - bypass passport check", "INFO");
             $member = $oktaLinker->linkViaUserProfile($userProfile, true);
             if (!$member) {
                 throw new OktaAppUserSyncException("AppUser {$userId} could not link/create member from profile login={$userLogin},email={$userEmail}");
@@ -217,9 +219,11 @@ class OktaAppUserSync extends OktaAppClient
             } else {
                 // @var array
                 $createdOrUpdatedGroups = $this->oktaUserMemberGroupAssignment($groups, $member);
+                /*
                 foreach ($createdOrUpdatedGroups as $createdOrUpdatedGroup) {
                     Logger::log("AppUser.id={$userId} Member {$member->ID} is assigned local Okta group {$createdOrUpdatedGroup}", "DEBUG");
                 }
+                */
             }
         }
 
