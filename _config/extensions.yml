@@ -21,3 +21,6 @@ Bigfork\SilverStripeOAuth\Client\Form\LoginForm:
 SilverStripe\Security\Security:
   extensions:
     - 'NSWDPC\Authentication\Okta\SecurityControllerExtension'
+SilverStripe\Forms\GridField\GridFieldDetailForm_ItemRequest:
+  extensions:
+    - 'NSWDPC\Authentication\Okta\MemberOktaSyncExtension'

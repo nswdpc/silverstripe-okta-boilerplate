@@ -12,7 +12,7 @@ With this module you can
 + Authenticate an Okta user that may or may not be a Silverstripe member, via Okta OAuth
 + Save Okta groups returned for a user as Silverstripe group records, and link that user to them
 + Restrict Silverstripe login access to one or more configured Okta groups
-+ Optionally disallow/allow the default member authenticator
++ Optionally disallow/allow the default member authenticator alongside Okta auth
 
 ### Okta API
 
@@ -29,7 +29,7 @@ Use of the Okta API is optional.
 + An Okta OAuth service application configured with scopes granted
 + A valid groups claim to return some or all of the user's Okta groups
 + If you require multiple sites authenticating via Okta, a service application per site.
-+ A `clientId` and `clientSecret` for Oauth
++ A `clientId` and `clientSecret` for OAuth
 
 ### Okta API
 

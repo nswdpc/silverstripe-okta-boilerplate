@@ -38,20 +38,50 @@ Configuration adds this handler as the OAuth login handler when enabled. It over
 
 The following configuration values are available on the Okta Login Handler:
 
-### link_existing_member
-
-`bool` - if true, existing members will be linked to authenticated Okta users based on their email address. This is useful if you have an existing table of Silverstripe members.
-
-If false, authenticated Okta users whose email value exists for a current Silverstripe member will not be able to complete the sign-in process unless they have a Passport record linked to that member.
-
-If you are switching to Okta authentication and the Okta user.email + Silverstripe Member.Email are owned by the same person, this can be set to true.
-
 ### apply_group_restriction
 
-`bool` - whether to further restrict access based on the Okta groups returned for an authenticate user. When false, any user authenticated by your Okta OAuth app may gain access. You can control user access to the app via the Okta administration dashboard.
++ Value: true|false
++ Default: true
+
+Whether to further restrict access based on the Okta groups returned for an authenticated user. When false, any user authenticated by your Okta OAuth app may gain access. You can control which users are assigned to the Okta Application via the Okta Administration dashboard.
 
 ### site_restricted_groups
 
-`array` - Okta group name.
++ Value: array
++ Default: []
+
+An array of Okta group names.
 
 The site can specify these groups. Okta users authenticating must exist in all groups specified. If `apply_group_restriction` is false, this value is ignored.
+
+## Okta Linker
+
+### update_existing_member
+
+> Previously `NSWDPC\Authentication\Okta\OktaLoginHandler.link_existing_member`)
+
++ Value: true|false
++ Default: true
+
+If true, existing members will be linked to authenticated Okta users based on their `Member.OktaProfileLogin` value. This is useful if you have an existing table of Silverstripe members.
+
+If false, authenticated Okta users who have a matching Member record will have the following base Member fields updated from the Okta profile returned:
+
++ FirstName
++ Surname
++ Email (when a new member is created)
+
+### link_via_email
+
++ Value: true|false
++ Default: false
+
+Prior to setting this to true, read: https://developer.okta.com/docs/reference/api/oidc/#scope-dependent-claims-not-always-returned
+
+> User's preferred email address. The resource provider must not rely on this value being unique.
+
+Set this to true if your Okta login values will match Member.Email values.
+
+The default is false, which will match Okta login values against Member.OktaProfileLogin value.
+
+This configuration setting will be removed in future releases

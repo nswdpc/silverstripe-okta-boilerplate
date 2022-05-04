@@ -15,7 +15,6 @@ Name: silverstripe-okta-loginhandler
 ---
 # configure the Okta Login Handker
 NSWDPC\Authentication\Okta\OktaLoginHandler:
-  link_existing_member: true
   apply_group_restriction: true
   site_restricted_groups: []
 ---
@@ -51,7 +50,5 @@ Bigfork\SilverStripeOAuth\Client\Authenticator\Authenticator:
 Bigfork\SilverStripeOAuth\Client\Mapper\GenericMemberMapper:
   mapping:
     'Okta':
-      # Member.field : Provider method mapping
-      'Email': 'PreferredUsername'
       'FirstName': 'FirstName'
       'Surname': 'Surname'

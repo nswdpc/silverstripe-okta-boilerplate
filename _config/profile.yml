@@ -1,0 +1,112 @@
+---
+Name: silverstripe-okta-profile
+---
+# Specify profile fields to be stored in OktaProfile
+# See: https://developer.okta.com/docs/reference/api/users/#default-profile-properties
+SilverStripe\Security\Member:
+  okta_profile_fields:
+    firstName:
+      Field: \SilverStripe\Forms\TextField
+      SearchField: \SilverStripe\Forms\TextField
+      Label: 'First/given name'
+      Description: 'First name of the person'
+    lastName:
+      Field: \SilverStripe\Forms\TextField
+      SearchField: \SilverStripe\Forms\TextField
+      Label: 'Family name/surname'
+      Description: 'Family name or surname of the person'
+    middleName:
+      Field: \SilverStripe\Forms\TextField
+      Label: 'Middle name(s)'
+      Description: 'Middle name(s) of the person'
+    secondEmail:
+      Field: \SilverStripe\Forms\EmailField
+      Label: 'Secondary email'
+      Description: 'Secondary email address of person, typically used for account recovery'
+    honorificPrefix:
+      Field: \SilverStripe\Forms\TextField
+      Label: 'Honourific prefix(es)'
+      Description: 'Honourific prefix(es) of the person, or title in most Western languages'
+    honorificSuffix:
+      Field: \SilverStripe\Forms\TextField
+      Label: 'Honourific suffix(es)'
+      Description: 'Honourific suffix(es) of the person'
+    title:
+      Field: \SilverStripe\Forms\TextField
+      SearchField: \SilverStripe\Forms\TextField
+      Label: 'Position'
+      Description: 'Person''s title, such as "Vice President"'
+    displayName:
+      Field: \SilverStripe\Forms\TextField
+      SearchField: \SilverStripe\Forms\TextField
+      Label: 'Display name'
+      Description: 'An informal name for the person, or person''s preferred name'
+    nickName:
+      Field: \SilverStripe\Forms\TextField
+      Label: 'Nickname'
+      Description: 'Casual way to address the person in real life'
+    primaryPhone:
+      Field: \SilverStripe\Forms\TextField
+      SearchField: \SilverStripe\Forms\TextField
+      Label: 'Primary phone number'
+      Description: 'Primary phone number of person'
+    mobilePhone:
+      Field: \SilverStripe\Forms\TextField
+      SearchField: \SilverStripe\Forms\TextField
+      Label: 'Mobile phone number'
+      Description: 'Mobile phone number of person'
+    streetAddress:
+      Field: \SilverStripe\Forms\TextField
+      Label: 'Street address'
+      Description: 'Full street address of person''s address'
+    city:
+      Field: \SilverStripe\Forms\TextField
+      Label: 'City/locality'
+      Description: 'City or locality component of person''s address'
+    state:
+      Field: \SilverStripe\Forms\TextField
+      Label: 'State/region'
+      Description: 'State or region component of person''s address'
+    zipCode:
+      Field: \SilverStripe\Forms\TextField
+      Label: 'Post code'
+      Description: 'Postal code component of person''s address'
+    countryCode:
+      Field: \SilverStripe\Forms\TextField
+      Label: 'Country'
+      Description: 'Country component of person''s address'
+    preferredLanguage:
+      Field: \SilverStripe\Forms\TextField
+      Label: 'Preferred language'
+      Description: 'Person''s preferred written or spoken languages'
+    locale:
+      Field: \SilverStripe\Forms\TextField
+      Label: 'Locale'
+      Description: 'Person''s locale, used for personalisation'
+    timezone:
+      Field: \SilverStripe\Forms\TextField
+      Label: 'Time zone'
+      Description: 'Person''s timezone'
+    organization:
+      Field: \SilverStripe\Forms\TextField
+      SearchField: \SilverStripe\Forms\TextField
+      Label: 'Organisation'
+      Description: 'Person''s organisation'
+    division:
+      Field: \SilverStripe\Forms\TextField
+      SearchField: \SilverStripe\Forms\TextField
+      Label: 'Division'
+      Description: 'Person''s division'
+    department:
+      Field: \SilverStripe\Forms\TextField
+      SearchField: \SilverStripe\Forms\TextField
+      Label: 'Department'
+      Description: 'Person''s department'
+    managerId:
+      Field: \SilverStripe\Forms\DropDownField
+      Label: 'Manager'
+      Description: 'Person''s manager'
+    manager:
+      Field: \SilverStripe\Forms\TextField
+      Label: 'Manager name'
+      Description: 'Name of person''s manager'
