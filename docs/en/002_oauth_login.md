@@ -14,6 +14,22 @@ By default, the module resets all authenticators. To enable local user access, a
 ALLOW_MEMBER_AUTHENTICATOR=1
 ```
 
+In project configuration:
+
+```yaml
+---
+Name: re-enable-local-authenticator
+After:
+  - '#silverstripe-okta-authenticator'
+---
+SilverStripe\Core\Injector\Injector:
+  SilverStripe\Security\Security:
+    properties:
+      Authenticators:
+        default: '%$SilverStripe\MFA\Authenticator\MemberAuthenticator'
+```
+
+
 ## Required configuration values
 
 + `clientId` your Okta clientId for the app in question
