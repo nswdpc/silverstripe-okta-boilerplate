@@ -64,6 +64,18 @@ abstract class OktaClient
 
 
     /**
+     * @var bool
+     * When true, a single page of results is returned
+     */
+    protected $singlePage = true;
+
+    /**
+     * Store the 'after' value when a page of results is returned
+     * @var string|null
+     */
+    protected $cursorAfter = null;
+
+    /**
      * Set up Okta client and parameters
      */
     public function __construct($isDryRun = false) {
@@ -78,6 +90,22 @@ abstract class OktaClient
     public function setIsDryRun(bool $is) : self {
         $this->dryRun = $is;
         return $this;
+    }
+
+    /**
+     * Store whether the request should proceed to the next page of results (false) or not (true)
+     * @param bool
+     */
+    public function setIsSinglePage(bool $is) : self {
+        $this->singlePage = $is;
+        return $this;
+    }
+
+    /**
+     * Return the after cursor value
+     */
+    public function getCursorAfter() : ?string {
+        return $this->cursorAfter;
     }
 
     /**

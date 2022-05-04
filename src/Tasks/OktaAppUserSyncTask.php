@@ -4,6 +4,7 @@ namespace NSWDPC\Authentication\Okta;
 
 use SilverStripe\Control\Director;
 use SilverStripe\Dev\BuildTask;
+use SilverStripe\ORM\DB;
 
 class OktaAppUserSyncTask extends BuildTask
 {
@@ -18,8 +19,9 @@ class OktaAppUserSyncTask extends BuildTask
     private static $segment = 'OktaAppUserSyncTask';
 
     /**
-     * Run the task - given a group id, get all users
+     * Run the task
      * When commit=1 is provided, the changes found are committed
+     * This task gets all users by paging through all results
      */
     public function run($request)
     {
@@ -31,19 +33,28 @@ class OktaAppUserSyncTask extends BuildTask
 
             $commitChanges = $request->getVar('commit');
             $limit = $request->getVar('limit');
+            $verbose = $request->getVar('verbose') == 1;
+            $cursorAfter = $request->getVar('after');
             $dryRun = ($commitChanges != 1);
             $sync = new OktaAppUserSync($dryRun);
-            $sync->run($dryRun, ($limit > 0 ? $limit : 50));
+            $sync->setIsSinglePage(true);
 
-            if ($dryRun) {
+            $queryOptions = [];
+            $queryOptions['limit'] = ($limit > 0 ? $limit : 50);
+            if($cursorAfter) {
+                $queryOptions['after'] = $cursorAfter;
+            }
+            print "Running with limit {$queryOptions['limit']}\n";
+            $sync->run($queryOptions);
+
+            if ($verbose) {
                 print "DRY RUN report:\n";
                 print_r($sync->getReport());
             }
 
-            print "SUCCESS\n";
-            print_r($sync->getSuccesses());
-            print "FAIL\n";
-            print_r($sync->getFailures());
+            print "SUCCESS: " . count($sync->getSuccesses()) . "\n";
+            print "FAIL: " . count($sync->getFailures()) . "\n";
+            print "AFTER: " . $sync->getCursorAfter() . "\n";// for next task run
 
             return true;
         } catch (\Exception $e) {

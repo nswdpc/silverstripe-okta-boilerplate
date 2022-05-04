@@ -22,8 +22,6 @@ class OktaAppUserSearch extends OktaAppClient
     public function search(array $queryOptions) : ?\Okta\Applications\Collection {
         // Initial set
         $this->appUsers = new \Okta\Applications\Collection([]);
-        // options for the search
-        $limit = $this->defaultLimit;
         // ensure values are correctly encoded
         $queryOptions = array_map(
             function($value) {
@@ -31,7 +29,9 @@ class OktaAppUserSearch extends OktaAppClient
             },
             $queryOptions
         );
-        $this->getAppUsers($limit, $queryOptions);
+        // set default limit
+        $queryOptions['limit'] = $this->defaultLimit;
+        $this->getAppUsers($queryOptions);
         return $this->appUsers;
     }
 

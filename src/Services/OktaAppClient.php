@@ -58,10 +58,10 @@ abstract class OktaAppClient extends OktaClient
     /**
      * Collect all app users via pagination method
      * @param int $limit
-     * @param array $queryOptions other filtering options (https://developer.okta.com/docs/reference/api/users/#list-users-with-a-filter)
+     * @param array $queryOptions other filtering options (https://developer.okta.com/docs/reference/api/users/#list-users-with-a-filter). Can include limit (per page limit of resutls), after (cursor for next page of results)
      * @return void
      */
-    final protected function getAppUsers(int $limit = 50, array $queryOptions = [])
+    final protected function getAppUsers(array $queryOptions = [])
     {
 
         // Initial set
@@ -72,13 +72,6 @@ abstract class OktaAppClient extends OktaClient
 
         // initial options for initial request
         $options = ['query' => []];
-        if($limit > 0) {
-            $options = [
-                'query' => [
-                    'limit' => $limit
-                ]
-            ];
-        }
         // merge in other options
         $options['query'] = array_merge($options['query'], $queryOptions);
         $this->collectAppUsers($options, $resource);
@@ -101,9 +94,19 @@ abstract class OktaAppClient extends OktaClient
                 $this->appUsers = $this->appUsers->merge($collection);
             }
             try {
+                // reset 'after' cursor value
+                $this->cursorAfter = null;
                 $options = $this->httpClient->getNextPageOptions();
-                // get the next set
-                $this->collectAppUsers(['query' => $options ], $resource);
+                if(isset($options['after'])) {
+                    // store 'after' cursor for next batch
+                    $this->cursorAfter = $options['after'];
+                }
+
+                // Not single page request, get the next set
+                if(!$this->singlePage) {
+                    $this->collectAppUsers(['query' => $options ], $resource);
+                }
+
             } catch (\Exception $e) {
                 // getNextPageOptions threw an exception (or no more results)
             }

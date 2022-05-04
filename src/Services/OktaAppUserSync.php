@@ -27,20 +27,18 @@ class OktaAppUserSync extends OktaAppClient
     /**
      * Run the sync processing
      * @see https://developer.okta.com/docs/reference/api/apps/#list-users-assigned-to-application
-     * @param bool $dryRun when true, no changes are made to local members. A report is created and can be accessed via getReport()
-     * @param int $limit the number of records to return per page, if 0 the default Okta value is used (50 based on docs)
-     * @param array $queryOptions extra filtering options to pass to the Okta API
+     * @param array $queryOptions extra filtering options to pass to the Okta API, including limit
      * @throws \Exception
      */
-    public function run(bool $dryRun = false, int $limit = 50, array $queryOptions = []) : int
+    public function run(array $queryOptions = []) : int
     {
         $this->success = $this->fail = [];
-        $this->setIsDryRun($dryRun);
+
         if ($this->dryRun) {
             Logger::log("OktaApplicationSynchroniser::run in dryRun mode", "DEBUG");
         }
 
-        $this->getAppUsers($limit, $queryOptions);
+        $this->getAppUsers($queryOptions);
 
         $this->start = new \DateTime();
         $successCount = $this->processAppUsers($this->appUsers);
