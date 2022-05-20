@@ -20,7 +20,7 @@ class OktaAppUserSync extends OktaAppClient
     /**
      * @var bool
      * When true, Member records will be created from sync data
-     * When false, only those members who have signed in will be created
+     * When false, only those members who have signed in will be updated
      */
     private static $create_users = true;
 
