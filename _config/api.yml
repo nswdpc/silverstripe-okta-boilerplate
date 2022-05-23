@@ -10,4 +10,4 @@ NSWDPC\Authentication\Okta\ClientFactory:
   application_client_id: ''
 NSWDPC\Authentication\Okta\OktaAppUserSync:
   # Do not create Member records from Okta users by default
-  create_user: false
+  create_users: false
