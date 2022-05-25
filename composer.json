@@ -38,22 +38,8 @@
     },
     "autoload": {
         "psr-4": {
-            "NSWDPC\\Authentication\\Okta\\Tests\\": [
-                "tests/"
-            ],
-            "NSWDPC\\Authentication\\Okta\\": [
-                "src/Authenticator",
-                "src/Controllers",
-                "src/Exceptions",
-                "src/Extensions",
-                "src/Handler",
-                "src/Jobs",
-                "src/Models",
-                "src/Reports",
-                "src/Services",
-                "src/Tasks",
-                "src/Traits"
-            ]
+            "NSWDPC\\Authentication\\Okta\\": "src/",
+            "NSWDPC\\Authentication\\Okta\\Tests\\": "tests/"
         }
     }
 }
