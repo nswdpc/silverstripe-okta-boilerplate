@@ -97,16 +97,16 @@ class GroupExtension extends DataExtension
      */
     public function requireDefaultRecords()
     {
-        $this->owner->applyOktaRootGroup();
+        self::applyOktaRootGroup();
     }
 
     /**
      * Create or update the default root Okta group configured, if set
      * @return Group|null
      */
-    public function applyOktaRootGroup() : ?Group
+    public static function applyOktaRootGroup() : ?Group
     {
-        $parent = $this->owner->config()->get('okta_group');
+        $parent = Group::config()->get('okta_group');
         if (empty($parent['Code'])) {
             return null;
         }

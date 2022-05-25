@@ -122,9 +122,8 @@ class OAuthTest extends SapphireTest
     public function testApplyOktaRootGroup() {
         $parent = Group::config()->get('okta_group');
 
-        $inst = Group::create();
         /** @var Group **/
-        $rootOktaGroup = $inst->applyOktaRootGroup();
+        $rootOktaGroup = GroupExtension::applyOktaRootGroup();
 
         $this->assertInstanceOf(Group::class, $rootOktaGroup, "Root Okta Group is a group");
         $this->assertEquals($parent['Code'], $rootOktaGroup->Code, "Codes match");
@@ -560,8 +559,7 @@ class OAuthTest extends SapphireTest
         $member->OktaProfileLogin = $userWithGroups['preferred_username'];
         $member->write();
 
-        $inst = Group::create();
-        $rootOktaGroup = $inst->applyOktaRootGroup();
+        $rootOktaGroup = GroupExtension::applyOktaRootGroup();
 
         // current SS groups to create, as Okta linked groups
         $currentSystemGroups = ['group 10','group 11','group 12','group 13'];
@@ -657,8 +655,7 @@ class OAuthTest extends SapphireTest
         $member->OktaProfileLogin = $userWithNoGroups['preferred_username'];
         $member->write();
 
-        $inst = Group::create();
-        $rootOktaGroup = $inst->applyOktaRootGroup();
+        $rootOktaGroup = GroupExtension::applyOktaRootGroup();
 
         // current SS groups to create, as Okta linked groups
         $currentSystemGroups = ['group 20','group 21','group 22','group 23'];

@@ -11,7 +11,7 @@ use SilverStripe\Security\Member;
  */
 trait OktaGroups
 {
-    
+
     /**
      * Given an array of Okta groups found for an user, assign those groups to the Member
      * If the member already has Okta groups, remove those not found in $groups
@@ -21,7 +21,7 @@ trait OktaGroups
      */
     protected function oktaUserMemberGroupAssignment(array $groups, Member $member)
     {
-        
+
         // @var \SilverStripe\ORM\ManyManyList
         // the current member Okta groups
         $currentMemberGroups = $member->getOktaGroups();
@@ -30,8 +30,7 @@ trait OktaGroups
 
         // the Okta user returned some groups
         if (!empty($groups)) {
-            $inst = Group::create();
-            $parent = $inst->applyOktaRootGroup();
+            $parent = GroupExtension::applyOktaRootGroup();
             if ($parent && $parent->isInDB()) {
                 foreach ($groups as $oktaGroupName) {
 
