@@ -119,6 +119,8 @@ class GroupExtension extends DataExtension
         // Create a new group if none exists
         if (!$group) {
             $group = Group::create();
+            // assign code
+            $group->Code = $code;
             if (!empty($parent['Description'])) {
                 $group->Description = $parent['Description'];
             }
@@ -128,8 +130,6 @@ class GroupExtension extends DataExtension
         $group->IsOktaGroup = 1;
         $group->ParentID = 0;
         $group->Locked = $parent['Locked'] ?? 1;
-        // ensure code is set as it is stored in configuration
-        $group->setField('Code', $code);
         $group->write();
         return $group;
     }
