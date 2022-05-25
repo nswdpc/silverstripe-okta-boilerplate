@@ -16,13 +16,13 @@ class OktaAPITest extends SapphireTest
 {
     protected $usesDatabase = false;
 
-    public static function setUpBeforeClass()
+    public static function setUpBeforeClass() : void
     {
         parent::setUpBeforeClass();
-        
+
         // turn off default_file_location for these tests
         Config::inst()->update(ClientFactory::class, 'default_file_location', null);
-        
+
         // set up config file location
         $sample = dirname(__FILE__) . '/support/okta.yaml';
         Config::inst()->update(
@@ -31,7 +31,7 @@ class OktaAPITest extends SapphireTest
             $sample
         );
     }
-    
+
     protected function parseYamlConfig() : array
     {
         $config = Config::inst()->get(
@@ -42,7 +42,7 @@ class OktaAPITest extends SapphireTest
         $parsed = $parser->parse(file_get_contents($config));
         return $parsed;
     }
-    
+
     /**
      * Test API client creation
      */
@@ -50,7 +50,7 @@ class OktaAPITest extends SapphireTest
     {
         $client = ClientFactory::create();
         $this->assertInstanceOf(OktaClient::class, $client);
-        
+
         $parsed = $this->parseYamlConfig();
 
         $this->assertEquals($parsed['okta']['client']['token'], $client->getToken());
@@ -74,7 +74,7 @@ class OktaAPITest extends SapphireTest
         $client = ClientFactory::create($parameters);
 
         $this->assertInstanceOf(OktaClient::class, $client);
-        
+
         $parsed = $this->parseYamlConfig();
 
         $this->assertEquals($parameters['orgUrl'], $client->getOrganizationUrl());// default file location retained
