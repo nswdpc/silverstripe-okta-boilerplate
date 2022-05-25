@@ -59,7 +59,7 @@ class OAuthTest extends SapphireTest
     /**
      * Log out the currently signed in user, if any, before any tests
      */
-    public function setUp() : void
+    protected function setUp() : void
     {
         parent::setUp();
         Config::modify()->set(
