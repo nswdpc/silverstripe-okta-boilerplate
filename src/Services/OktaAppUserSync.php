@@ -68,7 +68,7 @@ class OktaAppUserSync extends OktaAppClient
                         $passport->delete();
                     }
                     // Members without permissions are removed
-                    $permissions = Permission::permissions_for_member($member);
+                    $permissions = Permission::permissions_for_member($member->ID);
                     if (count($permissions) == 0) {
                         // No permissions
                         Logger::log("OKTA: handleUnlinkedMembers removing unlinked member #{$member->ID}", "INFO");
