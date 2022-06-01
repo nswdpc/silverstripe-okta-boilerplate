@@ -115,6 +115,20 @@ abstract class OktaAppClient extends OktaClient
     }
 
     /**
+     * Get a list of stale members, last OktaLastSync before the provided datetime
+     * @param \DateTime
+     * @return DataList
+     */
+    public function getStaleMemberList(\DateTime $before) : DataList {
+        // Members who have been sync'd
+        $members = $this->getSyncedMembers();
+        // last synced before the provided DateTime
+        $members = $members->filter([ "OktaLastSync:LessThan" => $before->format('Y-m-d H:i:s') ]);
+        $members = $members->setQueriedColumns(['OktaProfileLogin','OktaLastSync']);
+        return $members;
+    }
+
+    /**
      * Get a list of members with an OktaLastSync before the provided DateTime
      * AND who are no longer linked to the configured Okta application clientId
      * For instance if a user was removed from the application, they will stop syncing
@@ -123,11 +137,7 @@ abstract class OktaAppClient extends OktaClient
      * @return DataList|null if null, there are no stale members to unlink
      */
     protected function getUnlinkedMembers(\DateTime $before) : ?DataList {
-        // Members who have been sync'd
-        $members = $this->getSyncedMembers();
-        // last synced before the provided DateTime
-        $members = $members->filter([ "OktaLastSync:LessThan" => $before->format('Y-m-d H:i:s') ]);
-        $members = $members->setQueriedColumns(['OktaProfileLogin','OktaLastSync']);
+        $members = $this->getStaleMemberList($before);
         if($members->count() == 0) {
             // there are no stale members to unlink
             return null;
@@ -145,6 +155,7 @@ abstract class OktaAppClient extends OktaClient
                     try {
                         $appUser = $applicationResource->getApplicationUser($userId);
                     } catch (\Exception $e) {
+                        // Will throw exception if not found - "Not found: Resource not found: xxxx (AppUser)"
                         // mark this user as being unlinked
                         $unlinkedMemberIds[] = $member->ID;
                     }
