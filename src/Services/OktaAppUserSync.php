@@ -57,7 +57,10 @@ class OktaAppUserSync extends OktaAppClient
      * @return int the number of Members no longer found in the configured application
      */
     protected function handleUnlinkedMembers() : int {
-        if($members = $this->getUnlinkedMembers($this->start)) {
+        $days = 2;
+        $before = new \DateTime();
+        $before->modify("-{$days} day");
+        if($members = $this->getUnlinkedMembers($before)) {
             foreach($members as $member) {
                 if(!$this->dryRun) {
                     $passports = $member->Passports()->filter(['OAuthSource' => 'Okta']);
@@ -67,7 +70,8 @@ class OktaAppUserSync extends OktaAppClient
                     // Members without permissions are removed
                     $permissions = Permission::permissions_for_member($member);
                     if (empty($permissions)) {
-                        Logger::log("OKTA: handleUnlinkedMembers removing unlinked member #{$member->ID}", "NOTICE");
+                        // No permissions
+                        Logger::log("OKTA: handleUnlinkedMembers removing unlinked member #{$member->ID}", "INFO");
                         $member->delete();
                     } else {
                         // Unlinked Okta values
