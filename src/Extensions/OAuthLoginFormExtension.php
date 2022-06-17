@@ -12,6 +12,7 @@ class OAuthLoginFormExtension extends Extension {
 
     /**
      * Modify actions, based on signed in/out state
+     * If signed in, change form actions to be a link to the logout URL
      */
     public function updateFormActions(&$actions) {
         $member = Security::getCurrentUser();
