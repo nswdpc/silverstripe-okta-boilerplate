@@ -8,6 +8,7 @@ use SilverStripe\Security\Permission;
 
 /**
  * Veto lost password requests for non-CMS users
+ * @todo make generic
  */
 class LostPasswordHandlerExtension extends Extension
 {
