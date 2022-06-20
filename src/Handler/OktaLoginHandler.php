@@ -17,6 +17,7 @@ use SilverStripe\Security\Security;
 
 /**
  * Perform Okta login handling
+ * Note that this is a "LoginTokenHandler" not a Silverstripe Authenticator LoginHandler
  */
 class OktaLoginHandler extends LoginTokenHandler
 {
@@ -37,6 +38,13 @@ class OktaLoginHandler extends LoginTokenHandler
      * If empty then all users authenticating via OAuth can gain access
      */
     private static $site_restricted_groups = [];
+
+    /**
+     * @var bool
+     * When true, the local member password for the member will be cleared
+     * and autologin token revoked
+     */
+    private static $clear_local_login_on_auth = true
 
     /**
      * List of failure codes
@@ -94,6 +102,14 @@ class OktaLoginHandler extends LoginTokenHandler
                 null,
                 $message
             );
+        }
+
+        // Block local login by making member password empty
+        if($this->config()->get('clear_local_login_on_auth')) {
+            $member->Password = '';
+            $member->AutoLoginHash = '';
+            $member->AutoLoginExpired = null;
+            $member->write();
         }
 
         // Log the member in
