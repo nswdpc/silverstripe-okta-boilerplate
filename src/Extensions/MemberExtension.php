@@ -76,6 +76,40 @@ class MemberExtension extends DataExtension implements PermissionProvider
     }
 
     /**
+     * Check if the lost password email can be sent
+     * @todo exclude ADMIN permission members (return false ?)
+     * @return bool
+     */
+    public static function canSendLostPasswordEmail(Member $member) {
+        // handler is trying to send a lost password email
+        if(Permission::checkMember($member, 'OKTA_LOCAL_PASSWORD_RESET')) {
+            // This specific member has a permission to allow local password reset
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    /**
+     * Test external management context for this member
+     * This is used to flag that the person can manage their member record externally
+     * In the case of Okta, this is all contexts
+     * @return bool
+     */
+    public function isExternallyManagedContext($context) : bool {
+
+        if($context == 'lostPasswordSendEmail') {
+            $canSend = self::canSendLostPasswordEmail($this->owner);
+            if($canSend) {
+                // local password reset allowed in this context
+                return false;
+            }
+        }
+        // default: all contexts are externally managed
+        return $this->owner->OktaProfileLogin != '';
+    }
+
+    /**
      * Get a passport for the member
      * @param string $provider the provider name
      */
