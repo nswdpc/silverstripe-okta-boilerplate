@@ -7,6 +7,7 @@ use Bigfork\SilverStripeOAuth\Client\Handler\LoginTokenHandler;
 use League\OAuth2\Client\Provider\AbstractProvider;
 use League\OAuth2\Client\Token\AccessToken;
 use League\OAuth2\Client\Provider\ResourceOwnerInterface;
+use SilverStripe\Control\Controller;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\ORM\ValidationException;
@@ -38,6 +39,12 @@ class OktaLoginHandler extends LoginTokenHandler
      * If empty then all users authenticating via OAuth can gain access
      */
     private static $site_restricted_groups = [];
+
+    /**
+     * When oauth/callback occurs with successful auth, return this URI as the redirect response
+     * @var null|string
+     */
+    private static $post_auth_redirect_uri = null;
 
     /**
      * List of failure codes
@@ -100,7 +107,12 @@ class OktaLoginHandler extends LoginTokenHandler
         // Log the member in
         $identityStore = Injector::inst()->get(IdentityStore::class);
         $identityStore->logIn($member);
-        return null;
+
+        $redirect = null;
+        if($redirectUri = $this->config()->get('post_auth_redirect_uri')) {
+            $redirect = Controller::curr()->redirect( $redirectUri );
+        }
+        return $redirect;
     }
 
     /**

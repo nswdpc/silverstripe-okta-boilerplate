@@ -17,6 +17,7 @@ Name: silverstripe-okta-loginhandler
 NSWDPC\Authentication\Okta\OktaLoginHandler:
   apply_group_restriction: true
   site_restricted_groups: []
+  post_auth_redirect_uri: null
 ---
 Name: silverstripe-okta-oauthprovider
 ---
