@@ -157,7 +157,7 @@ class MemberExtension extends DataExtension implements PermissionProvider
      * @return array
      * @throws \Exception
      */
-    public function getOktaProfileValueAsArray() : ?array {
+    public function getOktaProfileValueAsArray() : array {
         $value = json_decode($this->owner->OktaProfileValue, true, JSON_THROW_ON_ERROR);
         if(!is_array($value)) {
             $value = [];
