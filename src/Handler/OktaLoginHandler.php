@@ -41,12 +41,6 @@ class OktaLoginHandler extends LoginTokenHandler
     private static $site_restricted_groups = [];
 
     /**
-     * When oauth/callback occurs with successful auth, return this URI as the redirect response
-     * @var null|string
-     */
-    private static $post_auth_redirect_uri = null;
-
-    /**
      * List of failure codes
      */
     const FAIL_USER_NO_GROUPS = 100;
@@ -107,12 +101,6 @@ class OktaLoginHandler extends LoginTokenHandler
         // Log the member in
         $identityStore = Injector::inst()->get(IdentityStore::class);
         $identityStore->logIn($member);
-
-        $redirect = null;
-        if($redirectUri = $this->config()->get('post_auth_redirect_uri')) {
-            $redirect = Controller::curr()->redirect( $redirectUri );
-        }
-        return $redirect;
     }
 
     /**
