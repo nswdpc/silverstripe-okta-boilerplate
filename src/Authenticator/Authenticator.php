@@ -3,6 +3,8 @@
 namespace NSWDPC\Authentication\Okta;
 
 use Bigfork\SilverStripeOAuth\Client\Authenticator\Authenticator as OAuthAuthenticator;
+use SilverStripe\Security\Security;
+use SilverStripe\Security\Authenticator as AuthenticatorInterface;
 use SilverStripe\Security\MemberAuthenticator\LogoutHandler;
 
 /**
@@ -21,12 +23,22 @@ class Authenticator extends OAuthAuthenticator
     }
 
     /**
-     * Log a locally signed in member out
-     * The link will contain the authenticator name
+     * If the OAuthAuthenticator is the only authenticator for logout
+     * this provides a default logout handler so that users can log out
      * @inheritdoc
      */
     public function getLogoutHandler($link)
     {
+        try {
+            $authenticators = Security::singleton()->getApplicableAuthenticators( AuthenticatorInterface::LOGOUT );
+            if(isset($authenticators['default'])) {
+                // return the default logout handler
+                return $authenticators['default']->getLogoutHandler($link);
+            }
+        } catch (\Exception $e) {
+            // possibly no 'default' authenticator
+        }
+        // return a 'classic' LogoutHandler
         return LogoutHandler::create($link, $this);
     }
 

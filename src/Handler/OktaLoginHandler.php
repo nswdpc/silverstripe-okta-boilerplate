@@ -7,6 +7,7 @@ use Bigfork\SilverStripeOAuth\Client\Handler\LoginTokenHandler;
 use League\OAuth2\Client\Provider\AbstractProvider;
 use League\OAuth2\Client\Token\AccessToken;
 use League\OAuth2\Client\Provider\ResourceOwnerInterface;
+use SilverStripe\Control\Controller;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\ORM\ValidationException;
@@ -17,6 +18,7 @@ use SilverStripe\Security\Security;
 
 /**
  * Perform Okta login handling
+ * Note that this is a "LoginTokenHandler" not a Silverstripe Authenticator LoginHandler
  */
 class OktaLoginHandler extends LoginTokenHandler
 {
@@ -99,7 +101,6 @@ class OktaLoginHandler extends LoginTokenHandler
         // Log the member in
         $identityStore = Injector::inst()->get(IdentityStore::class);
         $identityStore->logIn($member);
-        return null;
     }
 
     /**
