@@ -7,7 +7,6 @@ use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Convert;
 use SilverStripe\ORM\ArrayList;
-use SilverStripe\Security\Group;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
 
@@ -134,16 +133,12 @@ class OktaAppUserSync extends OktaAppClient
         $user = $this->getUser($appUser->getId());
         $userId = $user->getId();
 
-        // Collect user groups
         // initial request options
         $options = [
             'query' => [
                 'limit' => 50
             ]
         ];
-        // initially no groups
-        $userGroups = new \Okta\Groups\Collection([]);
-        $this->collectUserGroups($options, $user, $userGroups);
 
         // User profile information
         $userProfile = $this->getUserProfile($user);
@@ -205,30 +200,7 @@ class OktaAppUserSync extends OktaAppClient
             $member->OktaLastSync = $this->startFormatted();
             $member->OktaUnlinkedWhen = null;// remove any previous value, if the user was unlinked
             $member->write();
-        }
-
-        $groups = [];
-        if ($userGroups instanceof \Okta\Groups\Collection) {
-
-            // The group profile contains the group name
-            foreach ($userGroups as $userGroup) {
-                $groupProfile = $userGroup->getProfile();
-                $groups[ $userGroup->getId() ] = $groupProfile->getName();
-            }
-
-            if ($this->dryRun) {
-                foreach ($groups as $groupId => $groupName) {
-                    $this->report[$userId][] = "AppUser.id={$userId} Member #{$member->ID} returned Okta group '{$groupName}'";
-                }
-            } else {
-                // @var array
-                $createdOrUpdatedGroups = $this->oktaUserMemberGroupAssignment($groups, $member);
-                /*
-                foreach ($createdOrUpdatedGroups as $createdOrUpdatedGroup) {
-                    Logger::log("AppUser.id={$userId} Member {$member->ID} is assigned local Okta group {$createdOrUpdatedGroup}", "DEBUG");
-                }
-                */
-            }
+            $this->assignOktaRootGroup($member);
         }
 
         return $member;

@@ -38,9 +38,9 @@ Example: https://mysite.example/Security/logout
 
 ### Initiate login URI
 
-An `Initiate login URI` with `openid`, `profile`, `email` and `groups` scopes should be provided. The Provider value must match the provider `name: 'Okta'` value from configuration. For this module it is `Okta`. If your project modifies this, it needs to be modified in the URI as well:
+An `Initiate login URI` with `openid`, `profile` and `email` scopes should be provided. The Provider value must match the provider `name: 'Okta'` value from configuration. For this module it is `Okta`. If your project modifies this, it needs to be modified in the URI as well:
 
-> https://mysite.example.com/oauth/authenticate/?provider=Okta&context=login&scope%5B0%5D=openid&scope%5B1%5D=profile&scope%5B2%5D=email&scope%5B3%5D=groups
+> https://mysite.example.com/oauth/authenticate/?provider=Okta&context=login&scope%5B0%5D=openid&scope%5B1%5D=profile&scope%5B2%5D=email
 
 Copy the client ID, client secret, Okta domain and Sign-in redirect URI values into [the configuration for your project](./004_example_project_configuration.md)
 

@@ -6,7 +6,7 @@ SilverStripe\Security\Group:
   okta_group:
     Code: 'okta-root'
     Title: 'Okta'
-    Description: 'This is the parent group for all groups imported from Okta'
+    Description: 'Okta group'
     IsOktaGroup: 1
     Locked: 1
 ---

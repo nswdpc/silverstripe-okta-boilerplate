@@ -167,17 +167,6 @@ class OktaAppUserSyncReport extends Report
                     );
                     return sprintf('<a href="%s">%s</a>', $link, htmlspecialchars($item->Email));
                 }
-            ],
-            "GroupList" => [
-                "title" => _t('OKTA.GROUPS', 'Groups'),
-                'formatting' => function ($value, $item) {
-                    $groups = $item->Groups();
-                    if ($groups && $groups->count() > 0) {
-                        return implode(",", $groups->column('Title'));
-                    } else {
-                        return "";
-                    }
-                }
             ]
         ];
 

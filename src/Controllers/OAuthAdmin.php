@@ -5,7 +5,6 @@ namespace NSWDPC\Authentication\Okta;
 use Bigfork\SilverStripeOAuth\Client\Model\Passport;
 use SilverStripe\Admin\ModelAdmin;
 use SilverStripe\Security\Member;
-use SilverStripe\Security\Group;
 use SilverStripe\Security\Permission;
 use SilverStripe\Control\Controller;
 use SilverStripe\Forms\GridField\GridField;

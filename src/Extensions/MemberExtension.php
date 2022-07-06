@@ -282,7 +282,7 @@ class MemberExtension extends DataExtension implements PermissionProvider
     }
 
     /**
-     * Get a Member's *direct* Okta groups, which excludes the root Okta group
+     * Get a Member's *direct* Okta groups
      */
     public function getOktaGroups() : ManyManyList
     {

@@ -211,33 +211,6 @@ abstract class OktaClient
     }
 
     /**
-     * Collect all groups for a user
-     * @param array $options
-     * @param \Okta\Users\User $user
-     * @param \Okta\Groups\Collection $userGroups
-     */
-    final protected function collectUserGroups(array $options, \Okta\Users\User $user, \Okta\Groups\Collection &$userGroups)
-    {
-        // @var \Okta\Groups\Collection
-        if (!$user->getId()) {
-            throw new \Exception("To get user groups, the user resource must have an Id");
-        }
-        $collection = $user->getGroups($options);
-        if ($collection instanceof \Okta\Groups\Collection) {
-            // merge the returned collection on
-            $userGroups = $userGroups->merge($collection);
-            try {
-                $options = $this->httpClient->getNextPageOptions();
-                // get the next set
-                $this->collectUserGroups(['query' => $options ], $user, $userGroups);
-            } catch (\Exception $e) {
-                // getNextPageOptions threw an exception (or no more results)
-            }
-        }
-        return false;
-    }
-
-    /**
      * Ensure that a profile has HTML removed
      */
     protected function sanitiseProfileValue($value) : string
