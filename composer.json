@@ -31,7 +31,7 @@
     },
     "require-dev": {
         "mockery/mockery": "^1.5",
-        "phpunit/phpunit": "^5.7 | ^9.5",
+        "phpunit/phpunit": "^9.5",
         "web-token/jwt-key-mgmt" : "^2.2",
         "friendsofphp/php-cs-fixer": "^3"
     },
