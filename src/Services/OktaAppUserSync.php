@@ -72,6 +72,15 @@ class OktaAppUserSync extends OktaAppClient
                     foreach($passports as $passport) {
                         $passport->delete();
                     }
+
+                    /**
+                     * Remove links to Okta groups
+                     * @var ManyManyList
+                     */
+                    if($oktaGroupList = $member->getOktaGroups()) {
+                        $oktaGroupList->removeAll();
+                    }
+
                     // Members without permissions are removed
                     $permissions = Permission::permissions_for_member($member->ID);
                     if (count($permissions) == 0) {
