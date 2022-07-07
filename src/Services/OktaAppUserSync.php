@@ -64,7 +64,9 @@ class OktaAppUserSync extends OktaAppClient
         $before = new \DateTime();
         $before->modify("-{$beforeDays} day");
         if($members = $this->getUnlinkedMembers($before)) {
+            $unlinkedMembers = 0;
             foreach($members as $member) {
+
                 if(!$this->dryRun) {
                     $passports = $member->Passports()->filter(['OAuthSource' => 'Okta']);
                     foreach($passports as $passport) {
@@ -87,8 +89,9 @@ class OktaAppUserSync extends OktaAppClient
                 } else {
                     $this->report["Member #{$member->ID}"][] = "Not linked to application";
                 }
+                $unlinkedMembers++;
             }
-            return $members->count();
+            return $unlinkedMembers;
         } else {
             return 0;
         }
