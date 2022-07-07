@@ -53,12 +53,16 @@ class OktaAppUserSync extends OktaAppClient
     /**
      * Remove Okta values from members no longer linked to the configured application
      * Based on the value of their last sync date in this operation
+     * @param int $beforeDays pick up members whose last sync date is > than this
      * @return int the number of Members no longer found in the configured application
      */
-    protected function handleUnlinkedMembers() : int {
-        $days = 2;
+    public function handleUnlinkedMembers(int $beforeDays = 2) : int {
+        if($beforeDays < 2) {
+            // minimum 2 days
+            $beforeDays = 2;
+        }
         $before = new \DateTime();
-        $before->modify("-{$days} day");
+        $before->modify("-{$beforeDays} day");
         if($members = $this->getUnlinkedMembers($before)) {
             foreach($members as $member) {
                 if(!$this->dryRun) {
