@@ -145,6 +145,12 @@ class OktaAppUserSync extends OktaAppClient
     protected function processAppUsers(\Okta\Applications\Collection $appUsers) : int
     {
         // Logger::log("OKTA: Processing appUser collection count=" . count($appUsers), "INFO");
+        $createUser = $this->config()->get('create_users');
+        if(!$createUser) {
+            Logger::log("OKTA: create users off", "INFO");
+        } else {
+            Logger::log("OKTA: create users on", "INFO");
+        }
         foreach ($appUsers as $appUser) {
             try {
                 $userId = $appUser->getId();
@@ -212,8 +218,6 @@ class OktaAppUserSync extends OktaAppClient
         $createUser = $this->config()->get('create_users');
         if(!$createUser) {
 
-            Logger::log("OKTA: create users off - passport check", "INFO");
-
             $passport = Passport::get()->filter([
                 'Identifier' => $userId,
                 'OAuthSource' => 'Okta' // @todo constant
@@ -234,7 +238,6 @@ class OktaAppUserSync extends OktaAppClient
             }
 
         } else {
-            Logger::log("OKTA: create users on - bypass passport check", "INFO");
             $member = $oktaLinker->linkViaUserProfile($userProfile, true);
             if (!$member) {
                 throw new OktaAppUserSyncException("AppUser {$userId} could not link/create member from profile login={$userLogin},email={$userEmail}");
