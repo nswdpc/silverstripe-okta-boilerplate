@@ -2,6 +2,7 @@
 
 namespace NSWDPC\Authentication\Okta\Tests;
 
+use NSWDPC\Authentication\Okta\OktaAppUserSyncJob;
 use NSWDPC\Authentication\Okta\ClientFactory;
 use Okta\Client as OktaClient;
 use Okta\Utilities\AuthorizationMode;
@@ -81,5 +82,31 @@ class OktaAPITest extends SapphireTest
         $this->assertEquals($parameters['token'], $client->getToken());
         $this->assertEquals($parameters['userAgent'], $client->getIntegrationUserAgent());
         $this->assertInstanceOf(AuthorizationMode::class, $client->getAuthorizationMode());
+    }
+
+    public function testJobCreation() {
+        $perPage = 140;
+        $unlinkLimit = 90;
+        $reportOnly = 1;
+        $cursorAfter = '';
+        $job = new OktaAppUserSyncJob($perPage, $unlinkLimit, $reportOnly, $cursorAfter);
+        $jobData = $job->getJobData();
+        $this->assertEquals($perPage, $job->per_page);
+        $this->assertEquals($unlinkLimit, $job->unlink_limit);
+        $this->assertEquals($reportOnly, $job->report_only);
+        $this->assertEquals($cursorAfter, $job->cursor_after);
+    }
+
+    public function testJobCreationWithCursorAfter() {
+        $perPage = 140;
+        $unlinkLimit = 90;
+        $reportOnly = 1;
+        $cursorAfter = 'some-id-value';
+        $job = new OktaAppUserSyncJob($perPage, $unlinkLimit, $reportOnly, $cursorAfter);
+        $jobData = $job->getJobData();
+        $this->assertEquals($perPage, $job->per_page);
+        $this->assertEquals($unlinkLimit, $job->unlink_limit);
+        $this->assertEquals($reportOnly, $job->report_only);
+        $this->assertEquals($cursorAfter, $job->cursor_after);
     }
 }
