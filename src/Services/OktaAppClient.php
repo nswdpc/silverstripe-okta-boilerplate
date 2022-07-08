@@ -162,12 +162,18 @@ abstract class OktaAppClient extends OktaClient
                         Logger::log("Member #{$member->ID} - resource not found - application user");
                         $unlinkedMemberIds[] = $member->ID;
                     }
+                } catch( \Exception $e) {
+                    // noop
+                    Logger::log("Member #{$member->ID} - general error request application user resource");
                 }
             } catch (\Okta\Exceptions\ResourceException $e) {
                 if($e->getErrorCode() == self::RESOURCE_NOT_FOUND) {
                     Logger::log("Member #{$member->ID} - resource not found - user");
                     $unlinkedMemberIds[] = $member->ID;
                 }
+            } catch( \Exception $e) {
+                // noop
+                Logger::log("Member #{$member->ID} - general error request user resource");
             }
         }
         $unlinkedMembers = null;
