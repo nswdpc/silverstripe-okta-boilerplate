@@ -28,9 +28,10 @@ class OktaAppUserSyncJob extends AbstractQueuedJob
     /**
      * Create the job with args
      */
-    public function __construct($per_page = 100, $report_only = 0, $cursor_after = '')
+    public function __construct($per_page = 100, $unlink_limit = 50, $report_only = 0, $cursor_after = '')
     {
-        $this->per_page = $per_page;
+        $this->per_page = $per_page;// pagination
+        $this->unlink_limit = $unlink_limit;// unlink limit
         $this->report_only = $report_only;
         $this->cursor_after = $cursor_after;
     }
@@ -93,7 +94,7 @@ class OktaAppUserSyncJob extends AbstractQueuedJob
 
             $sync = new OktaAppUserSync($dryRun);
             $sync->setIsSinglePage(true);// job handles a single page of results
-            $sync->run($queryOptions);
+            $sync->run($queryOptions, $this->unlink_limit);
 
             $successes = $sync->getSuccesses();
             $failures = $sync->getFailures();
@@ -141,7 +142,7 @@ class OktaAppUserSyncJob extends AbstractQueuedJob
         $run_datetime = new \DateTime();
         $run_datetime->modify("+{$seconds} seconds");
         Injector::inst()->get(QueuedJobService::class)->queueJob(
-            new self($this->per_page, $this->report_only, $this->cursor_after),
+            new self($this->per_page, $this->unlink_limit, $this->report_only, $this->cursor_after),
             $run_datetime->format('Y-m-d H:i:s')
         );
     }

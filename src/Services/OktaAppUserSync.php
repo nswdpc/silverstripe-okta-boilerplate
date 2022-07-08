@@ -38,12 +38,12 @@ class OktaAppUserSync extends OktaAppClient
      * Run the sync processing
      * @see https://developer.okta.com/docs/reference/api/apps/#list-users-assigned-to-application
      * @param array $queryOptions extra filtering options to pass to the Okta API, including limit
+     * @param int $unlinkLimit max limit for unlinking users
      * @throws \Exception
      */
-    public function run(array $queryOptions = []) : int
+    public function run(array $queryOptions = [], int $unlinkLimit = 0) : int
     {
         $this->success = $this->fail = [];
-        $limit = isset($queryOptions['limit']) ? intval($queryOptions['limit']) : 0;
 
         /*
         if ($this->dryRun) {
@@ -58,7 +58,7 @@ class OktaAppUserSync extends OktaAppClient
         $failCount = count($this->fail);
         Logger::log("OKTA: processUsers complete, {$successCount} users successfully synced, {$failCount} fails", "INFO");
         $beforeDays = $this->config()->get('before_days');
-        $this->handleUnlinkedMembers($beforeDays, $limit);
+        $this->handleUnlinkedMembers($beforeDays, $unlinkLimit);
         Logger::log("OKTA: processUsers {$this->unlinkedMembers} unlinked member(s) found", "INFO");
         return $successCount;
     }

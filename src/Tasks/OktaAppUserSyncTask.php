@@ -33,6 +33,7 @@ class OktaAppUserSyncTask extends BuildTask
 
             $commitChanges = $request->getVar('commit');
             $limit = $request->getVar('limit');
+            $unlinkLimit = $request->getVar('unlink_limit');
             $verbose = $request->getVar('verbose') == 1;
             $cursorAfter = $request->getVar('after');
             $dryRun = ($commitChanges != 1);
@@ -41,11 +42,15 @@ class OktaAppUserSyncTask extends BuildTask
 
             $queryOptions = [];
             $queryOptions['limit'] = ($limit > 0 ? $limit : 50);
+            if(!$unlinkLimit) {
+                // ensure an unlink limit
+                $unlinkLimit = $queryOptions['limit'];
+            }
             if($cursorAfter) {
                 $queryOptions['after'] = $cursorAfter;
             }
-            print "Running with limit {$queryOptions['limit']}\n";
-            $sync->run($queryOptions);
+            print "Running with limit {$queryOptions['limit']} unlinkLimit={$unlinkLimit}\n";
+            $sync->run($queryOptions, $unlinkLimit);
 
             if ($verbose) {
                 print "DRY RUN report:\n";
