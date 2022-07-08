@@ -30,6 +30,11 @@ class OktaAppUserSync extends OktaAppClient
     private static $before_days = 3;
 
     /**
+     * @var int
+     */
+    protected $unlinkedMembers = 0;
+
+    /**
      * Run the sync processing
      * @see https://developer.okta.com/docs/reference/api/apps/#list-users-assigned-to-application
      * @param array $queryOptions extra filtering options to pass to the Okta API, including limit
@@ -53,8 +58,8 @@ class OktaAppUserSync extends OktaAppClient
         $failCount = count($this->fail);
         Logger::log("OKTA: processUsers complete, {$successCount} users successfully synced, {$failCount} fails", "INFO");
         $beforeDays = $this->config()->get('before_days');
-        $unlinkedMembers = $this->handleUnlinkedMembers($beforeDays, $limit);
-        Logger::log("OKTA: processUsers {$unlinkedMembers} unlinked member(s) found", "INFO");
+        $this->handleUnlinkedMembers($beforeDays, $limit);
+        Logger::log("OKTA: processUsers {$this->unlinkedMembers} unlinked member(s) found", "INFO");
         return $successCount;
     }
 
@@ -66,6 +71,7 @@ class OktaAppUserSync extends OktaAppClient
      * @return int the number of Members no longer found in the configured application
      */
     public function handleUnlinkedMembers(int $beforeDays = 2, int $limit = 0) : int {
+        $this->unlinkedMembers = 0;
         if($beforeDays < 1) {
             // minimum 3 days
             $beforeDays = 3;
@@ -74,10 +80,11 @@ class OktaAppUserSync extends OktaAppClient
         $before->modify("-{$beforeDays} day");
         Logger::log("OKTA: handleUnlinkedMembers beforeDays={$beforeDays} limit={$limit}");
         if($members = $this->getUnlinkedMembers($before, $limit)) {
-            $unlinkedMembers = $members->count();
+            $this->unlinkedMembers = $members->count();
             foreach($members as $member) {
 
                 if(!$this->dryRun) {
+
                     $passports = $member->Passports()->filter(['OAuthSource' => 'Okta']);
                     foreach($passports as $passport) {
                         $passport->delete();
@@ -109,10 +116,15 @@ class OktaAppUserSync extends OktaAppClient
                     $this->report["Member #{$member->ID}"][] = "Not linked to application";
                 }
             }
-            return $unlinkedMembers;
-        } else {
-            return 0;
         }
+        return $this->unlinkedMembers;
+    }
+
+    /**
+     * Return the count of unlinked members
+     */
+    public function getUnlinkedMemberCount() : int {
+        return $this->unlinkedMembers;
     }
 
     /**
