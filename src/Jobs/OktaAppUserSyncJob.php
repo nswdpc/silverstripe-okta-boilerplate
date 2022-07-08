@@ -54,11 +54,12 @@ class OktaAppUserSyncJob extends AbstractQueuedJob
     {
         return _t(
             'OKTA.APP_USER_SYNC_JOB',
-            'Okta App User Sync Job report_only={report_only}, per_page={per_page}, after=' . $this->cursor_after,
+            'Okta App User Sync Job report_only={report_only}, per_page={per_page}, unlink_limit={unlink_limit}, after=' . $this->cursor_after,
             [
                 'report_only' => $this->report_only,
                 'per_page' => $this->per_page,
-                'cursor_after' => $this->cursor_after
+                'unlink_limit' => $this->unlink_limit,
+                'cursor_after' => $this->cursor_after,
             ]
         );
     }
