@@ -27,7 +27,8 @@
         "okta/sdk": "^1.3",
         "silverstripe/framework": "^4.7",
         "phptek/jsontext": "^2",
-        "symbiote/silverstripe-queuedjobs": "^4.5"
+        "symbiote/silverstripe-queuedjobs": "^4.5",
+        "cache/void-adapter": "^1.2.0"
     },
     "require-dev": {
         "mockery/mockery": "^1.5",

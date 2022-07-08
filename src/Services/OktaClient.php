@@ -122,7 +122,11 @@ abstract class OktaClient
     {
         if (!$this->client) {
             $this->httpClient = new ProxiedCurlHttpClient();
-            $this->client = ClientFactory::create($parameters, $this->httpClient);
+            /**
+             * Use the VoidCacheManager
+             */
+            $cacheManager = new VoidCacheManager();
+            $this->client = ClientFactory::create($parameters, $this->httpClient, $cacheManager);
         }
         return $this->client;
     }
