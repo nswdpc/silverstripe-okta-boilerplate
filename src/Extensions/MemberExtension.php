@@ -290,6 +290,14 @@ class MemberExtension extends DataExtension implements PermissionProvider
     }
 
     /**
+     * Get a Member's *direct* non Okta groups
+     */
+    public function getNonOktaGroups() : ManyManyList
+    {
+        return $this->owner->DirectGroups()->exclude(['IsOktaGroup' => 1]);
+    }
+
+    /**
      * Provide permissions
      */
     public function providePermissions()

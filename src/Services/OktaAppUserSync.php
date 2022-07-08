@@ -92,21 +92,24 @@ class OktaAppUserSync extends OktaAppClient
                         }
 
                         /**
-                         * Remove links to Okta groups
+                         * Users with non-okta groups are retained
                          * @var ManyManyList
                          */
-                        if($oktaGroupList = $member->getOktaGroups()) {
-                            $oktaGroupList->removeAll();
-                        }
+                        $nonOktaGroups = $member->getNonOktaGroups();
 
-                        // Members without permissions are removed
-                        $permissions = Permission::permissions_for_member($member->ID);
-                        if (count($permissions) == 0) {
+                        /**
+                         * Remove links to Okta groups for this member
+                         * @var ManyManyList
+                         */
+                        $member->getOktaGroups()->removeAll();
+
+                        // If no local groups, remove the user
+                        if ($nonOktaGroups->count() == 0) {
                             // No permissions
                             Logger::log("OKTA: handleUnlinkedMembers removing unlinked member #{$member->ID}", "INFO");
                             $member->delete();
                         } else {
-                            // Unlinked Okta values
+                            // Unlink Okta profile values
                             Logger::log("OKTA: handleUnlinkedMembers removing okta values from member #{$member->ID}", "INFO");
                             $member->OktaLastSync = '';
                             $member->OktaUnlinkedWhen = $this->startFormatted();
