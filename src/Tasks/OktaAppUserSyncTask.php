@@ -54,6 +54,7 @@ class OktaAppUserSyncTask extends BuildTask
 
             print "SUCCESS: " . count($sync->getSuccesses()) . "\n";
             print "FAIL: " . count($sync->getFailures()) . "\n";
+            print "UNLINK: " . $sync->getUnlinkedMemberCount() . "\n";
             print "AFTER: " . $sync->getCursorAfter() . "\n";// for next task run
 
             return true;
