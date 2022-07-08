@@ -84,33 +84,37 @@ class OktaAppUserSync extends OktaAppClient
             foreach($members as $member) {
 
                 if(!$this->dryRun) {
+                    try {
 
-                    $passports = $member->Passports()->filter(['OAuthSource' => 'Okta']);
-                    foreach($passports as $passport) {
-                        $passport->delete();
-                    }
+                        $passports = $member->Passports()->filter(['OAuthSource' => 'Okta']);
+                        foreach($passports as $passport) {
+                            $passport->delete();
+                        }
 
-                    /**
-                     * Remove links to Okta groups
-                     * @var ManyManyList
-                     */
-                    if($oktaGroupList = $member->getOktaGroups()) {
-                        $oktaGroupList->removeAll();
-                    }
+                        /**
+                         * Remove links to Okta groups
+                         * @var ManyManyList
+                         */
+                        if($oktaGroupList = $member->getOktaGroups()) {
+                            $oktaGroupList->removeAll();
+                        }
 
-                    // Members without permissions are removed
-                    $permissions = Permission::permissions_for_member($member->ID);
-                    if (count($permissions) == 0) {
-                        // No permissions
-                        Logger::log("OKTA: handleUnlinkedMembers removing unlinked member #{$member->ID}", "INFO");
-                        $member->delete();
-                    } else {
-                        // Unlinked Okta values
-                        Logger::log("OKTA: handleUnlinkedMembers removing okta values from member #{$member->ID}", "INFO");
-                        $member->OktaLastSync = '';
-                        $member->OktaUnlinkedWhen = $this->startFormatted();
-                        $member->OktaProfileValue = null;
-                        $member->write();
+                        // Members without permissions are removed
+                        $permissions = Permission::permissions_for_member($member->ID);
+                        if (count($permissions) == 0) {
+                            // No permissions
+                            Logger::log("OKTA: handleUnlinkedMembers removing unlinked member #{$member->ID}", "INFO");
+                            $member->delete();
+                        } else {
+                            // Unlinked Okta values
+                            Logger::log("OKTA: handleUnlinkedMembers removing okta values from member #{$member->ID}", "INFO");
+                            $member->OktaLastSync = '';
+                            $member->OktaUnlinkedWhen = $this->startFormatted();
+                            $member->OktaProfileValue = null;
+                            $member->write();
+                        }
+                    } catch (\Exception $e) {
+                        Logger::log("OKTA: Failed to unlink member #{$member->ID}", "INFO");
                     }
                 } else {
                     $this->report["Member #{$member->ID}"][] = "Not linked to application";
