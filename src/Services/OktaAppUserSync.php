@@ -24,6 +24,12 @@ class OktaAppUserSync extends OktaAppClient
     private static $create_users = false;
 
     /**
+     * Consider users last synced before this date as stale
+     * @var int
+     */
+    private static $before_days = 3;
+
+    /**
      * Run the sync processing
      * @see https://developer.okta.com/docs/reference/api/apps/#list-users-assigned-to-application
      * @param array $queryOptions extra filtering options to pass to the Okta API, including limit
@@ -32,6 +38,7 @@ class OktaAppUserSync extends OktaAppClient
     public function run(array $queryOptions = []) : int
     {
         $this->success = $this->fail = [];
+        $limit = isset($queryOptions['limit']) ? intval($queryOptions['limit']) : 0;
 
         /*
         if ($this->dryRun) {
@@ -45,7 +52,8 @@ class OktaAppUserSync extends OktaAppClient
         $successCount = $this->processAppUsers($this->appUsers);
         $failCount = count($this->fail);
         Logger::log("OKTA: processUsers complete, {$successCount} users successfully synced, {$failCount} fails", "INFO");
-        $unlinkedMembers = $this->handleUnlinkedMembers();
+        $beforeDays = $this->config()->get('before_days');
+        $unlinkedMembers = $this->handleUnlinkedMembers($beforeDays, $limit);
         Logger::log("OKTA: processUsers {$unlinkedMembers} unlinked member(s) found", "INFO");
         return $successCount;
     }
@@ -54,17 +62,19 @@ class OktaAppUserSync extends OktaAppClient
      * Remove Okta values from members no longer linked to the configured application
      * Based on the value of their last sync date in this operation
      * @param int $beforeDays pick up members whose last sync date is > than this
+     * @param int $limit maximum number of users to unlink in this request
      * @return int the number of Members no longer found in the configured application
      */
-    public function handleUnlinkedMembers(int $beforeDays = 2) : int {
-        if($beforeDays < 2) {
-            // minimum 2 days
-            $beforeDays = 2;
+    public function handleUnlinkedMembers(int $beforeDays = 2, int $limit = 0) : int {
+        if($beforeDays < 1) {
+            // minimum 3 days
+            $beforeDays = 3;
         }
         $before = new \DateTime();
         $before->modify("-{$beforeDays} day");
-        if($members = $this->getUnlinkedMembers($before)) {
-            $unlinkedMembers = 0;
+        Logger::log("OKTA: handleUnlinkedMembers beforeDays={$beforeDays} limit={$limit}");
+        if($members = $this->getUnlinkedMembers($before, $limit)) {
+            $unlinkedMembers = $members->count();
             foreach($members as $member) {
 
                 if(!$this->dryRun) {
@@ -98,7 +108,6 @@ class OktaAppUserSync extends OktaAppClient
                 } else {
                     $this->report["Member #{$member->ID}"][] = "Not linked to application";
                 }
-                $unlinkedMembers++;
             }
             return $unlinkedMembers;
         } else {

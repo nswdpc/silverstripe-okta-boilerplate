@@ -75,6 +75,13 @@ abstract class OktaClient
      */
     protected $cursorAfter = null;
 
+
+    /**
+     * Error code for resource not found
+     * @var string
+     */
+    const RESOURCE_NOT_FOUND = "E0000007";
+
     /**
      * Set up Okta client and parameters
      */
