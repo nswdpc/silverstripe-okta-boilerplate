@@ -118,6 +118,9 @@ class OktaAppUserSync extends OktaAppClient
                         }
                     } catch (\Exception $e) {
                         Logger::log("OKTA: Failed to unlink member #{$member->ID}", "INFO");
+                        // drop out of the stale list to avoid blocking
+                        $member->OktaLastSync = '';
+                        $member->write();
                     }
                 } else {
                     $this->report["Member #{$member->ID}"][] = "Not linked to application";
