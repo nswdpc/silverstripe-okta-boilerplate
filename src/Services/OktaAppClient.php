@@ -117,14 +117,18 @@ abstract class OktaAppClient extends OktaClient
     /**
      * Get a list of stale members, last OktaLastSync before the provided datetime
      * @param \DateTime
+     * @param int $limit
      * @return DataList
      */
-    public function getStaleMemberList(\DateTime $before) : DataList {
+    public function getStaleMemberList(\DateTime $before, int $limit = 0) : DataList {
         // Members who have been sync'd
         $members = $this->getSyncedMembers();
         // last synced before the provided DateTime
         $members = $members->filter([ "OktaLastSync:LessThan" => $before->format('Y-m-d H:i:s') ]);
         $members = $members->setQueriedColumns(['OktaProfileLogin','OktaLastSync']);
+        if($limit > 0) {
+            $members = $members->limit($limit);
+        }
         return $members;
     }
 
@@ -136,8 +140,8 @@ abstract class OktaAppClient extends OktaClient
      * @param DateTime check for members last sync'd before this datetime
      * @return DataList|null if null, there are no stale members to unlink
      */
-    protected function getUnlinkedMembers(\DateTime $before) : ?DataList {
-        $members = $this->getStaleMemberList($before);
+    protected function getUnlinkedMembers(\DateTime $before, int $limit = 0) : ?DataList {
+        $members = $this->getStaleMemberList($before, $limit);
         if($members->count() == 0) {
             // there are no stale members to unlink
             return null;
@@ -150,18 +154,26 @@ abstract class OktaAppClient extends OktaClient
             try {
                 $identifier = $member->OktaProfileLogin;
                 $user = $userResource->get($identifier);
-                if($user) {
+                try {
                     $userId = $user->getId();
-                    try {
-                        $appUser = $applicationResource->getApplicationUser($userId);
-                    } catch (\Exception $e) {
-                        // Will throw exception if not found - "Not found: Resource not found: xxxx (AppUser)"
-                        // mark this user as being unlinked
+                    $appUser = $applicationResource->getApplicationUser($userId);
+                } catch (\Okta\Exceptions\ResourceException $e) {
+                    if($e->getErrorCode() == self::RESOURCE_NOT_FOUND) {
+                        Logger::log("Member #{$member->ID} - resource not found - application user");
                         $unlinkedMemberIds[] = $member->ID;
                     }
+                } catch( \Exception $e) {
+                    // noop
+                    Logger::log("Member #{$member->ID} - general error request application user resource");
                 }
-            } catch (\Exception $e) {
-                // User not found, ignore
+            } catch (\Okta\Exceptions\ResourceException $e) {
+                if($e->getErrorCode() == self::RESOURCE_NOT_FOUND) {
+                    Logger::log("Member #{$member->ID} - resource not found - user");
+                    $unlinkedMemberIds[] = $member->ID;
+                }
+            } catch( \Exception $e) {
+                // noop
+                Logger::log("Member #{$member->ID} - general error request user resource");
             }
         }
         $unlinkedMembers = null;

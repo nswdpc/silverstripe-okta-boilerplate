@@ -12,7 +12,6 @@ use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\ORM\ValidationException;
 use SilverStripe\Security\IdentityStore;
-use SilverStripe\Security\Group;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Security;
 
@@ -22,23 +21,10 @@ use SilverStripe\Security\Security;
  */
 class OktaLoginHandler extends LoginTokenHandler
 {
-    use Configurable;
+
     use OktaGroups;
 
-    /**
-     * @var bool
-     * If true, after authentication the user's Okta groups will be used to determine
-     * authenticated access
-     * see self::assignGroups() for group scope and return setup
-     */
-    private static $apply_group_restriction = true;
-
-    /**
-     * @var array
-     * The user must be in all groups listed here to gain authenticated access to the site
-     * If empty then all users authenticating via OAuth can gain access
-     */
-    private static $site_restricted_groups = [];
+    use Configurable;
 
     /**
      * List of failure codes
@@ -249,70 +235,6 @@ class OktaLoginHandler extends LoginTokenHandler
     }
 
     /**
-     * Apply configured group restrictions based on Okta groups returned
-     * Returns false when no restriction applied due to configuration, true if user passes checks
-     * throw ValidationException if check fails
-     * @return bool
-     * @throws ValidationException
-     * @todo move to Okta control panel in /admin area
-     */
-    protected function applyOktaGroupRestriction(ResourceOwnerInterface $user)
-    {
-
-        // check if restricting
-        if (!$this->config()->get('apply_group_restriction')) {
-            return false;
-        }
-
-        // get user Okta groups (titles)
-        $data = $user->toArray();
-        if (empty($data['groups']) || !is_array($data['groups'])) {
-            $this->setLoginFailureCode(self::FAIL_USER_NO_GROUPS, $user->getId());
-            throw new ValidationException(
-                _t(
-                    'OKTA.GENERAL_SESSION_ERROR',
-                    '{getSupportMessage} (#{messageId})',
-                    [
-                        'messageId' => $this->getLoginFailureMessageId(),
-                        'getSupportMessage' => $this->getSupportMessage()
-                    ]
-                )
-            );
-        }
-
-        // User group check
-        $restrictedGroups = $this->config()->get('site_restricted_groups');
-
-        if (empty($restrictedGroups)) {
-            // no restrictions
-            return true;
-        }
-
-        if (!is_array($restrictedGroups)) {
-            // assume a single group
-            $restrictedGroups = [ $restrictedGroups ];
-        }
-
-        $intersect = array_intersect($restrictedGroups, $data['groups']);
-        // the intersect must contain all the restricted groups
-        if ($intersect != $restrictedGroups) {
-            $this->setLoginFailureCode(self::FAIL_USER_MISSING_REQUIRED_GROUPS, $user->getId());
-            throw new ValidationException(
-                _t(
-                    'OKTA.GENERAL_SESSION_ERROR',
-                    '{getSupportMessage} (#{messageId})',
-                    [
-                        'messageId' => $this->getLoginFailureMessageId(),
-                        'getSupportMessage' => $this->getSupportMessage()
-                    ]
-                )
-            );
-        }
-
-        return true;
-    }
-
-    /**
      * @inheritdoc
      */
     protected function findOrCreateMember(AccessToken $token, AbstractProvider $provider)
@@ -320,8 +242,6 @@ class OktaLoginHandler extends LoginTokenHandler
         $session = $this->getSession();
 
         $user = $provider->getResourceOwner($token);
-
-        $this->applyOktaGroupRestriction($user);
 
         $identifier = $user->getId();
         $providerName = $session->get('oauth2.provider');
@@ -398,35 +318,9 @@ class OktaLoginHandler extends LoginTokenHandler
             $passport->write();
         }
 
-        $this->assignGroups($user, $member);
+        $this->assignOktaRootGroup($member);
 
         return $member;
-    }
-
-    /**
-     * Given a user returned from Okta, assign their configured groups
-     * if the groups were also returned
-     * Groups are returned by adding the 'group' scope to the AccessToken claim
-     * You must add a "Groups claim filter" = 'groups' 'Matches regex' '.*' in the Service app
-     * OpenID Connect ID Token section
-     * @see https://developer.okta.com/docs/guides/customize-tokens-groups-claim/add-groups-claim-org-as/
-     * @return array values are created or updated Group.ID values for the $member
-     * @param ResourceOwnerInterface $user an Okta user
-     * @param Member $member associated with the Okta user
-     */
-    protected function assignGroups(ResourceOwnerInterface $user, Member $member) : array
-    {
-
-        // groups are present in the returned user, but not via a method
-        $data = $user->toArray();
-
-        // Note: to return all the user's Okta groups, the groups claim in the application settings should be
-        // .* to return all the user's groups
-        // the list of groups here may not represent a list of all the user's Okta groups
-        // the goal here is to sync on auth the available Okta groups
-        $groups = !empty($data['groups']) && is_array($data['groups']) ? $data['groups'] : [];
-
-        return $this->oktaUserMemberGroupAssignment($groups, $member);
     }
 
     /**

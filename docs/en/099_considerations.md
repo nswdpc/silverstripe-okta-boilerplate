@@ -7,8 +7,7 @@ You may have success using this module with other OAuth provider clients configu
 The Okta login handler provided in this module works on the basis that:
 
 1. The Okta user's preferred username is returned during the authentication process
-1. Some or all of the Okta user's groups are returned during the authentication process
-1. One person is the owner of the Okta account and Silverstripe Member record, and that the Okta preferred_username is matched with the Silverstripe Member.Email value
+1. One person is the owner of the Okta account and Silverstripe Member record
 
 ## Extensions
 
@@ -16,11 +15,7 @@ The following extensions and handlers modify or add functionality to the default
 
 ### Group extension
 
-The module adds an `IsOktaGroup` field.
-
-Groups with `IsOktaGroup` toggled 'on' will not be able to have permissions or roles assigned. Okta groups can be used for targeted content, for instance.
-
-All groups synchronised this way will be given a parent based on the configured root group.
+The module adds an `IsOktaGroup` field and a default Okta group is created.
 
 ### Member extension
 
@@ -35,24 +30,6 @@ See OktaLoginHandler for usage.
 ## Okta Login Handler
 
 Configuration adds this handler as the OAuth login handler when enabled. It overrides Passport and Member handling.
-
-The following configuration values are available on the Okta Login Handler:
-
-### apply_group_restriction
-
-+ Value: true|false
-+ Default: true
-
-Whether to further restrict access based on the Okta groups returned for an authenticated user. When false, any user authenticated by your Okta OAuth app may gain access. You can control which users are assigned to the Okta Application via the Okta Administration dashboard.
-
-### site_restricted_groups
-
-+ Value: array
-+ Default: []
-
-An array of Okta group names.
-
-The site can specify these groups. Okta users authenticating must exist in all groups specified. If `apply_group_restriction` is false, this value is ignored.
 
 ## Okta Linker
 

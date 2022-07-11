@@ -75,6 +75,13 @@ abstract class OktaClient
      */
     protected $cursorAfter = null;
 
+
+    /**
+     * Error code for resource not found
+     * @var string
+     */
+    const RESOURCE_NOT_FOUND = "E0000007";
+
     /**
      * Set up Okta client and parameters
      */
@@ -115,7 +122,11 @@ abstract class OktaClient
     {
         if (!$this->client) {
             $this->httpClient = new ProxiedCurlHttpClient();
-            $this->client = ClientFactory::create($parameters, $this->httpClient);
+            /**
+             * Use the VoidCacheManager
+             */
+            $cacheManager = new VoidCacheManager();
+            $this->client = ClientFactory::create($parameters, $this->httpClient, $cacheManager);
         }
         return $this->client;
     }
@@ -208,33 +219,6 @@ abstract class OktaClient
             throw new OktaClientException("AppUser {$user->getId()} has no Okta user profile");
         }
         return $userProfile;
-    }
-
-    /**
-     * Collect all groups for a user
-     * @param array $options
-     * @param \Okta\Users\User $user
-     * @param \Okta\Groups\Collection $userGroups
-     */
-    final protected function collectUserGroups(array $options, \Okta\Users\User $user, \Okta\Groups\Collection &$userGroups)
-    {
-        // @var \Okta\Groups\Collection
-        if (!$user->getId()) {
-            throw new \Exception("To get user groups, the user resource must have an Id");
-        }
-        $collection = $user->getGroups($options);
-        if ($collection instanceof \Okta\Groups\Collection) {
-            // merge the returned collection on
-            $userGroups = $userGroups->merge($collection);
-            try {
-                $options = $this->httpClient->getNextPageOptions();
-                // get the next set
-                $this->collectUserGroups(['query' => $options ], $user, $userGroups);
-            } catch (\Exception $e) {
-                // getNextPageOptions threw an exception (or no more results)
-            }
-        }
-        return false;
     }
 
     /**

@@ -1,6 +1,6 @@
 # 🧪 Okta authentication boilerplate
 
-This module adds Okta OAuth2 authentication and group discovery to your Silverstripe website
+This module adds Okta OAuth2 authentication to your Silverstripe website
 
 :warning: 🧪 This module is under active development and may include breaking changes.
 
@@ -10,8 +10,7 @@ With this module you can
 
 + Create an OAuth2 client via configuration using [bigfork/silverstripe-oauth-login](https://github.com/bigfork/silverstripe-oauth-login)
 + Authenticate an Okta user that may or may not be a Silverstripe member, via Okta OAuth
-+ Save Okta groups returned for a user as Silverstripe group records, and link that user to them
-+ Restrict Silverstripe login access to one or more configured Okta groups
++ Link a user to an Okta group
 + Optionally disallow/allow the default member authenticator alongside Okta auth
 
 ### Okta API
@@ -27,7 +26,6 @@ Use of the Okta API is optional.
 
 + An Okta account
 + An Okta OAuth service application configured with scopes granted
-+ A valid groups claim to return some or all of the user's Okta groups
 + If you require multiple sites authenticating via Okta, a service application per site.
 + A `clientId` and `clientSecret` for OAuth
 

@@ -14,33 +14,13 @@
     Code: contenteditorgroup
     Permissions: '=>SilverStripe\Security\Permission.cmspermission'
     IsOktaGroup: 0
-  oktagroup1:
-    ID: 1001
-    Title: 'Okta Group 1'
-    code: oktagroup1
-    IsOktaGroup: 1
-  oktagroup2:
-    ID: 1002
-    Title: 'Okta Group 2'
-    code: oktagroup2
-    IsOktaGroup: 1
-  oktagroup3:
-    ID: 1003
-    Title: 'Okta Group 3'
-    code: oktagroup3
-    IsOktaGroup: 1
-  oktagroup4:
-    ID: 1004
-    Title: 'Okta Group 4'
-    code: oktagroup4
-    IsOktaGroup: 1
 'SilverStripe\Security\Member':
   admin1:
     ID: 11
     FirstName: Admin
     Surname: Person1
     Email: admin1@example.com
-    Groups: '=>SilverStripe\Security\Group.admingroup,=>SilverStripe\Security\Group.oktagroup4'
+    Groups: '=>SilverStripe\Security\Group.admingroup'
     OktaLastSync: null
     OktaProfileLogin: 'admin1@example.com'
   admin2:
@@ -64,7 +44,7 @@
     FirstName: Content
     Surname: Editor2
     Email: contenteditor2@example.org
-    Groups: '=>SilverStripe\Security\Group.contenteditorgroup,=>SilverStripe\Security\Group.oktagroup2'
+    Groups: '=>SilverStripe\Security\Group.contenteditorgroup'
     OktaLastSync: null
     OktaProfileLogin: 'contenteditor2@example.com'
   oktauser1:
@@ -72,7 +52,6 @@
     FirstName: Okta
     Surname: User1
     Email: oktauser1@example.com
-    Groups: '=>SilverStripe\Security\Group.oktagroup1,=>SilverStripe\Security\Group.oktagroup2'
     OktaLastSync: null
     OktaProfileLogin: 'oktauser1@example.com'
   oktauser2:
@@ -80,7 +59,6 @@
     FirstName: Okta
     Surname: User2
     Email: oktauser2@example.com
-    Groups: '=>SilverStripe\Security\Group.oktagroup1'
     OktaLastSync: null
     OktaProfileLogin: 'oktauser2@sub.example.com'
   oktauser3:
@@ -88,7 +66,6 @@
     FirstName: Okta
     Surname: User3
     Email: oktauser3@example.com
-    Groups: '=>SilverStripe\Security\Group.oktagroup2,=>SilverStripe\Security\Group.oktagroup4'
     OktaLastSync: null
     OktaProfileLogin: 'oktauser3@example.com'
   oktauser4:
@@ -96,7 +73,7 @@
     FirstName: Okta
     Surname: User4
     Email: oktauser4@example.com
-    Groups: '=>SilverStripe\Security\Group.admingroup,=>SilverStripe\Security\Group.oktagroup3'
+    Groups: '=>SilverStripe\Security\Group.admingroup'
     OktaLastSync: null
     OktaProfileLogin: 'oktauser4@example.com'
   oktauser5:
@@ -104,7 +81,7 @@
     FirstName: Okta
     Surname: User5
     Email: oktauser5@example.com
-    Groups: '=>SilverStripe\Security\Group.contenteditorgroup,=>SilverStripe\Security\Group.oktagroup4'
+    Groups: '=>SilverStripe\Security\Group.contenteditorgroup'
     OktaLastSync: null
     OktaProfileLogin: 'oktauser5@sub.example.com'
   oktauser6:
@@ -119,7 +96,7 @@
     FirstName: Okta
     Surname: User7
     Email: oktauser7@example.com
-    Groups: '=>SilverStripe\Security\Group.admingroup,=>SilverStripe\Security\Group.oktagroup3'
+    Groups: '=>SilverStripe\Security\Group.admingroup'
     OktaLastSync: null
     OktaProfileLogin: 'oktauser7@example.com'
 'Bigfork\SilverStripeOAuth\Client\Model\Passport':

@@ -22,29 +22,31 @@ class OktaUnlinkMemberTest extends SapphireTest
     public function testStaleMemberList() {
 
         $sync = new OktaAppUserSync(false);
-        $days = 2;
+        $beforeDays = 2;
         $before = new \DateTime();
-        $before->modify("-{$days} day");
+        $before->modify("-{$beforeDays} day");
         $list = $sync->getStaleMemberList($before);
 
         // no users have been marked stale in the fixture
         $this->assertEquals(0, $list->count());
 
-        // sync on days
+        // not stale
         $oktaUser5Sync = new \DateTime();
-        $oktaUser5Sync->modify("-{$days} day");
+        $oktaUser5Sync->modify("-{$beforeDays} day");
         $oktaUser5 = $this->objFromFixture(Member::class, 'oktauser5');
         $oktaUser5->OktaLastSync = $oktaUser5Sync->format('Y-m-d H:i:s');
         $oktaUser5->write();
 
-        $syncDays = $days + 5;
+        // stale
+        $syncDays = $beforeDays + 5;
         $oktaUser6Sync = new \DateTime();
         $oktaUser6Sync->modify("-{$syncDays} day");
         $oktaUser6 = $this->objFromFixture(Member::class, 'oktauser6');
         $oktaUser6->OktaLastSync = $oktaUser6Sync->format('Y-m-d H:i:s');
         $oktaUser6->write();
 
-        $syncDays = $days + 1;
+        // stale
+        $syncDays = $beforeDays + 1;
         $oktaUser7Sync = new \DateTime();
         $oktaUser7Sync->modify("-{$syncDays} day");
         $oktaUser7 = $this->objFromFixture(Member::class, 'oktauser7');
@@ -52,8 +54,9 @@ class OktaUnlinkMemberTest extends SapphireTest
         $oktaUser7->write();
 
         $list = $sync->getStaleMemberList($before);
-
         $this->assertEquals(2, $list->count());
+        $this->assertNotNull( $list->filter(['OktaProfileLogin' => 'oktauser7@example.com'])->first() );
+        $this->assertNotNull( $list->filter(['OktaProfileLogin' => 'oktauser6@sub.example.com'])->first() );
 
     }
 

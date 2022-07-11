@@ -7,7 +7,6 @@ use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Convert;
 use SilverStripe\ORM\ArrayList;
-use SilverStripe\Security\Group;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
 
@@ -25,12 +24,24 @@ class OktaAppUserSync extends OktaAppClient
     private static $create_users = false;
 
     /**
+     * Consider users last synced before this date as stale
+     * @var int
+     */
+    private static $before_days = 3;
+
+    /**
+     * @var int
+     */
+    protected $unlinkedMembers = 0;
+
+    /**
      * Run the sync processing
      * @see https://developer.okta.com/docs/reference/api/apps/#list-users-assigned-to-application
      * @param array $queryOptions extra filtering options to pass to the Okta API, including limit
+     * @param int $unlinkLimit max limit for unlinking users
      * @throws \Exception
      */
-    public function run(array $queryOptions = []) : int
+    public function run(array $queryOptions = [], int $unlinkLimit = 0) : int
     {
         $this->success = $this->fail = [];
 
@@ -46,49 +57,84 @@ class OktaAppUserSync extends OktaAppClient
         $successCount = $this->processAppUsers($this->appUsers);
         $failCount = count($this->fail);
         Logger::log("OKTA: processUsers complete, {$successCount} users successfully synced, {$failCount} fails", "INFO");
-        $unlinkedMembers = $this->handleUnlinkedMembers();
-        Logger::log("OKTA: processUsers {$unlinkedMembers} unlinked member(s) found", "INFO");
+        $beforeDays = $this->config()->get('before_days');
+        $this->handleUnlinkedMembers($beforeDays, $unlinkLimit);
+        Logger::log("OKTA: processUsers {$this->unlinkedMembers} unlinked member(s) found", "INFO");
         return $successCount;
     }
 
     /**
      * Remove Okta values from members no longer linked to the configured application
      * Based on the value of their last sync date in this operation
+     * @param int $beforeDays pick up members whose last sync date is > than this
+     * @param int $limit maximum number of users to unlink in this request
      * @return int the number of Members no longer found in the configured application
      */
-    protected function handleUnlinkedMembers() : int {
-        $days = 2;
+    public function handleUnlinkedMembers(int $beforeDays = 2, int $limit = 0) : int {
+        $this->unlinkedMembers = 0;
+        if($beforeDays < 1) {
+            // minimum 3 days
+            $beforeDays = 3;
+        }
         $before = new \DateTime();
-        $before->modify("-{$days} day");
-        if($members = $this->getUnlinkedMembers($before)) {
+        $before->modify("-{$beforeDays} day");
+        Logger::log("OKTA: handleUnlinkedMembers beforeDays={$beforeDays} limit={$limit}");
+        if($members = $this->getUnlinkedMembers($before, $limit)) {
+            $this->unlinkedMembers = $members->count();
             foreach($members as $member) {
+
                 if(!$this->dryRun) {
-                    $passports = $member->Passports()->filter(['OAuthSource' => 'Okta']);
-                    foreach($passports as $passport) {
-                        $passport->delete();
-                    }
-                    // Members without permissions are removed
-                    $permissions = Permission::permissions_for_member($member->ID);
-                    if (count($permissions) == 0) {
-                        // No permissions
-                        Logger::log("OKTA: handleUnlinkedMembers removing unlinked member #{$member->ID}", "INFO");
-                        $member->delete();
-                    } else {
-                        // Unlinked Okta values
-                        Logger::log("OKTA: handleUnlinkedMembers removing okta values from member #{$member->ID}", "INFO");
+                    try {
+
+                        $passports = $member->Passports()->filter(['OAuthSource' => 'Okta']);
+                        foreach($passports as $passport) {
+                            $passport->delete();
+                        }
+
+                        /**
+                         * Users with non-okta groups are retained
+                         * @var ManyManyList
+                         */
+                        $nonOktaGroups = $member->getNonOktaGroups();
+
+                        /**
+                         * Remove links to Okta groups for this member
+                         * @var ManyManyList
+                         */
+                        $member->getOktaGroups()->removeAll();
+
+                        // If no local groups, remove the user
+                        if ($nonOktaGroups->count() == 0) {
+                            // No permissions
+                            Logger::log("OKTA: handleUnlinkedMembers removing unlinked member #{$member->ID}", "INFO");
+                            $member->delete();
+                        } else {
+                            // Unlink Okta profile values
+                            Logger::log("OKTA: handleUnlinkedMembers removing okta values from member #{$member->ID}", "INFO");
+                            $member->OktaLastSync = '';
+                            $member->OktaUnlinkedWhen = $this->startFormatted();
+                            $member->OktaProfileValue = '[]';
+                            $member->write();
+                        }
+                    } catch (\Exception $e) {
+                        Logger::log("OKTA: Failed to unlink member #{$member->ID}", "INFO");
+                        // drop out of the stale list to avoid blocking
                         $member->OktaLastSync = '';
-                        $member->OktaUnlinkedWhen = $this->startFormatted();
-                        $member->OktaProfileValue = null;
                         $member->write();
                     }
                 } else {
                     $this->report["Member #{$member->ID}"][] = "Not linked to application";
                 }
             }
-            return $members->count();
-        } else {
-            return 0;
         }
+        return $this->unlinkedMembers;
+    }
+
+    /**
+     * Return the count of unlinked members
+     */
+    public function getUnlinkedMemberCount() : int {
+        return $this->unlinkedMembers;
     }
 
     /**
@@ -98,6 +144,12 @@ class OktaAppUserSync extends OktaAppClient
     protected function processAppUsers(\Okta\Applications\Collection $appUsers) : int
     {
         // Logger::log("OKTA: Processing appUser collection count=" . count($appUsers), "INFO");
+        $createUser = $this->config()->get('create_users');
+        if(!$createUser) {
+            Logger::log("OKTA: create users off", "INFO");
+        } else {
+            Logger::log("OKTA: create users on", "INFO");
+        }
         foreach ($appUsers as $appUser) {
             try {
                 $userId = $appUser->getId();
@@ -134,16 +186,12 @@ class OktaAppUserSync extends OktaAppClient
         $user = $this->getUser($appUser->getId());
         $userId = $user->getId();
 
-        // Collect user groups
         // initial request options
         $options = [
             'query' => [
                 'limit' => 50
             ]
         ];
-        // initially no groups
-        $userGroups = new \Okta\Groups\Collection([]);
-        $this->collectUserGroups($options, $user, $userGroups);
 
         // User profile information
         $userProfile = $this->getUserProfile($user);
@@ -169,8 +217,6 @@ class OktaAppUserSync extends OktaAppClient
         $createUser = $this->config()->get('create_users');
         if(!$createUser) {
 
-            Logger::log("OKTA: create users off - passport check", "INFO");
-
             $passport = Passport::get()->filter([
                 'Identifier' => $userId,
                 'OAuthSource' => 'Okta' // @todo constant
@@ -191,7 +237,6 @@ class OktaAppUserSync extends OktaAppClient
             }
 
         } else {
-            Logger::log("OKTA: create users on - bypass passport check", "INFO");
             $member = $oktaLinker->linkViaUserProfile($userProfile, true);
             if (!$member) {
                 throw new OktaAppUserSyncException("AppUser {$userId} could not link/create member from profile login={$userLogin},email={$userEmail}");
@@ -205,30 +250,7 @@ class OktaAppUserSync extends OktaAppClient
             $member->OktaLastSync = $this->startFormatted();
             $member->OktaUnlinkedWhen = null;// remove any previous value, if the user was unlinked
             $member->write();
-        }
-
-        $groups = [];
-        if ($userGroups instanceof \Okta\Groups\Collection) {
-
-            // The group profile contains the group name
-            foreach ($userGroups as $userGroup) {
-                $groupProfile = $userGroup->getProfile();
-                $groups[ $userGroup->getId() ] = $groupProfile->getName();
-            }
-
-            if ($this->dryRun) {
-                foreach ($groups as $groupId => $groupName) {
-                    $this->report[$userId][] = "AppUser.id={$userId} Member #{$member->ID} returned Okta group '{$groupName}'";
-                }
-            } else {
-                // @var array
-                $createdOrUpdatedGroups = $this->oktaUserMemberGroupAssignment($groups, $member);
-                /*
-                foreach ($createdOrUpdatedGroups as $createdOrUpdatedGroup) {
-                    Logger::log("AppUser.id={$userId} Member {$member->ID} is assigned local Okta group {$createdOrUpdatedGroup}", "DEBUG");
-                }
-                */
-            }
+            $this->assignOktaRootGroup($member);
         }
 
         return $member;

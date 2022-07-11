@@ -19,8 +19,7 @@ class OktaAppUserSearchTask extends BuildTask
     private static $segment = 'OktaAppUserSearchTask';
 
     /**
-     * Run the task - given a group id, get all users
-     * When commit=1 is provided, the changes found are committed
+     * Run the task
      */
     public function run($request)
     {

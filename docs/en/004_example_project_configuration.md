@@ -40,16 +40,6 @@ NSWDPC\Authentication\Okta\ClientFactory:
   config_file_location: null
   application_client_id: 'not-a-client-id'
 ---
-Name: app-okta-loginhandler
-After:
-  - '#silverstripe-okta-loginhandler'
----
-# Oauth login handler
-NSWDPC\Authentication\Okta\OktaLoginHandler:
-  apply_group_restriction: true
-  site_restricted_groups:
-    - 'An Okta group the user has to be in'
----
 Name: app-okta-linker
 After:
   - silverstripe-okta-linker
