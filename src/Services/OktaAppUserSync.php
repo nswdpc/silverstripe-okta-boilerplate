@@ -111,15 +111,15 @@ class OktaAppUserSync extends OktaAppClient
                         } else {
                             // Unlink Okta profile values
                             Logger::log("OKTA: handleUnlinkedMembers removing okta values from member #{$member->ID}", "INFO");
-                            $member->OktaLastSync = null;
+                            $member->OktaLastSync = '';
                             $member->OktaUnlinkedWhen = $this->startFormatted();
-                            $member->OktaProfileValue = null;
+                            $member->OktaProfileValue = '[]';
                             $member->write();
                         }
                     } catch (\Exception $e) {
                         Logger::log("OKTA: Failed to unlink member #{$member->ID}", "INFO");
                         // drop out of the stale list to avoid blocking
-                        $member->OktaLastSync = null;
+                        $member->OktaLastSync = '';
                         $member->write();
                     }
                 } else {
