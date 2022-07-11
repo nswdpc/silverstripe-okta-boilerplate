@@ -114,7 +114,6 @@ class OktaAppUserSync extends OktaAppClient
                             $member->OktaLastSync = null;
                             $member->OktaUnlinkedWhen = $this->startFormatted();
                             $member->OktaProfileValue = null;
-                            $member->OktaProfileLogin = null;
                             $member->write();
                         }
                     } catch (\Exception $e) {
