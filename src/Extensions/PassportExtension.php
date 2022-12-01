@@ -41,6 +41,8 @@ class PassportExtension extends DataExtension implements PermissionProvider
      * @var array
      */
     private static $indexes = [
+        'Created' => true,
+        'LastEdited' => true,
         'IdentifierProvider' => [
             'type' => 'unique',
             'columns' => [

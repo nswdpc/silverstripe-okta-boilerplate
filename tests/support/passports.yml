@@ -1,0 +1,31 @@
+'Bigfork\SilverStripeOAuth\Client\Model\Passport':
+  passport1:
+    OAuthSource: 'Okta'
+    Identifier: 901
+  passport2:
+    OAuthSource: 'Okta'
+    Identifier: 902
+  passport3:
+    OAuthSource: 'Okta'
+    Identifier: 123451
+  passport4:
+    OAuthSource: 'Okta'
+    Identifier: 123452
+  passport5:
+    OAuthSource: 'Okta'
+    Identifier: 123453
+  passport6:
+    OAuthSource: 'Okta'
+    Identifier: 123454
+  passport7:
+    OAuthSource: 'Okta'
+    Identifier: 123455
+  passport8:
+    OAuthSource: 'Okta'
+    Identifier: 123456
+  passport9:
+    OAuthSource: 'Okta'
+    Identifier: 987651
+  passport10:
+    OAuthSource: 'Okta'
+    Identifier: 987652
