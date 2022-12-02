@@ -27,8 +27,12 @@ class PassportCleanupJob extends AbstractQueuedJob
      */
     public function __construct($staleness_in_days = 30, $report_only = 0)
     {
-        $this->report_only = $report_only;
-        $this->staleness_in_days = $staleness_in_days;
+        if($report_only !== '') {
+            $this->report_only = $report_only;
+        }
+        if($staleness_in_days !== '') {
+            $this->staleness_in_days = $staleness_in_days;
+        }
     }
 
     /**
@@ -107,7 +111,7 @@ class PassportCleanupJob extends AbstractQueuedJob
         $rdt = new \DateTime();
         $rdt->modify("+{$seconds} seconds");
         Injector::inst()->get(QueuedJobService::class)->queueJob(
-            new self($this->report_only, $this->staleness_in_days),
+            new self($this->staleness_in_days, $this->report_only),
             $rdt->format('Y-m-d H:i:s')
         );
     }
