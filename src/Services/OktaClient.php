@@ -48,7 +48,7 @@ abstract class OktaClient
     protected $start = null;
 
     /**
-     * @var HttpClient
+     * @var ProxiedCurlHttpClient
      */
     protected $httpClient = null;
 
@@ -101,7 +101,7 @@ abstract class OktaClient
 
     /**
      * Store whether the request should proceed to the next page of results (false) or not (true)
-     * @param bool
+     * @param bool $is
      */
     public function setIsSinglePage(bool $is) : self {
         $this->singlePage = $is;
@@ -200,7 +200,7 @@ abstract class OktaClient
     /**
      * Get an Okta user, based on the provided identifier
      * @see https://developer.okta.com/docs/reference/api/users/#get-user
-     * @param string
+     * @param string $identifier
      */
     final public function getUser(string $identifier) : ?\Okta\Users\User {
         $resource = $this->getUserResource();
@@ -210,7 +210,7 @@ abstract class OktaClient
 
     /**
      * Get an Okta user profile, from an Okta user record
-     * @param \Okta\Users\User Okta user record
+     * @param \Okta\Users\User $user Okta user record
      */
     final public function getUserProfile(\Okta\Users\User $user) : \Okta\Users\UserProfile {
         // @var \Okta\Users\UserProfile

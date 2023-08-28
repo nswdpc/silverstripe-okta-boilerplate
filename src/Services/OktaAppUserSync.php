@@ -93,13 +93,12 @@ class OktaAppUserSync extends OktaAppClient
 
                         /**
                          * Users with non-okta groups are retained
-                         * @var ManyManyList
+                         * @var \SilverStripe\ORM\ManyManyList $nonOktaGroups
                          */
                         $nonOktaGroups = $member->getNonOktaGroups();
 
                         /**
                          * Remove links to Okta groups for this member
-                         * @var ManyManyList
                          */
                         $member->getOktaGroups()->removeAll();
 
@@ -152,6 +151,7 @@ class OktaAppUserSync extends OktaAppClient
         }
         foreach ($appUsers as $appUser) {
             try {
+                $userId = null;
                 $userId = $appUser->getId();
                 /**
                  * Process a single AppUser, the return value is the matched/updated member

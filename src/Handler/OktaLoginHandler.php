@@ -87,6 +87,7 @@ class OktaLoginHandler extends LoginTokenHandler
         // Log the member in
         $identityStore = Injector::inst()->get(IdentityStore::class);
         $identityStore->logIn($member);
+        return null;
     }
 
     /**
@@ -202,7 +203,7 @@ class OktaLoginHandler extends LoginTokenHandler
      * See {@link NSWDPC\Authentication\Okta\PassportExtension::validatePassportWrite()}
      * @return Passport|null
      */
-    protected function createPassport(string $identifier, string $provider, Member $member) : Passport
+    protected function createPassport(string $identifier, string $provider, Member $member) : ?Passport
     {
         try {
             // create a passport
@@ -241,6 +242,7 @@ class OktaLoginHandler extends LoginTokenHandler
     {
         $session = $this->getSession();
 
+        /** @var \Foxworth42\OAuth2\Client\Provider\OktaUser $user **/
         $user = $provider->getResourceOwner($token);
 
         $identifier = $user->getId();
@@ -335,6 +337,7 @@ class OktaLoginHandler extends LoginTokenHandler
     {
         $session = $this->getSession();
         $providerName = $session->get('oauth2.provider');
+        /** @var \Foxworth42\OAuth2\Client\Provider\OktaUser $user **/
         $user = $provider->getResourceOwner($token);
 
         // require a provider name for this operation

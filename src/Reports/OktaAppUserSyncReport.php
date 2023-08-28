@@ -1,6 +1,6 @@
 <?php
 
-namespace SilverStripe\CMS\Reports;
+namespace NSWDPC\Authentication\Okta;
 
 use SilverStripe\Admin\SecurityAdmin;
 use SilverStripe\Control\Controller;

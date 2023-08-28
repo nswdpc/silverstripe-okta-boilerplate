@@ -173,7 +173,7 @@ class MemberExtension extends DataExtension implements PermissionProvider
         if($this->owner->OktaProfileValue) {
             try {
                 $formattedValue = json_encode(
-                    $this->owner->getOktaProfileValueAsArray(),
+                    $this->getOktaProfileValueAsArray(),
                     JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR
                 );
             } catch (\Exception $e) {
