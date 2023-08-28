@@ -84,7 +84,7 @@ class OktaLinker {
      * @param string $userSurname an Okta user family_name or surname
      * @return Member|null
      */
-    protected static function linktoMember(bool $createIfNotExisting = true, string $userLogin, string $userEmail, string $userFirstName = '', string $userSurname = '') : ?Member {
+    protected static function linktoMember(bool $createIfNotExisting, string $userLogin, string $userEmail, string $userFirstName = '', string $userSurname = '') : ?Member {
 
         // Linking requires both the Okta login and email values
         if(!$userLogin || !$userEmail) {
