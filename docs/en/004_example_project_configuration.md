@@ -30,16 +30,6 @@ Bigfork\SilverStripeOAuth\Client\Mapper\GenericMemberMapper:
       'FirstName': 'FirstName'
       'Surname': 'Surname'
 ---
-Name: app-okta-api
-After:
-  - '#silverstripe-okta-api'
----
-# API client options
-NSWDPC\Authentication\Okta\ClientFactory:
-  default_file_location: '/path/to/okta.yaml'
-  config_file_location: null
-  application_client_id: 'not-a-client-id'
----
 Name: app-okta-linker
 After:
   - silverstripe-okta-linker

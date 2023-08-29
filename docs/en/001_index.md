@@ -1,7 +1,6 @@
 # Documentation
 
 1. [OAuth client setup](./002_oauth_login.md)
-1. [API setup](./003_okta_api.md)
 1. [Example project configuration](./004_example_project_configuration.md)
 1. [Considerations](./099_considerations.md)
 
@@ -11,7 +10,6 @@ This module uses the following libraries and Silverstripe vendor modules to prov
 
 + [bigfork/silverstripe-oauth-login](https://github.com/bigfork/silverstripe-oauth-login) + dependencies
 + [foxworth42/oauth2-okta](https://github.com/foxworth42/oauth2-okta), a [league/oauth2-client](https://github.com/thephpleague/oauth2-client) client
-+ [okta/sdk](https://github.com/okta/okta-sdk-php)
 + [silverstripe/framework](https://github.com/silverstripe/silverstripe-framework)
 
 Configuring your Okta OAuth service application is outside the scope of this document. [Okta provides good documentation](https://developer.okta.com/docs/guides/implement-oauth-for-okta/create-oauth-app/).

@@ -202,14 +202,6 @@ class MemberExtension extends DataExtension implements PermissionProvider
                         'OktaProfileLogin',
                         _t('OKTA.PROFILE_LOGIN', 'Okta login')
                     ),
-                    LabelField::create(
-                        'OktaProfileLabel',
-                        _t('OKTA.PROFILE_FIELD_TITLE', 'Latest profile data')
-                    ),
-                    LiteralField::create(
-                        'OktaProfileValue',
-                        '<pre>' . htmlspecialchars($this->formatOktaProfileValue()) . '</pre>'
-                    ),
                     CompositeField::create(
                         ReadonlyField::create(
                             'OktaLastSync',
@@ -223,11 +215,7 @@ class MemberExtension extends DataExtension implements PermissionProvider
                                 'Clear this value'
                             )
                         )
-                    ),
-                    ReadonlyField::create(
-                        'OktaUnlinkedWhen',
-                        _t('OKTA.UNLINKED_DATETIME', 'When this member was unlinked from an Okta profile')
-                    ),
+                    )
                 )->setTitle(
                     _t('OKTA.OKTA_HEADING', 'Okta')
                 )
