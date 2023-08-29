@@ -263,7 +263,7 @@ class MemberExtension extends DataExtension implements PermissionProvider
         try {
             $dt = new \DateTime();
             $odt = new \DateTime($this->owner->OktaLastSync);
-            $odt->modify("+1 {$days} day");
+            $odt->modify("+{$days} day");
             if ($odt < $dt) {
                 // still not on or after today
                 $result->addError(
