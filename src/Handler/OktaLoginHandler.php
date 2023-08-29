@@ -10,6 +10,7 @@ use League\OAuth2\Client\Provider\ResourceOwnerInterface;
 use SilverStripe\Control\Controller;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injector;
+use SilverStripe\ORM\FieldType\DBDatetime;
 use SilverStripe\ORM\ValidationException;
 use SilverStripe\Security\IdentityStore;
 use SilverStripe\Security\Member;
@@ -317,6 +318,7 @@ class OktaLoginHandler extends LoginTokenHandler
                 );
             }
             $passport->MemberID = $member->ID;
+            $passport->LastEdited = DBDatetime::now()->Rfc2822();
             $passport->write();
         }
 
