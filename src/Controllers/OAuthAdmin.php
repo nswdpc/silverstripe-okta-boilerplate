@@ -44,6 +44,7 @@ class OAuthAdmin extends ModelAdmin
         }
 
         $form = parent::getEditForm($id, $fields);
+        /** @var \SilverStripe\Forms\GridField\GridField  $grid **/
         $grid = $form->Fields()->dataFieldByName($this->sanitiseClassName($this->modelClass));
         $config = $grid->getConfig();
         $config->removeComponentsByType(GridFieldPrintButton::class);

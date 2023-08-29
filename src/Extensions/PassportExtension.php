@@ -199,7 +199,7 @@ class PassportExtension extends DataExtension implements PermissionProvider
                 foreach ($providers as $providerName => $provider) {
                     $listProviders[ $providerName ] = _t(
                         'OKTA.PROVIDER_' . $providerName,
-                        $providerName ?? 'Unknown provider'
+                        $providerName
                     );
                 }
             }

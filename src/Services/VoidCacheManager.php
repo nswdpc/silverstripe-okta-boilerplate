@@ -3,6 +3,7 @@
 namespace NSWDPC\Authentication\Okta;
 
 use Cache\Adapter\Void\VoidCachePool;
+use League\Flysystem\Adapter\AbstractAdapter;
 use Okta\Cache\MemoryManager;
 
 /**

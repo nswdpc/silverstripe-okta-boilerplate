@@ -351,8 +351,8 @@ class OAuthTest extends SapphireTest
         $oauthsource = 'Okta';
         $session->set('oauth2.provider', $oauthsource);
 
-        Config::inst()->set(OktaLinker::class, 'update_existing_member', true);
-        Config::inst()->set(OktaLinker::class, 'link_via_email', false);
+        Config::modify()->set(OktaLinker::class, 'update_existing_member', true);
+        Config::modify()->set(OktaLinker::class, 'link_via_email', false);
 
         $handler = new OktaLoginHandler();
         $response = $handler->handleToken($result['accessToken'], $result['provider']);
@@ -386,8 +386,8 @@ class OAuthTest extends SapphireTest
         $oauthsource = 'Okta';
         $session->set('oauth2.provider', $oauthsource);
 
-        Config::inst()->set(OktaLinker::class, 'update_existing_member', true);
-        Config::inst()->set(OktaLinker::class, 'link_via_email', false);
+        Config::modify()->set(OktaLinker::class, 'update_existing_member', true);
+        Config::modify()->set(OktaLinker::class, 'link_via_email', false);
 
         $handler = new OktaLoginHandler();
         $response = $handler->handleToken($result['accessToken'], $result['provider']);
@@ -444,8 +444,8 @@ class OAuthTest extends SapphireTest
         $oauthsource = 'Okta';
         $session->set('oauth2.provider', $oauthsource);
 
-        Config::inst()->set(OktaLinker::class, 'update_existing_member', true);
-        Config::inst()->set(OktaLinker::class, 'link_via_email', false);
+        Config::modify()->set(OktaLinker::class, 'update_existing_member', true);
+        Config::modify()->set(OktaLinker::class, 'link_via_email', false);
 
         $handler = new OktaLoginHandler();
         $correctResponse = $handler->handleToken($result['accessToken'], $result['provider']);
@@ -525,8 +525,8 @@ class OAuthTest extends SapphireTest
     public function testOktaLoginHandlerGroupAssignment()
     {
 
-        Config::inst()->set(OktaLinker::class, 'update_existing_member', true);
-        Config::inst()->set(OktaLinker::class, 'link_via_email', false);
+        Config::modify()->set(OktaLinker::class, 'update_existing_member', true);
+        Config::modify()->set(OktaLinker::class, 'link_via_email', false);
 
         $session = new Session([]);
         $userWithGroups = $this->getAssignGroupTestUser();
@@ -547,8 +547,8 @@ class OAuthTest extends SapphireTest
         $oauthsource = 'Okta';
         $session->set('oauth2.provider', $oauthsource);
 
-        Config::inst()->set(OktaLinker::class, 'update_existing_member', true);
-        Config::inst()->set(OktaLinker::class, 'link_via_email', false);
+        Config::modify()->set(OktaLinker::class, 'update_existing_member', true);
+        Config::modify()->set(OktaLinker::class, 'link_via_email', false);
 
         $handler = new OktaLoginHandler();
         $response = $handler->handleToken($result['accessToken'], $result['provider']);

@@ -22,11 +22,11 @@ class OktaAPITest extends SapphireTest
         parent::setUpBeforeClass();
 
         // turn off default_file_location for these tests
-        Config::inst()->update(ClientFactory::class, 'default_file_location', null);
+        Config::modify()->set(ClientFactory::class, 'default_file_location', null);
 
         // set up config file location
         $sample = dirname(__FILE__) . '/support/okta.yaml';
-        Config::inst()->update(
+        Config::modify()->set(
             ClientFactory::class,
             'config_file_location',
             $sample

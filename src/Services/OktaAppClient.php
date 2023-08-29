@@ -57,7 +57,6 @@ abstract class OktaAppClient extends OktaClient
 
     /**
      * Collect all app users via pagination method
-     * @param int $limit
      * @param array $queryOptions other filtering options (https://developer.okta.com/docs/reference/api/users/#list-users-with-a-filter). Can include limit (per page limit of resutls), after (cursor for next page of results)
      * @return void
      */
@@ -80,7 +79,7 @@ abstract class OktaAppClient extends OktaClient
     /**
      * Get all appusers based on configuration
      * @param array $options
-     * @param Okta\Applications\Application $resource
+     * @param \Okta\Applications\Application $resource
      */
     final protected function collectAppUsers(array $options, \Okta\Applications\Application $resource)
     {
@@ -116,7 +115,7 @@ abstract class OktaAppClient extends OktaClient
 
     /**
      * Get a list of stale members, last OktaLastSync before the provided datetime
-     * @param \DateTime
+     * @param \DateTime $before
      * @param int $limit
      * @return DataList
      */
@@ -137,7 +136,8 @@ abstract class OktaAppClient extends OktaClient
      * AND who are no longer linked to the configured Okta application clientId
      * For instance if a user was removed from the application, they will stop syncing
      * and their related Member record will be picked up here
-     * @param DateTime check for members last sync'd before this datetime
+     * @param \DateTime $before check for members last sync'd before this datetime
+     * @param int $limit
      * @return DataList|null if null, there are no stale members to unlink
      */
     protected function getUnlinkedMembers(\DateTime $before, int $limit = 0) : ?DataList {
