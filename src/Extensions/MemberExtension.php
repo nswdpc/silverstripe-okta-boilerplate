@@ -123,9 +123,9 @@ class MemberExtension extends DataExtension implements PermissionProvider
 
     /**
      * Setter for OktaProfileValue Text field, formatted as JSON
-     * The passed value can either be an array or an {@link \Okta\Users\UserProfile}
      * The configuration value of `Silverstripe\Security\Members.okta_profile_fields`
      * determines what profile fields are stored
+     * @param array|string $value either an array or a JSON encoded string
      */
     public function setOktaProfileValue($value) {
         $profileValue = [];
@@ -133,21 +133,28 @@ class MemberExtension extends DataExtension implements PermissionProvider
         if(!is_array($profileFields)) {
             $profileFields = [];
         }
-        if($value instanceof \Okta\Users\UserProfile) {
-            foreach($profileFields as $profileFieldName => $profileFieldMeta) {
-                $profileValue[ $profileFieldName ] = $value->getProperty($profileFieldName);
+        if(is_string($value)) {
+            try {
+                $value = json_decode($value, true, 512, JSON_THROW_ON_ERROR);
+            } catch(\JsonException $e) {
+                // JSON validation error
             }
-        } else if(is_array($value)) {
-            // Parameter is a key value pair
+        }
+        if(is_array($value)) {
             foreach($profileFields as $profileFieldName => $profileFieldMeta) {
                 $profileValue[ $profileFieldName ] = isset($value[ $profileFieldName ]) ? $value[ $profileFieldName ] : null;
             }
+            ksort($profileValue);
+            $this->owner->setField(
+                'OktaProfileValue',
+                json_encode($profileValue)
+            );
+        } else {
+            $this->owner->setField(
+                'OktaProfileValue',
+                null
+            );
         }
-        ksort($profileValue);
-        $this->owner->setField(
-            'OktaProfileValue',
-            json_encode($profileValue)
-        );
         return true;
     }
 
@@ -157,7 +164,7 @@ class MemberExtension extends DataExtension implements PermissionProvider
      * @throws \Exception
      */
     public function getOktaProfileValueAsArray() : array {
-        $value = json_decode($this->owner->OktaProfileValue, true, JSON_THROW_ON_ERROR);
+        $value = json_decode($this->owner->OktaProfileValue ?? '', true, JSON_THROW_ON_ERROR);
         if(!is_array($value)) {
             $value = [];
         }
