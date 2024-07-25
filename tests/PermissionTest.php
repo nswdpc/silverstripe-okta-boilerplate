@@ -18,6 +18,10 @@ use SilverStripe\Security\MemberAuthenticator\LostPasswordForm;
  */
 class PermissionTest extends SapphireTest
 {
+
+    /**
+     * @inheritdoc
+     */
     protected $usesDatabase = true;
 
     public function testGroupPermission()
