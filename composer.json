@@ -19,12 +19,12 @@
         ]
     },
     "require": {
-        "php": ">=7.3 || ^8",
-        "bigfork/silverstripe-oauth-login": "^2.2",
+        "php": "^8.1",
+        "bigfork/silverstripe-oauth-login": "^2.3",
         "foxworth42/oauth2-okta": "^1",
-        "silverstripe/framework": "^4.10.0",
+        "silverstripe/framework": "^5",
         "phptek/jsontext": "^2",
-        "symbiote/silverstripe-queuedjobs": "^4.9.0"
+        "symbiote/silverstripe-queuedjobs": "^5"
     },
     "require-dev": {
         "mockery/mockery": "^1.5",
