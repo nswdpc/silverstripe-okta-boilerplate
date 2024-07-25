@@ -23,7 +23,6 @@
         "bigfork/silverstripe-oauth-login": "^2.3",
         "foxworth42/oauth2-okta": "^1",
         "silverstripe/framework": "^5",
-        "phptek/jsontext": "^2",
         "symbiote/silverstripe-queuedjobs": "^5"
     },
     "require-dev": {

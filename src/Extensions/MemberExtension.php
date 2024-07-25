@@ -15,7 +15,6 @@ use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
 use SilverStripe\Security\PermissionProvider;
 use SilverStripe\Security\Security;
-use PhpTek\JSONText\ORM\FieldType\JSONText;
 
 /**
  * Updates member view in administration area
@@ -27,7 +26,7 @@ class MemberExtension extends DataExtension implements PermissionProvider
      * @var array
      */
     private static $db = [
-        'OktaProfileValue' => JSONText::class,
+        'OktaProfileValue' => 'Text',
         // see https://developer.okta.com/docs/reference/api/users/#profile-object
         'OktaProfileLogin' => 'Varchar(100)',
         'OktaLastSync' => 'DBDatetime',
@@ -123,7 +122,7 @@ class MemberExtension extends DataExtension implements PermissionProvider
     }
 
     /**
-     * Setter for OktaProfileValue JSONText field
+     * Setter for OktaProfileValue Text field, formatted as JSON
      * The passed value can either be an array or an {@link \Okta\Users\UserProfile}
      * The configuration value of `Silverstripe\Security\Members.okta_profile_fields`
      * determines what profile fields are stored
