@@ -138,6 +138,7 @@ class MemberExtension extends DataExtension implements PermissionProvider
                 $value = json_decode($value, true, 512, JSON_THROW_ON_ERROR);
             } catch(\JsonException $e) {
                 // JSON validation error
+                Logger::log("JSON decode exception: {$e->getMessage()} when trying to set profile value", "NOTICE");
             }
         }
         if(is_array($value)) {
