@@ -13,25 +13,12 @@ With this module you can
 + Link a user to an Okta group
 + Optionally disallow/allow the default member authenticator alongside Okta auth
 
-### Okta API
-
-+ Create an Okta API client using [okta/sdk](https://github.com/okta/okta-sdk-php)
-+ Synchronise users via a queued job (via Okta API)
-+ Block sign-in for those Okta users who have stopped appearing for a configured time period in synchronisation results
-+ Optionally remove users who have not synchronised after a certain time.
-
-Use of the Okta API is optional.
-
 ## You will need
 
 + An Okta account
 + An Okta OAuth service application configured with scopes granted
 + If you require multiple sites authenticating via Okta, a service application per site.
 + A `clientId` and `clientSecret` for OAuth
-
-### Okta API
-
-+ To work with the Okta API, you will need an Okta API token
 
 ## Documentation
 
@@ -49,10 +36,6 @@ Via composer:
 composer require nswdpc/silverstripe-okta-boilerplate
 ```
 After installing the module, run a `dev/build` then [start with the documentation](./docs/en/001_index.md).
-
-## TODO
-
-+ Private Key authentication mode
 
 ## License
 

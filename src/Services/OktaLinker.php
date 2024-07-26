@@ -5,6 +5,7 @@ namespace NSWDPC\Authentication\Okta;
 use Foxworth42\OAuth2\Client\Provider\OktaUser;
 use Okta\Users\UserProfile;
 use SilverStripe\Core\Config\Configurable;
+use SilverStripe\ORM\FieldType\DBDatetime;
 use SilverStripe\Security\Member;
 
 /**
@@ -109,6 +110,7 @@ class OktaLinker {
             $member->Surname = $userSurname;
             $member->Email = $userEmail;
             $member->OktaProfileLogin = $userLogin;
+            $member->OktaLastSync = DBDatetime::now()->Rfc2822();
             // Retained for compat with LoginTokenHandler
             $member->OAuthSource = null;
         } else if ($member && self::config()->get('update_existing_member')) {
@@ -117,6 +119,7 @@ class OktaLinker {
             $member->FirstName = $userFirstName;
             $member->Surname = $userSurname;
             $member->OAuthSource = null;
+            $member->OktaLastSync = DBDatetime::now()->Rfc2822();
             if(!$member->OktaProfileLogin) {
                 $member->OktaProfileLogin = $userLogin;
             }
