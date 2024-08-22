@@ -37,8 +37,8 @@ class OktaProfileLoginCreateTask extends BuildTask
             DB::get_conn()->transactionStart();
             $commitChanges = $request->getVar('commit');
 
-            $conditional = "(`OktaProfileLogin` IS NULL OR `OktaProfileLogin` = '') AND `Email` LIKE '%@%'";
-            $sqlSelect = "SELECT COUNT(`ID`) AS RecordCount FROM `Member` WHERE {$conditional}";
+            $conditional = "(\"OktaProfileLogin\" IS NULL OR \"OktaProfileLogin\" = '') AND \"Email\" LIKE '%@%'";
+            $sqlSelect = "SELECT COUNT(\"ID\") AS RecordCount FROM \"Member\" WHERE {$conditional}";
 
             $result = DB::query($sqlSelect);
             $recordCount = 0;
@@ -49,8 +49,8 @@ class OktaProfileLoginCreateTask extends BuildTask
 
             DB::alteration_message("Found {$recordCount} matching member records", "changed");
 
-            $sql = "UPDATE `Member` "
-                . " SET `OktaProfileLogin` = `Email`"
+            $sql = "UPDATE \"Member\" "
+                . " SET \"OktaProfileLogin\" = \"Email\""
                 . " WHERE {$conditional}";
             $result = DB::query($sql);
             $affectedRows = DB::affected_rows();
