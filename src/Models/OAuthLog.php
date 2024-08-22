@@ -89,8 +89,8 @@ class OAuthLog extends DataObject implements PermissionProvider
             $day = 7;
         }
 
-        $sql = "DELETE FROM `OAuthLog` WHERE Created < CURDATE() - INTERVAL {$day} DAY";
-        DB::query($sql);
+        $sql = "DELETE FROM \"OAuthLog\" WHERE Created < CURDATE() - INTERVAL ? DAY";
+        DB::prepared_query($sql, [$day]);
     }
 
     /**
