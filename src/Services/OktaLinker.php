@@ -21,20 +21,20 @@ class OktaLinker
      * the Silverstripe Member.Email address
      * If you cannot ensure that, set this value in your project configuration to false
      */
-    private static $update_existing_member = true;
+    private static bool $update_existing_member = true;
 
     /**
      * @var bool
      * If true, and login matching fails, allow Member linking where the
      * Okta login value for the member equals the Member.Email
      */
-    private static $link_via_email = false;
+    private static bool $link_via_email = false;
 
     /**
      * Link via an OAuth sign-in, via the OktaUser resource
      * @param OktaUser $user resource from OAuth signin
      */
-    public static function linkViaOktaUser(OktaUser $user, $createIfNotExisting = true): ?Member
+    public static function linkViaOktaUser(OktaUser $user, bool $createIfNotExisting = true): ?Member
     {
         return self::linktoMember(
             $createIfNotExisting,
@@ -71,25 +71,24 @@ class OktaLinker
      * @param string $userEmail an Okta primary email address
      * @param string $userFirstName an Okta user given_name or firstname
      * @param string $userSurname an Okta user family_name or surname
-     * @return Member|null
      */
     protected static function linktoMember(bool $createIfNotExisting, string $userLogin, string $userEmail, string $userFirstName = '', string $userSurname = ''): ?Member
     {
 
         // Linking requires both the Okta login and email values
-        if(!$userLogin || !$userEmail) {
+        if($userLogin === '' || $userEmail === '') {
             return null;
         }
 
         // Attempt to find Member via Member.OktaProfileLogin
         $member = self::linkLoginLogin($userLogin);
-        if(!$member && self::config()->get('link_via_email')) {
+        if(!$member instanceof \SilverStripe\Security\Member && self::config()->get('link_via_email')) {
             // Logger::log("OktaLinker: link_via_email=on", "DEBUG");
             // Attempt to find Member via Member.Email
             $member = self::linkLoginEmail($userLogin);
         }
 
-        if (!$member && $createIfNotExisting) {
+        if (!$member instanceof \SilverStripe\Security\Member && $createIfNotExisting) {
             // Create a new Member if allowed
             // Logger::log("OktaLinker: create new member login={$userLogin} email={$userEmail}", "DEBUG");
             $member = Member::create();
@@ -111,6 +110,7 @@ class OktaLinker
                 $member->OktaProfileLogin = $userLogin;
             }
         }
+
         // Logger::log("OktaLinker: returning a " . ($member ? 'member' : 'null'), "DEBUG");
         return $member;
     }

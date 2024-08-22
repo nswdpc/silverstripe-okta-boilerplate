@@ -18,7 +18,7 @@ class OktaProfileValueTest extends SapphireTest
     /**
      * Test write and retrieve okta profile value
      */
-    public function testOktaProfileValue()
+    public function testOktaProfileValue(): void
     {
         $member = Member::create([
             'FirstName' => 'Jason',
@@ -47,7 +47,7 @@ class OktaProfileValueTest extends SapphireTest
     /**
      * Test write and retrieve okta profile value
      */
-    public function testStringOktaProfileValue()
+    public function testStringOktaProfileValue(): void
     {
         $member = Member::create([
             'FirstName' => 'Jason',
@@ -76,7 +76,7 @@ class OktaProfileValueTest extends SapphireTest
     /**
      * Test write and retrieve okta profile value
      */
-    public function testInvalidOktaProfileValue()
+    public function testInvalidOktaProfileValue(): void
     {
         $member = Member::create([
             'FirstName' => 'Jason',

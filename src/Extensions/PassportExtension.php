@@ -22,24 +22,15 @@ use SilverStripe\Security\Security;
  */
 class PassportExtension extends DataExtension implements PermissionProvider
 {
-    /**
-     * @var array
-     */
-    private static $db = [
+    private static array $db = [
         'OAuthSource' => 'Varchar(255)'
     ];
 
-    /**
-     * @var array
-     */
-    private static $has_one = [
+    private static array $has_one = [
         'CreatedByMember' => Member::class
     ];
 
-    /**
-     * @var array
-     */
-    private static $indexes = [
+    private static array $indexes = [
         'Created' => true,
         'LastEdited' => true,
         'IdentifierProvider' => [
@@ -51,10 +42,7 @@ class PassportExtension extends DataExtension implements PermissionProvider
         ]
     ];
 
-    /**
-     * @var array
-     */
-    private static $summary_fields = [
+    private static array $summary_fields = [
         'Identifier' => 'Identifier',
         'OAuthSource' => 'OAuth provider',
         'Member.Email' => 'Member',
@@ -63,10 +51,7 @@ class PassportExtension extends DataExtension implements PermissionProvider
         'CreatedByMember.Email' => 'Created by'
     ];
 
-    /**
-     * @var array
-     */
-    private static $searchable_fields = [
+    private static array $searchable_fields = [
         'Identifier' => 'PartialMatchFilter',
         'OAuthSource' => 'ExactMatchFilter',
         'Member.Email' => 'PartialMatchFilter'
@@ -75,7 +60,7 @@ class PassportExtension extends DataExtension implements PermissionProvider
     /**
      * Validate the values provided prior to allowing write
      */
-    public function validatePassportWrite()
+    public function validatePassportWrite(): bool
     {
 
         // Validate: the Identifier/OAuthSource is unique
@@ -88,12 +73,10 @@ class PassportExtension extends DataExtension implements PermissionProvider
                 // exclude current record if it exists
                 $existing = $existing->exclude([ "ID" => $this->getOwner()->ID ]);
             }
+
             $existing = $existing->first();
             if ($existing && $existing->exists()) {
-                throw new ValidationException(
-                    OktaLoginHandler::getFailMessageForCode(OktaLoginHandler::FAIL_PASSPORT_CREATE_IDENT_COLLISION),
-                    OktaLoginHandler::FAIL_PASSPORT_CREATE_IDENT_COLLISION
-                );
+                throw \SilverStripe\ORM\ValidationException::create(OktaLoginHandler::getFailMessageForCode(OktaLoginHandler::FAIL_PASSPORT_CREATE_IDENT_COLLISION), OktaLoginHandler::FAIL_PASSPORT_CREATE_IDENT_COLLISION);
             }
         }
 
@@ -108,12 +91,10 @@ class PassportExtension extends DataExtension implements PermissionProvider
                 // exclude current record if it exists (updating current record)
                 $existing = $existing->exclude(["ID" => $this->getOwner()->ID ]);
             }
+
             $existing = $existing->first();
             if ($existing && $existing->exists()) {
-                throw new ValidationException(
-                    OktaLoginHandler::getFailMessageForCode(OktaLoginHandler::FAIL_USER_MEMBER_PASSPORT_MISMATCH),
-                    OktaLoginHandler::FAIL_USER_MEMBER_PASSPORT_MISMATCH
-                );
+                throw \SilverStripe\ORM\ValidationException::create(OktaLoginHandler::getFailMessageForCode(OktaLoginHandler::FAIL_USER_MEMBER_PASSPORT_MISMATCH), OktaLoginHandler::FAIL_USER_MEMBER_PASSPORT_MISMATCH);
             }
         }
 
@@ -127,6 +108,7 @@ class PassportExtension extends DataExtension implements PermissionProvider
             $member = Security::getCurrentUser();
             $this->getOwner()->CreatedByMemberID = $member->ID ?? 0;
         }
+
         // validate that the passport can be written
         $this->validatePassportWrite();
     }
@@ -194,14 +176,16 @@ class PassportExtension extends DataExtension implements PermissionProvider
                     $this->getOwner()->OAuthSource
                 );
             }
+
             if (is_array($providers)) {
-                foreach ($providers as $providerName => $provider) {
+                foreach (array_keys($providers) as $providerName) {
                     $listProviders[ $providerName ] = _t(
                         'OKTA.PROVIDER_' . $providerName,
                         $providerName
                     );
                 }
             }
+
             $fields->replaceField(
                 'OAuthSource',
                 DropdownField::create(

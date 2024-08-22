@@ -17,17 +17,11 @@ use SilverStripe\Security\Group;
  */
 class GroupExtension extends DataExtension
 {
-    /**
-     * @var array
-     */
-    private static $db = [
+    private static array $db = [
         'IsOktaGroup' => 'Boolean'
     ];
 
-    /**
-     * @var array
-     */
-    private static $indexes = [
+    private static array $indexes = [
         'IsOktaGroup' => true, // query on IsOktaGroup
         'Title' => true // need to query on title
     ];
@@ -49,21 +43,18 @@ class GroupExtension extends DataExtension
             // avoid writing an OktaGroup with permissions
             $permissionCount = $this->getOwner()->Permissions()->count();
             if ($permissionCount > 0) {
-                throw new OktaPermissionEscalationException(
-                    _t(
-                        'OKTA.OKTA_GROUP_NO_PERMISSIONS',
-                        "An Okta group may not be assigned permissions"
-                    )
-                );
+                throw \NSWDPC\Authentication\Okta\OktaPermissionEscalationException::create(_t(
+                    'OKTA.OKTA_GROUP_NO_PERMISSIONS',
+                    "An Okta group may not be assigned permissions"
+                ));
             }
+
             $roleCount = $this->getOwner()->Roles()->count();
             if ($roleCount > 0) {
-                throw new OktaPermissionEscalationException(
-                    _t(
-                        'OKTA.OKTA_GROUP_NO_ROLES',
-                        "An Okta group may not be assigned roles"
-                    )
-                );
+                throw \NSWDPC\Authentication\Okta\OktaPermissionEscalationException::create(_t(
+                    'OKTA.OKTA_GROUP_NO_ROLES',
+                    "An Okta group may not be assigned roles"
+                ));
             }
         }
     }
@@ -101,7 +92,6 @@ class GroupExtension extends DataExtension
 
     /**
      * Create or update the default root Okta group configured, if set
-     * @return Group|null
      */
     public static function applyOktaRootGroup(): ?Group
     {
@@ -109,12 +99,14 @@ class GroupExtension extends DataExtension
         if (empty($parent['Code'])) {
             return null;
         }
+
         $code = Convert::raw2url($parent['Code']);
         $group = Group::get()->filter([ 'Code' => $code ])->first();
-        $title = trim(!empty($parent['Title']) ? $parent['Title'] : '');
-        if($title == '') {
+        $title = trim(empty($parent['Title']) ? '' : $parent['Title']);
+        if($title === '') {
             $title = self::DEFAULT_GROUP_TITLE;
         }
+
         // Create a new group if none exists
         if (!$group) {
             $group = Group::create();
@@ -124,6 +116,7 @@ class GroupExtension extends DataExtension
                 $group->Description = $parent['Description'];
             }
         }
+
         // Allow group title updates from configuration
         $group->Title = $title;
         $group->IsOktaGroup = 1;

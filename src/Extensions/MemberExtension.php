@@ -21,10 +21,7 @@ use SilverStripe\Security\Security;
  */
 class MemberExtension extends DataExtension implements PermissionProvider
 {
-    /**
-     * @var array
-     */
-    private static $db = [
+    private static array $db = [
         'OktaProfileValue' => 'Text',
         // see https://developer.okta.com/docs/reference/api/users/#profile-object
         'OktaProfileLogin' => 'Varchar(100)',
@@ -32,10 +29,7 @@ class MemberExtension extends DataExtension implements PermissionProvider
         'OktaUnlinkedWhen' => 'DBDatetime'
     ];
 
-    /**
-     * @var array
-     */
-    private static $indexes = [
+    private static array $indexes = [
         'OktaLastSync' => true,
         'OktaUnlinkedWhen' => true,
         'OktaProfileLogin' => [
@@ -49,9 +43,8 @@ class MemberExtension extends DataExtension implements PermissionProvider
     /**
      * Default profile fields stored during sync
      * See: https://developer.okta.com/docs/reference/api/users/#default-profile-properties
-     * @var array
      */
-    private static $okta_profile_fields = [];
+    private static array $okta_profile_fields = [];
 
     /**
      * Handle member okta operations on write
@@ -76,9 +69,8 @@ class MemberExtension extends DataExtension implements PermissionProvider
     /**
      * Check if the lost password email can be sent
      * @todo exclude ADMIN permission members (return false ?)
-     * @return bool
      */
-    public static function canSendLostPasswordEmail(Member $member)
+    public static function canSendLostPasswordEmail(Member $member): bool
     {
         // handler is trying to send a lost password email
         if(Permission::checkMember($member, 'OKTA_LOCAL_PASSWORD_RESET')) {
@@ -93,7 +85,6 @@ class MemberExtension extends DataExtension implements PermissionProvider
      * Test external management context for this member
      * This is used to flag that the person can manage their member record externally
      * In the case of Okta, this is all contexts
-     * @return bool
      */
     public function isExternallyManagedContext($context): bool
     {
@@ -107,6 +98,7 @@ class MemberExtension extends DataExtension implements PermissionProvider
                 return false;
             }
         }
+
         // default: all contexts are externally managed
         return $this->getOwner()->OktaProfileLogin != '';
     }
@@ -130,13 +122,14 @@ class MemberExtension extends DataExtension implements PermissionProvider
      * determines what profile fields are stored
      * @param array|string $value either an array or a JSON encoded string
      */
-    public function setOktaProfileValue($value)
+    public function setOktaProfileValue($value): bool
     {
         $profileValue = [];
         $profileFields = $this->getOwner()->config()->get('okta_profile_fields');
         if(!is_array($profileFields)) {
             $profileFields = [];
         }
+
         if(is_string($value)) {
             try {
                 $value = json_decode($value, true, 512, JSON_THROW_ON_ERROR);
@@ -145,10 +138,12 @@ class MemberExtension extends DataExtension implements PermissionProvider
                 Logger::log("JSON decode exception: {$e->getMessage()} when trying to set profile value", "NOTICE");
             }
         }
+
         if(is_array($value)) {
-            foreach($profileFields as $profileFieldName => $profileFieldMeta) {
-                $profileValue[ $profileFieldName ] = isset($value[ $profileFieldName ]) ? $value[ $profileFieldName ] : null;
+            foreach(array_keys($profileFields) as $profileFieldName) {
+                $profileValue[ $profileFieldName ] = $value[ $profileFieldName ] ?? null;
             }
+
             ksort($profileValue);
             $this->getOwner()->setField(
                 'OktaProfileValue',
@@ -160,12 +155,12 @@ class MemberExtension extends DataExtension implements PermissionProvider
                 null
             );
         }
+
         return true;
     }
 
     /**
      * Return OktaProfileValue as an array
-     * @return array
      * @throws \Exception
      */
     public function getOktaProfileValueAsArray(): array
@@ -174,6 +169,7 @@ class MemberExtension extends DataExtension implements PermissionProvider
         if(!is_array($value)) {
             $value = [];
         }
+
         return $value;
     }
 
@@ -189,9 +185,10 @@ class MemberExtension extends DataExtension implements PermissionProvider
                     $this->getOktaProfileValueAsArray(),
                     JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR
                 );
-            } catch (\Exception $e) {
+            } catch (\Exception) {
             }
         }
+
         return $formattedValue;
     }
 
@@ -254,6 +251,7 @@ class MemberExtension extends DataExtension implements PermissionProvider
             // if the configured days is 0 or less, OK
             return true;
         }
+
         if (!$this->getOwner()->OktaLastSync) {
             // If the member has never been sync'd, allow
             return true;
@@ -275,9 +273,10 @@ class MemberExtension extends DataExtension implements PermissionProvider
                 );
                 return false;
             }
-        } catch (\Exception $e) {
+        } catch (\Exception) {
             // noop
         }
+
         return true;
     }
 

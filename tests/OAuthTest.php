@@ -83,15 +83,14 @@ class OAuthTest extends SapphireTest
      */
     protected function getIssuer(): array
     {
-        $issuer = [
+        return [
             'host' => 'something.example.com',
             'path' => '/oauth2',
             'scheme' => 'https'
         ];
-        return $issuer;
     }
 
-    public function testGroupCodeChange()
+    public function testGroupCodeChange(): void
     {
 
         $code = 'test';
@@ -120,7 +119,7 @@ class OAuthTest extends SapphireTest
 
     }
 
-    public function testApplyOktaRootGroup()
+    public function testApplyOktaRootGroup(): void
     {
 
         $parent = Group::config()->get('okta_group');
@@ -139,7 +138,7 @@ class OAuthTest extends SapphireTest
     /**
      * Test that we can create an authentication URL from the Okta configuration
      */
-    public function testOktaAuthenticateUrl()
+    public function testOktaAuthenticateUrl(): void
     {
         $issuer = $this->getIssuer();
         $options = [
@@ -182,7 +181,8 @@ class OAuthTest extends SapphireTest
             $getVars
         );
         $request->setSession(new Session([]));
-        $controller = new Controller();
+
+        $controller = \Bigfork\SilverStripeOAuth\Client\Control\Controller::create();
         $authenticate = $controller->authenticate($request);
 
         $this->assertInstanceOf(HTTPResponse::class, $authenticate);
@@ -284,7 +284,7 @@ class OAuthTest extends SapphireTest
     /**
      * Return an access token and provider for a supplied user and session
      */
-    protected function setupForLoginHandler(Session &$session, array $authenticatingUser, int $expires = 3600)
+    protected function setupForLoginHandler(Session &$session, array $authenticatingUser, int $expires = 3600): array
     {
         $this->setSessionOnController($session);
 
@@ -343,7 +343,7 @@ class OAuthTest extends SapphireTest
         ];
     }
 
-    public function testOktaLoginHandlerFail()
+    public function testOktaLoginHandlerFail(): void
     {
         $session = new Session([]);
         // Fail user has no username
@@ -358,7 +358,7 @@ class OAuthTest extends SapphireTest
         $handler = new OktaLoginHandler();
         $response = $handler->handleToken($result['accessToken'], $result['provider']);
 
-        $code = $handler->getLoginFailureCode();
+        $handler->getLoginFailureCode();
 
         $this->assertInstanceOf(HTTPResponse::class, $response);
 
@@ -368,7 +368,7 @@ class OAuthTest extends SapphireTest
 
         // assert that the message contains the message id via regex
         $pattern = "/^.+\(#([0-9]+)\)$/s";
-        $result = preg_match($pattern, $sessionMessage, $matches);
+        $result = preg_match($pattern, (string) $sessionMessage, $matches);
         $this->assertTrue($result > 0, "Session message should match pattern {$pattern}");
         $this->assertEquals('warning', $sessionMessageType, "Message type should be warning");
         $logRef = $matches[1];
@@ -378,7 +378,7 @@ class OAuthTest extends SapphireTest
         $this->assertEquals(OktaLoginHandler::FAIL_USER_MISSING_USERNAME, $log->Code, "Log code matches");
     }
 
-    public function testOktaLoginHandlerSuccess()
+    public function testOktaLoginHandlerSuccess(): void
     {
         $session = new Session([]);
         $user = $this->getCorrectUser();
@@ -397,7 +397,7 @@ class OAuthTest extends SapphireTest
         $this->assertNull($response);
 
         $message = $session->get('Security.Message.message');
-        $type = $session->get('Security.Message.type');
+        $session->get('Security.Message.type');
 
         $code = $handler->getLoginFailureCode();
 
@@ -435,7 +435,7 @@ class OAuthTest extends SapphireTest
     /**
      * That a user with the same email address can't link to current Member
      */
-    public function testOktaLoginHandlerConflictingUsers()
+    public function testOktaLoginHandlerConflictingUsers(): void
     {
         $session = new Session([]);
 
@@ -476,6 +476,7 @@ class OAuthTest extends SapphireTest
         $this->logOut();
         $session = new Session([]);
         $session->set('oauth2.provider', $oauthsource);
+
         $conflicting = $this->getConflictingUser();
 
         // assert that an email conflict will occur
@@ -490,7 +491,7 @@ class OAuthTest extends SapphireTest
         $this->assertInstanceOf(HTTPResponse::class, $conflictingResponse);
         $this->assertEquals(302, $conflictingResponse->getStatusCode(), "Conflicting response failure should be a 302 redirect");
 
-        $message = $session->get('Security.Message.message');
+        $session->get('Security.Message.message');
         $type = $session->get('Security.Message.type');
 
         $this->assertEquals("warning", $type);
@@ -523,7 +524,7 @@ class OAuthTest extends SapphireTest
     /**
      * Test group assignment
      */
-    public function testOktaLoginHandlerGroupAssignment()
+    public function testOktaLoginHandlerGroupAssignment(): void
     {
 
         Config::modify()->set(OktaLinker::class, 'update_existing_member', true);
@@ -538,7 +539,7 @@ class OAuthTest extends SapphireTest
         $member->OktaProfileLogin = $userWithGroups['preferred_username'];
         $member->write();
 
-        $rootOktaGroup = GroupExtension::applyOktaRootGroup();
+        GroupExtension::applyOktaRootGroup();
 
         // the member should have no root okta group at this point
         $this->assertEquals(0, $member->getOktaGroups()->count());
@@ -557,7 +558,7 @@ class OAuthTest extends SapphireTest
         $this->assertNull($response);
 
         $message = $session->get('Security.Message.message');
-        $type = $session->get('Security.Message.type');
+        $session->get('Security.Message.type');
 
         $code = $handler->getLoginFailureCode();
 

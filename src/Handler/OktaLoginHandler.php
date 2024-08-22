@@ -30,27 +30,32 @@ class OktaLoginHandler extends LoginTokenHandler
      * List of failure codes
      */
     public const FAIL_USER_NO_GROUPS = 100;
+
     public const FAIL_USER_MEMBER_COLLISION = 101;
+
     public const FAIL_USER_MISSING_REQUIRED_GROUPS = 102;
+
     public const FAIL_USER_MISSING_EMAIL = 103;
+
     public const FAIL_USER_MEMBER_EMAIL_MISMATCH = 104;
+
     public const FAIL_USER_MEMBER_PASSPORT_MISMATCH = 105;
+
     public const FAIL_PASSPORT_CREATE_IDENT_COLLISION = 106;
+
     public const FAIL_USER_MISSING_USERNAME = 107;
+
     public const FAIL_USER_MEMBER_LINK_FAILED = 108;
+
     public const FAIL_NO_PROVIDER_NAME = 200;
+
     public const FAIL_NO_PASSPORT_NO_MEMBER_CREATED = 300;
+
     public const FAIL_PASSPORT_NO_MEMBER_CREATED = 301;
 
-    /*
-     * @var string|null
-     */
-    protected $loginFailureCode = null;
+    protected ?int $loginFailureCode = null;
 
-    /*
-     * @var int|null
-     */
-    protected $loginFailureMessageId = null;
+    protected int $loginFailureMessageId;
 
     /**
      * @inheritdoc
@@ -64,18 +69,16 @@ class OktaLoginHandler extends LoginTokenHandler
             $this->setLoginFailureCode(null);//reset failure code on new attempt
             // Find or create a member from the token
             $member = $this->findOrCreateMember($token, $provider);
-        } catch (ValidationException $e) {
+        } catch (ValidationException $validationException) {
             // Logger::log("Permission failure: " . $e->getMessage());
-            return Security::permissionFailure(null, $e->getMessage());
+            return Security::permissionFailure(null, $validationException->getMessage());
         }
 
         // Check whether the member can log in before we proceed
         $result = $member->validateCanLogin();
         if (!$result->isValid()) {
             $message = implode("; ", array_map(
-                function ($message) {
-                    return $message['message'];
-                },
+                fn(array $message) => $message['message'],
                 $result->getMessages()
             ));
             return Security::permissionFailure(
@@ -93,34 +96,22 @@ class OktaLoginHandler extends LoginTokenHandler
     /**
      * Return message related to code
      */
-    public static function getFailMessageForCode($code): string
+    public static function getFailMessageForCode(string $code): string
     {
-        switch ($code) {
-            case self::FAIL_USER_NO_GROUPS:
-                return _t('OAUTH.FAIL_' . $code, 'User has no Okta groups');
-            case self::FAIL_USER_MEMBER_COLLISION:
-                return _t('OAUTH.FAIL_' . $code, 'User/member collision');
-            case self::FAIL_USER_MISSING_REQUIRED_GROUPS:
-                return _t('OAUTH.FAIL_' . $code, 'User missing required groups');
-            case self::FAIL_USER_MISSING_EMAIL:
-                return _t('OAUTH.FAIL_' . $code, 'User missing email');
-            case self::FAIL_USER_MISSING_USERNAME:
-                return _t('OAUTH.FAIL_' . $code, 'User missing username');
-            case self::FAIL_USER_MEMBER_EMAIL_MISMATCH:
-                return _t('OAUTH.FAIL_' . $code, 'User/member email mismatch');
-            case self::FAIL_USER_MEMBER_PASSPORT_MISMATCH:
-                return _t('OAUTH.FAIL_' . $code, 'User/member/passport mismatch');
-            case self::FAIL_PASSPORT_CREATE_IDENT_COLLISION:
-                return _t('OAUTH.FAIL_' . $code, 'Tried to create a passport when one existed for the identifier/provider');
-            case self::FAIL_NO_PROVIDER_NAME:
-                return _t('OAUTH.FAIL_' . $code, 'No provider name');
-            case self::FAIL_NO_PASSPORT_NO_MEMBER_CREATED:
-                return _t('OAUTH.FAIL_' . $code, 'No passport found and no member created');
-            case self::FAIL_PASSPORT_NO_MEMBER_CREATED:
-                return _t('OAUTH.FAIL_' . $code, 'Passport created but no member found');
-            default:
-                return _t('OAUTH.FAIL_UNKNOWN_CODE', 'Unknown');
-        }
+        return match ($code) {
+            self::FAIL_USER_NO_GROUPS => _t('OAUTH.FAIL_' . $code, 'User has no Okta groups'),
+            self::FAIL_USER_MEMBER_COLLISION => _t('OAUTH.FAIL_' . $code, 'User/member collision'),
+            self::FAIL_USER_MISSING_REQUIRED_GROUPS => _t('OAUTH.FAIL_' . $code, 'User missing required groups'),
+            self::FAIL_USER_MISSING_EMAIL => _t('OAUTH.FAIL_' . $code, 'User missing email'),
+            self::FAIL_USER_MISSING_USERNAME => _t('OAUTH.FAIL_' . $code, 'User missing username'),
+            self::FAIL_USER_MEMBER_EMAIL_MISMATCH => _t('OAUTH.FAIL_' . $code, 'User/member email mismatch'),
+            self::FAIL_USER_MEMBER_PASSPORT_MISMATCH => _t('OAUTH.FAIL_' . $code, 'User/member/passport mismatch'),
+            self::FAIL_PASSPORT_CREATE_IDENT_COLLISION => _t('OAUTH.FAIL_' . $code, 'Tried to create a passport when one existed for the identifier/provider'),
+            self::FAIL_NO_PROVIDER_NAME => _t('OAUTH.FAIL_' . $code, 'No provider name'),
+            self::FAIL_NO_PASSPORT_NO_MEMBER_CREATED => _t('OAUTH.FAIL_' . $code, 'No passport found and no member created'),
+            self::FAIL_PASSPORT_NO_MEMBER_CREATED => _t('OAUTH.FAIL_' . $code, 'Passport created but no member found'),
+            default => _t('OAUTH.FAIL_UNKNOWN_CODE', 'Unknown'),
+        };
     }
 
     /**
@@ -129,7 +120,7 @@ class OktaLoginHandler extends LoginTokenHandler
     protected function setLoginFailureCode(?int $code, string $userId = '')
     {
         $messageId = null;
-        if ($code) {
+        if (!is_null($code)) {
             // a random message id a user can quote to support
             $messageId = random_int(100000, 1000000);
             $session = $this->getSession();
@@ -141,6 +132,7 @@ class OktaLoginHandler extends LoginTokenHandler
                 $userId
             );
         }
+
         $this->loginFailureMessageId = $messageId;
         $this->loginFailureCode = $code;
     }
@@ -148,22 +140,18 @@ class OktaLoginHandler extends LoginTokenHandler
     /**
      * @return string|null
      */
-    public function getLoginFailureCode()
+    public function getLoginFailureCode(): ?int
     {
         return $this->loginFailureCode;
     }
 
-    /**
-     * @return int|null
-     */
-    public function getLoginFailureMessageId()
+    public function getLoginFailureMessageId(): int
     {
         return $this->loginFailureMessageId;
     }
 
     /**
      * Generic support message
-     * @return string
      */
     public function getSupportMessage(): string
     {
@@ -179,17 +167,15 @@ class OktaLoginHandler extends LoginTokenHandler
      */
     protected function getPassport(string $identifier, string $provider)
     {
-        $passport = Passport::get()->filter([
+        return Passport::get()->filter([
             'Identifier' => $identifier,
             'OAuthSource' => $provider
         ])->first();
-        return $passport;
     }
 
     /**
      * Create a passport with the provided identifier, a provider string and a Member record
      * See {@link NSWDPC\Authentication\Okta\PassportExtension::validatePassportWrite()}
-     * @return Passport|null
      */
     protected function createPassport(string $identifier, string $provider, Member $member): ?Passport
     {
@@ -206,20 +192,18 @@ class OktaLoginHandler extends LoginTokenHandler
             } else {
                 return $passport;
             }
-        } catch (ValidationException $e) {
+        } catch (ValidationException $validationException) {
             // catch the validation exception thrown on write error
-            $this->setLoginFailureCode($e->getCode(), $identifier);
+            $this->setLoginFailureCode($validationException->getCode(), $identifier);
             // rethrow with the login exception message
-            throw new ValidationException(
-                _t(
-                    'OKTA.INVALID_MEMBER',
-                    '{getSupportMessage} (#{messageId})',
-                    [
-                        'messageId' => $this->getLoginFailureMessageId(),
-                        'getSupportMessage' => $this->getSupportMessage()
-                    ]
-                )
-            );
+            throw \SilverStripe\ORM\ValidationException::create(_t(
+                'OKTA.INVALID_MEMBER',
+                '{getSupportMessage} (#{messageId})',
+                [
+                    'messageId' => $this->getLoginFailureMessageId(),
+                    'getSupportMessage' => $this->getSupportMessage()
+                ]
+            ));
         }
     }
 
@@ -239,30 +223,26 @@ class OktaLoginHandler extends LoginTokenHandler
         $userUsername = $user->getPreferredUsername();
         if (!$userUsername) {
             $this->setLoginFailureCode(self::FAIL_USER_MISSING_USERNAME, $user->getId());
-            throw new ValidationException(
-                _t(
-                    'OKTA.GENERAL_SESSION_ERROR',
-                    '{getSupportMessage} (#{messageId})',
-                    [
-                        'messageId' => $this->getLoginFailureMessageId(),
-                        'getSupportMessage' => $this->getSupportMessage()
-                    ]
-                )
-            );
+            throw \SilverStripe\ORM\ValidationException::create(_t(
+                'OKTA.GENERAL_SESSION_ERROR',
+                '{getSupportMessage} (#{messageId})',
+                [
+                    'messageId' => $this->getLoginFailureMessageId(),
+                    'getSupportMessage' => $this->getSupportMessage()
+                ]
+            ));
         }
 
         if (empty($providerName)) {
             $this->setLoginFailureCode(self::FAIL_NO_PROVIDER_NAME, $user->getId());
-            throw new ValidationException(
-                _t(
-                    'OKTA.GENERAL_SESSION_ERROR',
-                    '{getSupportMessage} (#{messageId})',
-                    [
-                        'messageId' => $this->getLoginFailureMessageId(),
-                        'getSupportMessage' => $this->getSupportMessage()
-                    ]
-                )
-            );
+            throw \SilverStripe\ORM\ValidationException::create(_t(
+                'OKTA.GENERAL_SESSION_ERROR',
+                '{getSupportMessage} (#{messageId})',
+                [
+                    'messageId' => $this->getLoginFailureMessageId(),
+                    'getSupportMessage' => $this->getSupportMessage()
+                ]
+            ));
         }
 
         /** @var Passport $passport */
@@ -271,39 +251,37 @@ class OktaLoginHandler extends LoginTokenHandler
             // Logger::log("findOrCreateMember no passport");
             // Passport does not exist, create or find member linked to Okta username
             $member = $this->createMember($token, $provider);
-            if (!$member) {
+            if (!$member instanceof \SilverStripe\Security\Member) {
                 // Failed to create or find member
                 $this->setLoginFailureCode(self::FAIL_NO_PASSPORT_NO_MEMBER_CREATED, $user->getId());
-                throw new ValidationException(
-                    _t(
-                        'OKTA.INVALID_MEMBER',
-                        '{getSupportMessage} (#{messageId})',
-                        [
-                            'messageId' => $this->getLoginFailureMessageId(),
-                            'getSupportMessage' => $this->getSupportMessage()
-                        ]
-                    )
-                );
+                throw \SilverStripe\ORM\ValidationException::create(_t(
+                    'OKTA.INVALID_MEMBER',
+                    '{getSupportMessage} (#{messageId})',
+                    [
+                        'messageId' => $this->getLoginFailureMessageId(),
+                        'getSupportMessage' => $this->getSupportMessage()
+                    ]
+                ));
             }
+
             // Assign member to created passport
             $passport = $this->createPassport($identifier, $providerName, $member);
         } else {
             // Logger::log("findOrCreateMember use current passport");
             // Passport exists, create or find member linked to Okta username
             $member = $this->createMember($token, $provider);
-            if (!$member) {
+            if (!$member instanceof \SilverStripe\Security\Member) {
                 $this->setLoginFailureCode(self::FAIL_PASSPORT_NO_MEMBER_CREATED, $user->getId());
-                throw new ValidationException(
-                    _t(
-                        'OKTA.INVALID_MEMBER',
-                        '{getSupportMessage} (#{messageId})',
-                        [
-                            'messageId' => $this->getLoginFailureMessageId(),
-                            'getSupportMessage' => $this->getSupportMessage()
-                        ]
-                    )
-                );
+                throw \SilverStripe\ORM\ValidationException::create(_t(
+                    'OKTA.INVALID_MEMBER',
+                    '{getSupportMessage} (#{messageId})',
+                    [
+                        'messageId' => $this->getLoginFailureMessageId(),
+                        'getSupportMessage' => $this->getSupportMessage()
+                    ]
+                ));
             }
+
             $passport->MemberID = $member->ID;
             $passport->LastEdited = DBDatetime::now()->Rfc2822();
             $passport->write();
@@ -317,9 +295,6 @@ class OktaLoginHandler extends LoginTokenHandler
     /**
      * Create a member from the given token
      *
-     * @param AccessToken $token
-     * @param AbstractProvider $provider
-     * @return Member|null
      * @throws ValidationException
      */
     protected function createMember(AccessToken $token, AbstractProvider $provider): ?Member
@@ -332,64 +307,56 @@ class OktaLoginHandler extends LoginTokenHandler
         // require a provider name for this operation
         if (empty($providerName)) {
             $this->setLoginFailureCode(self::FAIL_NO_PROVIDER_NAME, $user->getId());
-            throw new ValidationException(
-                _t(
-                    'OKTA.GENERAL_SESSION_ERROR',
-                    '{getSupportMessage} (#{messageId})',
-                    [
-                        'messageId' => $this->getLoginFailureMessageId(),
-                        'getSupportMessage' => $this->getSupportMessage()
-                    ]
-                )
-            );
+            throw \SilverStripe\ORM\ValidationException::create(_t(
+                'OKTA.GENERAL_SESSION_ERROR',
+                '{getSupportMessage} (#{messageId})',
+                [
+                    'messageId' => $this->getLoginFailureMessageId(),
+                    'getSupportMessage' => $this->getSupportMessage()
+                ]
+            ));
         }
 
         // Require the user preferred username (Okta login) for this operation
         if (!$user->getPreferredUsername()) {
             $this->setLoginFailureCode(self::FAIL_USER_MISSING_USERNAME, $user->getId());
-            throw new ValidationException(
-                _t(
-                    'OKTA.NO_USERNAME_RETURNED',
-                    '{getSupportMessage} (#{messageId})',
-                    [
-                        'messageId' => $this->getLoginFailureMessageId(),
-                        'getSupportMessage' => $this->getSupportMessage()
-                    ]
-                )
-            );
+            throw \SilverStripe\ORM\ValidationException::create(_t(
+                'OKTA.NO_USERNAME_RETURNED',
+                '{getSupportMessage} (#{messageId})',
+                [
+                    'messageId' => $this->getLoginFailureMessageId(),
+                    'getSupportMessage' => $this->getSupportMessage()
+                ]
+            ));
         }
 
         // Require user email
         if (!$user->getEmail()) {
             $this->setLoginFailureCode(self::FAIL_USER_MISSING_EMAIL, $user->getId());
-            throw new ValidationException(
-                _t(
-                    'OKTA.NO_USERNAME_RETURNED',
-                    '{getSupportMessage} (#{messageId})',
-                    [
-                        'messageId' => $this->getLoginFailureMessageId(),
-                        'getSupportMessage' => $this->getSupportMessage()
-                    ]
-                )
-            );
+            throw \SilverStripe\ORM\ValidationException::create(_t(
+                'OKTA.NO_USERNAME_RETURNED',
+                '{getSupportMessage} (#{messageId})',
+                [
+                    'messageId' => $this->getLoginFailureMessageId(),
+                    'getSupportMessage' => $this->getSupportMessage()
+                ]
+            ));
         }
 
         // Link Okta User to Member, or create a new Member
         $oktaLinker = new OktaLinker();
         $member = $oktaLinker->linkViaOktaUser($user, true);
-        if(!$member) {
+        if(!$member instanceof \SilverStripe\Security\Member) {
             // Could not link the member to the Okta user
             $this->setLoginFailureCode(self::FAIL_USER_MEMBER_LINK_FAILED, $user->getId());
-            throw new ValidationException(
-                _t(
-                    'OKTA.MEMBER_COLLISION',
-                    '{getSupportMessage} (#{messageId})',
-                    [
-                        'messageId' => $this->getLoginFailureMessageId(),
-                        'getSupportMessage' => $this->getSupportMessage()
-                    ]
-                )
-            );
+            throw \SilverStripe\ORM\ValidationException::create(_t(
+                'OKTA.MEMBER_COLLISION',
+                '{getSupportMessage} (#{messageId})',
+                [
+                    'messageId' => $this->getLoginFailureMessageId(),
+                    'getSupportMessage' => $this->getSupportMessage()
+                ]
+            ));
         } else {
             try {
                 $member->write();
@@ -401,6 +368,7 @@ class OktaLoginHandler extends LoginTokenHandler
                 Logger::log("Failed to write member with error: {$e->getMessage()}", "WARNING");
             }
         }
+
         return null;
     }
 }

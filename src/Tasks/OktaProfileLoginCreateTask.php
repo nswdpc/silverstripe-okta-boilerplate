@@ -19,9 +19,8 @@ class OktaProfileLoginCreateTask extends BuildTask
 
     /**
      * {@inheritDoc}
-     * @var string
      */
-    private static $segment = 'OktaProfileLoginCreateTask';
+    private static string $segment = 'OktaProfileLoginCreateTask';
 
     /**
      * Run the task
@@ -47,6 +46,7 @@ class OktaProfileLoginCreateTask extends BuildTask
                 $row = $result->nextRecord();
                 $recordCount = $row['RecordCount'];
             }
+
             DB::alteration_message("Found {$recordCount} matching member records", "changed");
 
             $sql = "UPDATE `Member` "
@@ -64,8 +64,8 @@ class OktaProfileLoginCreateTask extends BuildTask
                 DB::alteration_message("Rolling back", "changed");
                 DB::get_conn()->transactionRollback();
             }
-        } catch (\Exception $e) {
-            print $e->getMessage();
+        } catch (\Exception $exception) {
+            print $exception->getMessage();
             print "\n";
             exit(1);
         }

@@ -14,45 +14,23 @@ use SilverStripe\Security\PermissionProvider;
  */
 class OAuthLog extends DataObject implements PermissionProvider
 {
-    /**
-     * @var string
-     */
-    private static $table_name = 'OAuthLog';
+    private static string $table_name = 'OAuthLog';
 
-    /**
-     * @var string
-     */
-    private static $singular_name = 'OAuth log';
+    private static string $singular_name = 'OAuth log';
 
-    /**
-     * @var string
-     */
-    private static $plural_name = 'OAuth logs';
+    private static string $plural_name = 'OAuth logs';
 
-    /**
-     * @var string
-     */
-    private static $default_sort = 'Created DESC';
+    private static string $default_sort = 'Created DESC';
 
-    /**
-     * @var int
-     */
-    private static $log_truncation_age = 7;//days
-
-    /**
-     * @var array
-     */
-    private static $db = [
+    private static int $log_truncation_age = 7;//days
+    private static array $db = [
         'Code' => 'Varchar(3)',
         'MessageId' => 'Int',
         'OAuthSource' => 'Varchar(255)',
         'Identifier' => 'Varchar(255)'
     ];
 
-    /**
-     * @var array
-     */
-    private static $indexes = [
+    private static array $indexes = [
         'Code' => true,
         'OAuthSource' => true,
         'MessageId' => true,
@@ -60,10 +38,7 @@ class OAuthLog extends DataObject implements PermissionProvider
         'Created' => true
     ];
 
-    /**
-     * @var array
-     */
-    private static $summary_fields = [
+    private static array $summary_fields = [
         'Created.Nice' => 'Created',
         'MessageId' => 'Message Id',
         'Code' => 'Code',
@@ -112,6 +87,7 @@ class OAuthLog extends DataObject implements PermissionProvider
         if ($day <= 0) {
             $day = 7;
         }
+
         $sql = "DELETE FROM `OAuthLog` WHERE Created < CURDATE() - INTERVAL {$day} DAY";
         DB::query($sql);
     }
@@ -176,9 +152,11 @@ class OAuthLog extends DataObject implements PermissionProvider
                 OktaLoginHandler::getFailMessageForCode($this->Code)
             );
         }
+
         if ($oauthSourceField = $fields->dataFieldByName('OAuthSource')) {
             $oauthSourceField->setTitle(_t('OAUTH.SOURCE_TITLE', 'OAuth provider'));
         }
+
         return $fields;
     }
 }

@@ -21,6 +21,7 @@ trait OktaGroups
             $member->Groups()->add($parentOktaGroup);
             return true;
         }
+
         return false;
     }
 
