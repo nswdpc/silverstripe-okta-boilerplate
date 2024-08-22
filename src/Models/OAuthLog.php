@@ -22,7 +22,8 @@ class OAuthLog extends DataObject implements PermissionProvider
 
     private static string $default_sort = 'Created DESC';
 
-    private static int $log_truncation_age = 7;//days
+    private static int $log_truncation_age = 7;
+    //days
     private static array $db = [
         'Code' => 'Varchar(3)',
         'MessageId' => 'Int',

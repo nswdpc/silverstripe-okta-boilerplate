@@ -41,11 +41,12 @@ class PassportCleanUpJobTest extends SapphireTest
                 $okIds[] = $id;
             }
         }
+
         $passports->count();
         $staleness = 30;
         $interval = $staleness + 1;
         // mark stale records with a stale last edited date beyond the limit
-        $result = DB::query(
+        DB::query(
             'UPDATE "SS_OAuth_Passport"'
             . " SET \"LastEdited\" = CURDATE() - INTERVAL {$interval} DAY "
             . " WHERE ID IN (" . implode(",", $staleIds) . ")"
