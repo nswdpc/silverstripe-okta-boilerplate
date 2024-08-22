@@ -78,7 +78,7 @@ class OktaLoginHandler extends LoginTokenHandler
         $result = $member->validateCanLogin();
         if (!$result->isValid()) {
             $message = implode("; ", array_map(
-                fn(array $message) => $message['message'],
+                fn (array $message) => $message['message'],
                 $result->getMessages()
             ));
             return Security::permissionFailure(
