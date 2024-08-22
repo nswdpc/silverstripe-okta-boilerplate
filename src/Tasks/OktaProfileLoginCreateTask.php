@@ -64,7 +64,6 @@ class OktaProfileLoginCreateTask extends BuildTask
                 DB::alteration_message("Rolling back", "changed");
                 DB::get_conn()->transactionRollback();
             }
-            return true;
         } catch (\Exception $e) {
             print $e->getMessage();
             print "\n";

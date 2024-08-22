@@ -59,8 +59,8 @@ class MemberExtension extends DataExtension implements PermissionProvider
     public function onBeforeWrite()
     {
         parent::onBeforeWrite();
-        if ($this->owner->OktaLastSyncClear) {
-            $this->owner->OktaLastSync = null;
+        if ($this->getOwner()->OktaLastSyncClear) {
+            $this->getOwner()->OktaLastSync = null;
         }
     }
 
@@ -70,7 +70,7 @@ class MemberExtension extends DataExtension implements PermissionProvider
     public function onAfterWrite()
     {
         parent::onAfterWrite();
-        $this->owner->OktaLastSyncClear = null;
+        $this->getOwner()->OktaLastSyncClear = null;
     }
 
     /**
@@ -99,14 +99,16 @@ class MemberExtension extends DataExtension implements PermissionProvider
     {
 
         if($context == 'lostPasswordSendEmail') {
-            $canSend = self::canSendLostPasswordEmail($this->owner);
+            /** @var Member $member */
+            $member = $this->getOwner();
+            $canSend = self::canSendLostPasswordEmail($member);
             if($canSend) {
                 // local password reset allowed in this context
                 return false;
             }
         }
         // default: all contexts are externally managed
-        return $this->owner->OktaProfileLogin != '';
+        return $this->getOwner()->OktaProfileLogin != '';
     }
 
     /**
@@ -115,7 +117,7 @@ class MemberExtension extends DataExtension implements PermissionProvider
      */
     public function getPassport(string $provider)
     {
-        if ($passports = $this->owner->Passports()) {
+        if ($passports = $this->getOwner()->Passports()) {
             return $passports->filter('OAuthSource', $provider)->first();
         } else {
             return null;
@@ -131,7 +133,7 @@ class MemberExtension extends DataExtension implements PermissionProvider
     public function setOktaProfileValue($value)
     {
         $profileValue = [];
-        $profileFields = $this->owner->config()->get('okta_profile_fields');
+        $profileFields = $this->getOwner()->config()->get('okta_profile_fields');
         if(!is_array($profileFields)) {
             $profileFields = [];
         }
@@ -148,12 +150,12 @@ class MemberExtension extends DataExtension implements PermissionProvider
                 $profileValue[ $profileFieldName ] = isset($value[ $profileFieldName ]) ? $value[ $profileFieldName ] : null;
             }
             ksort($profileValue);
-            $this->owner->setField(
+            $this->getOwner()->setField(
                 'OktaProfileValue',
                 json_encode($profileValue)
             );
         } else {
-            $this->owner->setField(
+            $this->getOwner()->setField(
                 'OktaProfileValue',
                 null
             );
@@ -168,7 +170,7 @@ class MemberExtension extends DataExtension implements PermissionProvider
      */
     public function getOktaProfileValueAsArray(): array
     {
-        $value = json_decode($this->owner->OktaProfileValue ?? '', true, JSON_THROW_ON_ERROR);
+        $value = json_decode($this->getOwner()->OktaProfileValue ?? '', true, JSON_THROW_ON_ERROR);
         if(!is_array($value)) {
             $value = [];
         }
@@ -181,7 +183,7 @@ class MemberExtension extends DataExtension implements PermissionProvider
     public function formatOktaProfileValue(): string
     {
         $formattedValue = '';
-        if($this->owner->OktaProfileValue) {
+        if($this->getOwner()->OktaProfileValue) {
             try {
                 $formattedValue = json_encode(
                     $this->getOktaProfileValueAsArray(),
@@ -217,7 +219,7 @@ class MemberExtension extends DataExtension implements PermissionProvider
                         ReadonlyField::create(
                             'OktaLastSync',
                             _t('OKTA.LAST_SYNC_DATETIME', 'Last sync. date'),
-                            $this->owner->OktaLastSync
+                            $this->getOwner()->OktaLastSync
                         ),
                         CheckboxField::create(
                             'OktaLastSyncClear',
@@ -236,9 +238,8 @@ class MemberExtension extends DataExtension implements PermissionProvider
 
     /**
      * Extend {@link Member::validateCanLogin()} to block logins for anyone whose account has become stale
-     * @return void
      */
-    public function canLogIn(ValidationResult &$result)
+    public function canLogIn(ValidationResult &$result): bool
     {
 
         /**
@@ -248,20 +249,20 @@ class MemberExtension extends DataExtension implements PermissionProvider
             return false;
         }
 
-        $days = intval($this->owner->config()->get('okta_lockout_after_days'));
+        $days = intval($this->getOwner()->config()->get('okta_lockout_after_days'));
         if ($days <= 0) {
             // if the configured days is 0 or less, OK
             return true;
         }
-        if (!$this->owner->OktaLastSync) {
+        if (!$this->getOwner()->OktaLastSync) {
             // If the member has never been sync'd, allow
-            return;
+            return true;
         }
 
         // calculate datetime comparison
         try {
             $dt = new \DateTime();
-            $odt = new \DateTime($this->owner->OktaLastSync);
+            $odt = new \DateTime($this->getOwner()->OktaLastSync);
             $odt->modify("+{$days} day");
             if ($odt < $dt) {
                 // still not on or after today
@@ -285,7 +286,7 @@ class MemberExtension extends DataExtension implements PermissionProvider
      */
     public function getOktaGroups(): ManyManyList
     {
-        return $this->owner->DirectGroups()->filter(['IsOktaGroup' => 1]);
+        return $this->getOwner()->DirectGroups()->filter(['IsOktaGroup' => 1]);
     }
 
     /**
@@ -293,7 +294,7 @@ class MemberExtension extends DataExtension implements PermissionProvider
      */
     public function getNonOktaGroups(): ManyManyList
     {
-        return $this->owner->DirectGroups()->exclude(['IsOktaGroup' => 1]);
+        return $this->getOwner()->DirectGroups()->exclude(['IsOktaGroup' => 1]);
     }
 
     /**

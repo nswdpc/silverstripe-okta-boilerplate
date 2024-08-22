@@ -30,7 +30,8 @@
         "cambis/silverstripe-rector": "^0.5.1",
         "phpunit/phpunit": "^9.5",
         "syntro/silverstripe-phpstan": "^5",
-        "nswdpc/ci-files": "^1"
+        "nswdpc/ci-files": "^1",
+        "phpstan/phpstan-mockery": "^1.1"
     },
     "repositories": [
         {

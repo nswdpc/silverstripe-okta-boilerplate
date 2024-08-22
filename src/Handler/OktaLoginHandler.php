@@ -98,47 +98,35 @@ class OktaLoginHandler extends LoginTokenHandler
         switch ($code) {
             case self::FAIL_USER_NO_GROUPS:
                 return _t('OAUTH.FAIL_' . $code, 'User has no Okta groups');
-                break;
             case self::FAIL_USER_MEMBER_COLLISION:
                 return _t('OAUTH.FAIL_' . $code, 'User/member collision');
-                break;
             case self::FAIL_USER_MISSING_REQUIRED_GROUPS:
                 return _t('OAUTH.FAIL_' . $code, 'User missing required groups');
-                break;
             case self::FAIL_USER_MISSING_EMAIL:
                 return _t('OAUTH.FAIL_' . $code, 'User missing email');
-                break;
             case self::FAIL_USER_MISSING_USERNAME:
                 return _t('OAUTH.FAIL_' . $code, 'User missing username');
-                break;
             case self::FAIL_USER_MEMBER_EMAIL_MISMATCH:
                 return _t('OAUTH.FAIL_' . $code, 'User/member email mismatch');
-                break;
             case self::FAIL_USER_MEMBER_PASSPORT_MISMATCH:
                 return _t('OAUTH.FAIL_' . $code, 'User/member/passport mismatch');
-                break;
             case self::FAIL_PASSPORT_CREATE_IDENT_COLLISION:
                 return _t('OAUTH.FAIL_' . $code, 'Tried to create a passport when one existed for the identifier/provider');
-                break;
             case self::FAIL_NO_PROVIDER_NAME:
                 return _t('OAUTH.FAIL_' . $code, 'No provider name');
-                break;
             case self::FAIL_NO_PASSPORT_NO_MEMBER_CREATED:
                 return _t('OAUTH.FAIL_' . $code, 'No passport found and no member created');
-                break;
             case self::FAIL_PASSPORT_NO_MEMBER_CREATED:
                 return _t('OAUTH.FAIL_' . $code, 'Passport created but no member found');
-                break;
             default:
                 return _t('OAUTH.FAIL_UNKNOWN_CODE', 'Unknown');
-                break;
         }
     }
 
     /**
-     * @param string|null $code
+     * Set the login failure code
      */
-    protected function setLoginFailureCode($code, $userId = '')
+    protected function setLoginFailureCode(?int $code, string $userId = '')
     {
         $messageId = null;
         if ($code) {
@@ -408,6 +396,7 @@ class OktaLoginHandler extends LoginTokenHandler
                 return $member;
             } catch(ValidationException $e) {
                 Logger::log("Failed to write member with error: {$e->getMessage()}", "WARNING");
+                /** @phpstan-ignore catch.neverThrown */
             } catch(\Exception $e) {
                 Logger::log("Failed to write member with error: {$e->getMessage()}", "WARNING");
             }

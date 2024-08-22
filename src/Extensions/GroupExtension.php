@@ -45,9 +45,9 @@ class GroupExtension extends DataExtension
     public function onBeforeWrite()
     {
         parent::onBeforeWrite();
-        if ($this->owner->IsOktaGroup) {
+        if ($this->getOwner()->IsOktaGroup) {
             // avoid writing an OktaGroup with permissions
-            $permissionCount = $this->owner->Permissions()->count();
+            $permissionCount = $this->getOwner()->Permissions()->count();
             if ($permissionCount > 0) {
                 throw new OktaPermissionEscalationException(
                     _t(
@@ -56,7 +56,7 @@ class GroupExtension extends DataExtension
                     )
                 );
             }
-            $roleCount = $this->owner->Roles()->count();
+            $roleCount = $this->getOwner()->Roles()->count();
             if ($roleCount > 0) {
                 throw new OktaPermissionEscalationException(
                     _t(
@@ -85,7 +85,7 @@ class GroupExtension extends DataExtension
                     'This group was synchronised from Okta'
                 )
             )->setValue(
-                DBField::create_field(DBBoolean::class, $this->owner->IsOktaGroup)->Nice()
+                DBField::create_field(DBBoolean::class, $this->getOwner()->IsOktaGroup)->Nice()
             ),
             'Description'
         );

@@ -3,7 +3,6 @@
 namespace NSWDPC\Authentication\Okta;
 
 use Foxworth42\OAuth2\Client\Provider\OktaUser;
-use Okta\Users\UserProfile;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\ORM\FieldType\DBDatetime;
 use SilverStripe\Security\Member;
@@ -47,21 +46,6 @@ class OktaLinker
     }
 
     /**
-     * Link via a UserProfile returned from the Okta API
-     * @param UserProfile $userProfile resource
-     */
-    public static function linkViaUserProfile(UserProfile $userProfile, $createIfNotExisting = false): ?Member
-    {
-        return self::linktoMember(
-            $createIfNotExisting,
-            $userProfile->getLogin(),
-            $userProfile->getEmail(),
-            $userProfile->getFirstName(),
-            $userProfile->getLastName()
-        );
-    }
-
-    /**
      * This is the default behaviour
      * Find a Member via Okta login <-> Member.Email
      */
@@ -99,9 +83,7 @@ class OktaLinker
 
         // Attempt to find Member via Member.OktaProfileLogin
         $member = self::linkLoginLogin($userLogin);
-        if($member) {
-            // Logger::log("OktaLinker: found via linkLoginLogin", "DEBUG");
-        } elseif(!$member && self::config()->get('link_via_email')) {
+        if(!$member && self::config()->get('link_via_email')) {
             // Logger::log("OktaLinker: link_via_email=on", "DEBUG");
             // Attempt to find Member via Member.Email
             $member = self::linkLoginEmail($userLogin);

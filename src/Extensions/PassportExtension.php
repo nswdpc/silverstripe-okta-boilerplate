@@ -79,14 +79,14 @@ class PassportExtension extends DataExtension implements PermissionProvider
     {
 
         // Validate: the Identifier/OAuthSource is unique
-        if ($this->owner->Identifier && $this->owner->OAuthSource) {
+        if ($this->getOwner()->Identifier && $this->getOwner()->OAuthSource) {
             $existing = Passport::get()->filter([
-                'Identifier' => $this->owner->Identifier,
-                'OAuthSource' => $this->owner->OAuthSource
+                'Identifier' => $this->getOwner()->Identifier,
+                'OAuthSource' => $this->getOwner()->OAuthSource
             ]);
-            if ($this->owner->isInDB()) {
+            if ($this->getOwner()->isInDB()) {
                 // exclude current record if it exists
-                $existing = $existing->exclude([ "ID" => $this->owner->ID ]);
+                $existing = $existing->exclude([ "ID" => $this->getOwner()->ID ]);
             }
             $existing = $existing->first();
             if ($existing && $existing->exists()) {
@@ -98,15 +98,15 @@ class PassportExtension extends DataExtension implements PermissionProvider
         }
 
         // Validate: the MemberID/OAuthSource is unique
-        if ($this->owner->MemberID && $this->owner->OAuthSource) {
+        if ($this->getOwner()->MemberID && $this->getOwner()->OAuthSource) {
             // validate member/provider passport does not exist
             $existing = Passport::get()->filter([
-                'MemberID' => $this->owner->MemberID,
-                'OAuthSource' => $this->owner->OAuthSource
+                'MemberID' => $this->getOwner()->MemberID,
+                'OAuthSource' => $this->getOwner()->OAuthSource
             ]);
-            if ($this->owner->isInDB()) {
+            if ($this->getOwner()->isInDB()) {
                 // exclude current record if it exists (updating current record)
-                $existing = $existing->exclude(["ID" => $this->owner->ID ]);
+                $existing = $existing->exclude(["ID" => $this->getOwner()->ID ]);
             }
             $existing = $existing->first();
             if ($existing && $existing->exists()) {
@@ -123,9 +123,9 @@ class PassportExtension extends DataExtension implements PermissionProvider
     public function onBeforeWrite()
     {
         parent::onBeforeWrite();
-        if (!$this->owner->isInDB()) {
+        if (!$this->getOwner()->isInDB()) {
             $member = Security::getCurrentUser();
-            $this->owner->CreatedByMemberID = $member->ID ?? 0;
+            $this->getOwner()->CreatedByMemberID = $member->ID ?? 0;
         }
         // validate that the passport can be written
         $this->validatePassportWrite();
@@ -133,13 +133,13 @@ class PassportExtension extends DataExtension implements PermissionProvider
 
     public function getTitle()
     {
-        if ($this->owner->exists()) {
+        if ($this->getOwner()->exists()) {
             return _t(
                 'OAUTH.PASSPORT_TITLE',
                 '{Identifier} @ {OAuthSource}',
                 [
-                    'Identifier' => $this->owner->Identifier,
-                    'OAuthSource' => $this->owner->OAuthSource
+                    'Identifier' => $this->getOwner()->Identifier,
+                    'OAuthSource' => $this->getOwner()->OAuthSource
                 ]
             );
         } else {
@@ -188,10 +188,10 @@ class PassportExtension extends DataExtension implements PermissionProvider
             $providerFactory = Injector::inst()->get(ProviderFactory::class);
             $providers = $providerFactory->getProviders();
             $listProviders = [];
-            if($this->owner->OAuthSource) {
-                $listProviders[ $this->owner->OAuthSource ] = _t(
-                    'OKTA.PROVIDER_' . $this->owner->OAuthSource,
-                    $this->owner->OAuthSource
+            if($this->getOwner()->OAuthSource) {
+                $listProviders[ $this->getOwner()->OAuthSource ] = _t(
+                    'OKTA.PROVIDER_' . $this->getOwner()->OAuthSource,
+                    $this->getOwner()->OAuthSource
                 );
             }
             if (is_array($providers)) {
@@ -208,12 +208,12 @@ class PassportExtension extends DataExtension implements PermissionProvider
                     'OAuthSource',
                     _t('OAUTH.SOURCE_TITLE', 'OAuth provider'),
                     $listProviders,
-                    $this->owner->OAuthSource
+                    $this->getOwner()->OAuthSource
                 )->setEmptyString('')
             );
         }
 
-        if (!$this->owner->isInDB()) {
+        if (!$this->getOwner()->isInDB()) {
             $fields->removeByName('CreatedByMemberID');
         } elseif ($createdByMemberField = $fields->dataFieldByName('CreatedByMemberID')) {
             $createdByMemberField->setTitle(_t('OAUTH.CREATED_BY_MEMBER', 'Created by'));
