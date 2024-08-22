@@ -119,7 +119,7 @@ class OktaLoginHandler extends LoginTokenHandler
      */
     protected function setLoginFailureCode(?int $code, string $userId = '')
     {
-        $messageId = null;
+        $messageId = 0;
         if (!is_null($code)) {
             // a random message id a user can quote to support
             $messageId = random_int(100000, 1000000);
