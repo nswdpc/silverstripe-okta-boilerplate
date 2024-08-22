@@ -23,6 +23,7 @@ class OAuthLog extends DataObject implements PermissionProvider
     private static string $default_sort = 'Created DESC';
 
     private static int $log_truncation_age = 7;
+
     //days
     private static array $db = [
         'Code' => 'Varchar(3)',
@@ -89,7 +90,7 @@ class OAuthLog extends DataObject implements PermissionProvider
             $day = 7;
         }
 
-        $sql = "DELETE FROM \"OAuthLog\" WHERE Created < CURDATE() - INTERVAL ? DAY";
+        $sql = 'DELETE FROM "OAuthLog" WHERE Created < CURDATE() - INTERVAL ? DAY';
         DB::prepared_query($sql, [$day]);
     }
 

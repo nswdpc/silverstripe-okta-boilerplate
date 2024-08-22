@@ -49,8 +49,8 @@ class OktaProfileLoginCreateTask extends BuildTask
 
             DB::alteration_message("Found {$recordCount} matching member records", "changed");
 
-            $sql = "UPDATE \"Member\" "
-                . " SET \"OktaProfileLogin\" = \"Email\""
+            $sql = 'UPDATE "Member" '
+                . ' SET "OktaProfileLogin" = "Email"'
                 . " WHERE {$conditional}";
             $result = DB::query($sql);
             $affectedRows = DB::affected_rows();
