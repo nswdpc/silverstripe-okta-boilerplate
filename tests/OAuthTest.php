@@ -35,7 +35,6 @@ use SilverStripe\Security\Security;
  */
 class OAuthTest extends SapphireTest
 {
-
     /**
      * @inheritdoc
      */
@@ -60,7 +59,7 @@ class OAuthTest extends SapphireTest
     /**
      * Log out the currently signed in user, if any, before any tests
      */
-    protected function setUp() : void
+    protected function setUp(): void
     {
         Config::modify()->set(
             Group::class,
@@ -74,7 +73,7 @@ class OAuthTest extends SapphireTest
     /**
      * Get an Access Token
      */
-    protected function getAccessToken($options = []) : AccessToken
+    protected function getAccessToken($options = []): AccessToken
     {
         return new AccessToken($options);
     }
@@ -82,7 +81,7 @@ class OAuthTest extends SapphireTest
     /**
      * Return issuer URI parts
      */
-    protected function getIssuer() : array
+    protected function getIssuer(): array
     {
         $issuer = [
             'host' => 'something.example.com',
@@ -92,7 +91,8 @@ class OAuthTest extends SapphireTest
         return $issuer;
     }
 
-    public function testGroupCodeChange() {
+    public function testGroupCodeChange()
+    {
 
         $code = 'test';
 
@@ -106,7 +106,7 @@ class OAuthTest extends SapphireTest
 
         $this->assertEquals($code, $group->Code);
 
-        $groupSaved = Group::get()->filter( [ 'Code' => $code ] )->first();
+        $groupSaved = Group::get()->filter([ 'Code' => $code ])->first();
 
         $this->assertEquals($code, $groupSaved->Code);
 
@@ -120,7 +120,8 @@ class OAuthTest extends SapphireTest
 
     }
 
-    public function testApplyOktaRootGroup() {
+    public function testApplyOktaRootGroup()
+    {
 
         $parent = Group::config()->get('okta_group');
 
@@ -213,7 +214,7 @@ class OAuthTest extends SapphireTest
     /**
      * Get a user with a 'corret' claim on an email (as in they own the SS member email address)
      */
-    protected function getCorrectUser() : array
+    protected function getCorrectUser(): array
     {
         return [
             'sub' => "some-okta-user-id",
@@ -228,7 +229,7 @@ class OAuthTest extends SapphireTest
     /**
      * Get a user with an invalid claim
      */
-    protected function getFailUser() : array
+    protected function getFailUser(): array
     {
         return [
             'sub' => "some-user-no-username",
@@ -243,7 +244,7 @@ class OAuthTest extends SapphireTest
     /**
      * Get conflicting user, note same email as correct user ^
      */
-    protected function getConflictingUser() : array
+    protected function getConflictingUser(): array
     {
         return [
             'sub' => "conflicting-okta-user-id",
@@ -258,7 +259,7 @@ class OAuthTest extends SapphireTest
     /**
      * Get a user with a bunch of groups to test  group assignment and sync on auth
      */
-    protected function getAssignGroupTestUser() : array
+    protected function getAssignGroupTestUser(): array
     {
         return [
             'sub' => "test-group-user-id",
@@ -374,7 +375,7 @@ class OAuthTest extends SapphireTest
 
         $log = OAuthLog::get()->filter(['MessageId' => $logRef])->first();
         $this->assertNotNull($log, "Has a log record");
-        $this->assertEquals( OktaLoginHandler::FAIL_USER_MISSING_USERNAME, $log->Code, "Log code matches");
+        $this->assertEquals(OktaLoginHandler::FAIL_USER_MISSING_USERNAME, $log->Code, "Log code matches");
     }
 
     public function testOktaLoginHandlerSuccess()
@@ -427,7 +428,7 @@ class OAuthTest extends SapphireTest
         $this->assertEquals(0, $logCount, "no log records");
 
         // Member groups
-        $this->assertEquals(1, $member->getOktaGroups()->count(), "Has root group" );
+        $this->assertEquals(1, $member->getOktaGroups()->count(), "Has root group");
     }
 
 
@@ -495,7 +496,7 @@ class OAuthTest extends SapphireTest
         $this->assertEquals("warning", $type);
 
         $conflictingMember = Member::get()->filter('OktaProfileLogin', $conflicting['preferred_username'])->first();
-        $this->assertFalse( $conflictingMember && $conflictingMember->isInDB() );
+        $this->assertFalse($conflictingMember && $conflictingMember->isInDB());
 
         // check correct passport hasn't changed for correct user
         $postCorrectPassport = Passport::get()->filter([

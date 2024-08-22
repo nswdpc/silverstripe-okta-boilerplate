@@ -18,7 +18,6 @@ use SilverStripe\Security\MemberAuthenticator\LostPasswordForm;
  */
 class PermissionTest extends SapphireTest
 {
-
     /**
      * @inheritdoc
      */
@@ -66,7 +65,8 @@ class PermissionTest extends SapphireTest
     /**
      * Test ability to reset a local password
      */
-    public function testPasswordReset() {
+    public function testPasswordReset()
+    {
 
         $passwordUpdaters = Group::create([
             'Title' => 'Local password updaters',
@@ -123,7 +123,7 @@ class PermissionTest extends SapphireTest
 
         $statusCode = $response->getStatusCode();
         $this->assertEquals(302, $statusCode);
-        $this->assertTrue( strpos( $response->getHeader("Location"), $passwordSent) !== false, "redirect URL should contain '{$passwordSent}" );
+        $this->assertTrue(strpos($response->getHeader("Location"), $passwordSent) !== false, "redirect URL should contain '{$passwordSent}");
 
         $email = $this->findEmail($canUpdatePassword->Email);
 
@@ -138,7 +138,7 @@ class PermissionTest extends SapphireTest
         // people who cannot update password should still get this page
         $statusCode = $response->getStatusCode();
         $this->assertEquals(302, $statusCode);
-        $this->assertTrue( strpos( $response->getHeader("Location"), $passwordSent) !== false, "redirect URL should contain '{$passwordSent}' for cannotUpdatePassword" );
+        $this->assertTrue(strpos($response->getHeader("Location"), $passwordSent) !== false, "redirect URL should contain '{$passwordSent}' for cannotUpdatePassword");
 
         $email = $this->findEmail($cannotUpdatePassword->Email);
 
@@ -152,7 +152,7 @@ class PermissionTest extends SapphireTest
         // people who cannot update password should still get this page
         $statusCode = $response->getStatusCode();
         $this->assertEquals(302, $statusCode);
-        $this->assertTrue( strpos( $response->getHeader("Location"), $passwordSent) !== false, "redirect URL should contain '{$passwordSent}' for isEditor" );
+        $this->assertTrue(strpos($response->getHeader("Location"), $passwordSent) !== false, "redirect URL should contain '{$passwordSent}' for isEditor");
 
         $email = $this->findEmail($isEditor->Email);
 

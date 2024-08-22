@@ -13,7 +13,6 @@ use SilverStripe\ORM\DB;
  */
 class OktaProfileLoginCreateTask extends BuildTask
 {
-
     protected $title = 'Okta profile login create task';
 
     protected $description = 'Migrates email to okta profile login value. Use when upgrading to v0.1';

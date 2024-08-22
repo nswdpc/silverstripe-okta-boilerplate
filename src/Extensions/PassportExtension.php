@@ -22,7 +22,6 @@ use SilverStripe\Security\Security;
  */
 class PassportExtension extends DataExtension implements PermissionProvider
 {
-
     /**
      * @var array
      */

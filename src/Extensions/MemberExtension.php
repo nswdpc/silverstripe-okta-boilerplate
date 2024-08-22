@@ -21,7 +21,6 @@ use SilverStripe\Security\Security;
  */
 class MemberExtension extends DataExtension implements PermissionProvider
 {
-
     /**
      * @var array
      */
@@ -79,7 +78,8 @@ class MemberExtension extends DataExtension implements PermissionProvider
      * @todo exclude ADMIN permission members (return false ?)
      * @return bool
      */
-    public static function canSendLostPasswordEmail(Member $member) {
+    public static function canSendLostPasswordEmail(Member $member)
+    {
         // handler is trying to send a lost password email
         if(Permission::checkMember($member, 'OKTA_LOCAL_PASSWORD_RESET')) {
             // This specific member has a permission to allow local password reset
@@ -95,7 +95,8 @@ class MemberExtension extends DataExtension implements PermissionProvider
      * In the case of Okta, this is all contexts
      * @return bool
      */
-    public function isExternallyManagedContext($context) : bool {
+    public function isExternallyManagedContext($context): bool
+    {
 
         if($context == 'lostPasswordSendEmail') {
             $canSend = self::canSendLostPasswordEmail($this->owner);
@@ -127,7 +128,8 @@ class MemberExtension extends DataExtension implements PermissionProvider
      * determines what profile fields are stored
      * @param array|string $value either an array or a JSON encoded string
      */
-    public function setOktaProfileValue($value) {
+    public function setOktaProfileValue($value)
+    {
         $profileValue = [];
         $profileFields = $this->owner->config()->get('okta_profile_fields');
         if(!is_array($profileFields)) {
@@ -164,7 +166,8 @@ class MemberExtension extends DataExtension implements PermissionProvider
      * @return array
      * @throws \Exception
      */
-    public function getOktaProfileValueAsArray() : array {
+    public function getOktaProfileValueAsArray(): array
+    {
         $value = json_decode($this->owner->OktaProfileValue ?? '', true, JSON_THROW_ON_ERROR);
         if(!is_array($value)) {
             $value = [];
@@ -175,13 +178,14 @@ class MemberExtension extends DataExtension implements PermissionProvider
     /**
      * Return a formatted OktaProfileValue for display in a readable format
      */
-    public function formatOktaProfileValue() : string {
+    public function formatOktaProfileValue(): string
+    {
         $formattedValue = '';
         if($this->owner->OktaProfileValue) {
             try {
                 $formattedValue = json_encode(
                     $this->getOktaProfileValueAsArray(),
-                    JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR
+                    JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR
                 );
             } catch (\Exception $e) {
             }
@@ -201,7 +205,7 @@ class MemberExtension extends DataExtension implements PermissionProvider
             'OktaUnlinkedWhen'
         ]);
 
-        if( Permission::checkMember( Security::getCurrentUser(), 'ADMIN') ) {
+        if(Permission::checkMember(Security::getCurrentUser(), 'ADMIN')) {
             $fields->addFieldToTab(
                 'Root.Okta',
                 CompositeField::create(
@@ -279,7 +283,7 @@ class MemberExtension extends DataExtension implements PermissionProvider
     /**
      * Get a Member's *direct* Okta groups
      */
-    public function getOktaGroups() : ManyManyList
+    public function getOktaGroups(): ManyManyList
     {
         return $this->owner->DirectGroups()->filter(['IsOktaGroup' => 1]);
     }
@@ -287,7 +291,7 @@ class MemberExtension extends DataExtension implements PermissionProvider
     /**
      * Get a Member's *direct* non Okta groups
      */
-    public function getNonOktaGroups() : ManyManyList
+    public function getNonOktaGroups(): ManyManyList
     {
         return $this->owner->DirectGroups()->exclude(['IsOktaGroup' => 1]);
     }

@@ -17,7 +17,6 @@ use SilverStripe\Security\Group;
  */
 class GroupExtension extends DataExtension
 {
-
     /**
      * @var array
      */
@@ -36,7 +35,7 @@ class GroupExtension extends DataExtension
     /**
      * Default group title, if none provided in configuration
      */
-    const DEFAULT_GROUP_TITLE = 'Okta';
+    public const DEFAULT_GROUP_TITLE = 'Okta';
 
     /**
      * Handle pre-write logic for OktaGroups
@@ -104,7 +103,7 @@ class GroupExtension extends DataExtension
      * Create or update the default root Okta group configured, if set
      * @return Group|null
      */
-    public static function applyOktaRootGroup() : ?Group
+    public static function applyOktaRootGroup(): ?Group
     {
         $parent = Group::config()->get('okta_group');
         if (empty($parent['Code'])) {
@@ -112,7 +111,7 @@ class GroupExtension extends DataExtension
         }
         $code = Convert::raw2url($parent['Code']);
         $group = Group::get()->filter([ 'Code' => $code ])->first();
-        $title = trim( !empty($parent['Title']) ? $parent['Title'] : '' );
+        $title = trim(!empty($parent['Title']) ? $parent['Title'] : '');
         if($title == '') {
             $title = self::DEFAULT_GROUP_TITLE;
         }

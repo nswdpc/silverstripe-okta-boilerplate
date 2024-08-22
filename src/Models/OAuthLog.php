@@ -14,7 +14,6 @@ use SilverStripe\Security\PermissionProvider;
  */
 class OAuthLog extends DataObject implements PermissionProvider
 {
-
     /**
      * @var string
      */
@@ -76,7 +75,7 @@ class OAuthLog extends DataObject implements PermissionProvider
     /**
      * Retrieve code meaning
      */
-    public function getMeaning() : string
+    public function getMeaning(): string
     {
         return OktaLoginHandler::getFailMessageForCode($this->Code);
     }
@@ -84,7 +83,7 @@ class OAuthLog extends DataObject implements PermissionProvider
     /**
      * Quick add record
      */
-    public static function add($code, int $messageId, $providerName, $identifier = '') : self
+    public static function add($code, int $messageId, $providerName, $identifier = ''): self
     {
         $record = self::create([
             'Code' => $code,

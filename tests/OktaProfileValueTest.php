@@ -10,7 +10,6 @@ use SilverStripe\Security\Member;
  */
 class OktaProfileValueTest extends SapphireTest
 {
-
     /**
      * @inheritdoc
      */
@@ -40,7 +39,7 @@ class OktaProfileValueTest extends SapphireTest
         $member->OktaProfileValue = $profileValue;
         $member->write();
         $get = $member->getOktaProfileValueAsArray();
-        foreach($profileValue as $k=>$v) {
+        foreach($profileValue as $k => $v) {
             $this->assertEquals($v, $get[$k]);
         }
     }
@@ -69,7 +68,7 @@ class OktaProfileValueTest extends SapphireTest
         $member->OktaProfileValue = json_encode($profileValue);
         $member->write();
         $get = $member->getOktaProfileValueAsArray();
-        foreach($profileValue as $k=>$v) {
+        foreach($profileValue as $k => $v) {
             $this->assertEquals($v, $get[$k]);
         }
     }

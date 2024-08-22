@@ -22,7 +22,6 @@ use SilverStripe\Security\Security;
  */
 class OktaLoginHandler extends LoginTokenHandler
 {
-
     use OktaGroups;
 
     use Configurable;
@@ -30,18 +29,18 @@ class OktaLoginHandler extends LoginTokenHandler
     /**
      * List of failure codes
      */
-    const FAIL_USER_NO_GROUPS = 100;
-    const FAIL_USER_MEMBER_COLLISION = 101;
-    const FAIL_USER_MISSING_REQUIRED_GROUPS = 102;
-    const FAIL_USER_MISSING_EMAIL = 103;
-    const FAIL_USER_MEMBER_EMAIL_MISMATCH = 104;
-    const FAIL_USER_MEMBER_PASSPORT_MISMATCH = 105;
-    const FAIL_PASSPORT_CREATE_IDENT_COLLISION = 106;
-    const FAIL_USER_MISSING_USERNAME = 107;
-    const FAIL_USER_MEMBER_LINK_FAILED = 108;
-    const FAIL_NO_PROVIDER_NAME = 200;
-    const FAIL_NO_PASSPORT_NO_MEMBER_CREATED = 300;
-    const FAIL_PASSPORT_NO_MEMBER_CREATED = 301;
+    public const FAIL_USER_NO_GROUPS = 100;
+    public const FAIL_USER_MEMBER_COLLISION = 101;
+    public const FAIL_USER_MISSING_REQUIRED_GROUPS = 102;
+    public const FAIL_USER_MISSING_EMAIL = 103;
+    public const FAIL_USER_MEMBER_EMAIL_MISMATCH = 104;
+    public const FAIL_USER_MEMBER_PASSPORT_MISMATCH = 105;
+    public const FAIL_PASSPORT_CREATE_IDENT_COLLISION = 106;
+    public const FAIL_USER_MISSING_USERNAME = 107;
+    public const FAIL_USER_MEMBER_LINK_FAILED = 108;
+    public const FAIL_NO_PROVIDER_NAME = 200;
+    public const FAIL_NO_PASSPORT_NO_MEMBER_CREATED = 300;
+    public const FAIL_PASSPORT_NO_MEMBER_CREATED = 301;
 
     /*
      * @var string|null
@@ -94,7 +93,7 @@ class OktaLoginHandler extends LoginTokenHandler
     /**
      * Return message related to code
      */
-    public static function getFailMessageForCode($code) : string
+    public static function getFailMessageForCode($code): string
     {
         switch ($code) {
             case self::FAIL_USER_NO_GROUPS:
@@ -178,7 +177,7 @@ class OktaLoginHandler extends LoginTokenHandler
      * Generic support message
      * @return string
      */
-    public function getSupportMessage() : string
+    public function getSupportMessage(): string
     {
         return _t(
             'OAUTH.SUPPORT_MESSAGE',
@@ -204,7 +203,7 @@ class OktaLoginHandler extends LoginTokenHandler
      * See {@link NSWDPC\Authentication\Okta\PassportExtension::validatePassportWrite()}
      * @return Passport|null
      */
-    protected function createPassport(string $identifier, string $provider, Member $member) : ?Passport
+    protected function createPassport(string $identifier, string $provider, Member $member): ?Passport
     {
         try {
             // create a passport
@@ -335,7 +334,7 @@ class OktaLoginHandler extends LoginTokenHandler
      * @return Member|null
      * @throws ValidationException
      */
-    protected function createMember(AccessToken $token, AbstractProvider $provider) : ?Member
+    protected function createMember(AccessToken $token, AbstractProvider $provider): ?Member
     {
         $session = $this->getSession();
         $providerName = $session->get('oauth2.provider');
@@ -407,9 +406,9 @@ class OktaLoginHandler extends LoginTokenHandler
             try {
                 $member->write();
                 return $member;
-            } catch( ValidationException $e) {
+            } catch(ValidationException $e) {
                 Logger::log("Failed to write member with error: {$e->getMessage()}", "WARNING");
-            } catch( \Exception $e) {
+            } catch(\Exception $e) {
                 Logger::log("Failed to write member with error: {$e->getMessage()}", "WARNING");
             }
         }

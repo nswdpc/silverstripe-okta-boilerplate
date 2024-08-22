@@ -11,8 +11,8 @@ use SilverStripe\Security\Member;
 /**
  * Service class to link an Okta user via login or sync to a Silverstripe Member
  */
-class OktaLinker {
-
+class OktaLinker
+{
     use Configurable;
 
     /**
@@ -35,7 +35,8 @@ class OktaLinker {
      * Link via an OAuth sign-in, via the OktaUser resource
      * @param OktaUser $user resource from OAuth signin
      */
-    public static function linkViaOktaUser(OktaUser $user, $createIfNotExisting = true) : ?Member {
+    public static function linkViaOktaUser(OktaUser $user, $createIfNotExisting = true): ?Member
+    {
         return self::linktoMember(
             $createIfNotExisting,
             $user->getPreferredUsername(),
@@ -49,7 +50,8 @@ class OktaLinker {
      * Link via a UserProfile returned from the Okta API
      * @param UserProfile $userProfile resource
      */
-    public static function linkViaUserProfile(UserProfile $userProfile, $createIfNotExisting = false) : ?Member {
+    public static function linkViaUserProfile(UserProfile $userProfile, $createIfNotExisting = false): ?Member
+    {
         return self::linktoMember(
             $createIfNotExisting,
             $userProfile->getLogin(),
@@ -63,7 +65,8 @@ class OktaLinker {
      * This is the default behaviour
      * Find a Member via Okta login <-> Member.Email
      */
-    protected static function linkLoginEmail(string $userLogin) : ?Member {
+    protected static function linkLoginEmail(string $userLogin): ?Member
+    {
         return Member::get()->filter('Email', $userLogin)->first();
     }
 
@@ -71,7 +74,8 @@ class OktaLinker {
      * This is the default behaviour
      * Find a Member via Okta login <-> Member.Email
      */
-    protected static function linkLoginLogin(string $userLogin) : ?Member {
+    protected static function linkLoginLogin(string $userLogin): ?Member
+    {
         return Member::get()->filter('OktaProfileLogin', $userLogin)->first();
     }
 
@@ -85,7 +89,8 @@ class OktaLinker {
      * @param string $userSurname an Okta user family_name or surname
      * @return Member|null
      */
-    protected static function linktoMember(bool $createIfNotExisting, string $userLogin, string $userEmail, string $userFirstName = '', string $userSurname = '') : ?Member {
+    protected static function linktoMember(bool $createIfNotExisting, string $userLogin, string $userEmail, string $userFirstName = '', string $userSurname = ''): ?Member
+    {
 
         // Linking requires both the Okta login and email values
         if(!$userLogin || !$userEmail) {
@@ -96,7 +101,7 @@ class OktaLinker {
         $member = self::linkLoginLogin($userLogin);
         if($member) {
             // Logger::log("OktaLinker: found via linkLoginLogin", "DEBUG");
-        } else if(!$member && self::config()->get('link_via_email')) {
+        } elseif(!$member && self::config()->get('link_via_email')) {
             // Logger::log("OktaLinker: link_via_email=on", "DEBUG");
             // Attempt to find Member via Member.Email
             $member = self::linkLoginEmail($userLogin);
@@ -113,7 +118,7 @@ class OktaLinker {
             $member->OktaLastSync = DBDatetime::now()->Rfc2822();
             // Retained for compat with LoginTokenHandler
             $member->OAuthSource = null;
-        } else if ($member && self::config()->get('update_existing_member')) {
+        } elseif ($member && self::config()->get('update_existing_member')) {
             // Member exists, update base fields from the provider
             // Logger::log("OktaLinker: link current member login={$userLogin} email={$userEmail}", "DEBUG");
             $member->FirstName = $userFirstName;
@@ -128,4 +133,4 @@ class OktaLinker {
         return $member;
     }
 
- }
+}

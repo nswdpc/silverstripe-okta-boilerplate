@@ -67,7 +67,7 @@ class PassportCleanupJob extends AbstractQueuedJob
     public function process()
     {
         try {
-            if($this->staleness_in_days <= 0 ) {
+            if($this->staleness_in_days <= 0) {
                 throw new \Exception("Invalid value for staleness_in_days.. must be > 0");
             }
             // increment number of steps
