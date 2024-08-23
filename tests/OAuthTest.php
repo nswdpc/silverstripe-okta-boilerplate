@@ -300,18 +300,15 @@ class OAuthTest extends SapphireTest
         $provider = new Okta($options);
 
         $stream = Mockery::mock(StreamInterface::class);
-        $stream
-            ->shouldReceive('__toString')
+        $stream->shouldReceive('__toString') /** @phpstan-ignore method.notFound */
             ->once()
             ->andReturn(json_encode($authenticatingUser));
 
         $response = Mockery::mock(ResponseInterface::class);
-        $response
-            ->shouldReceive('getBody')
+        $response->shouldReceive('getBody') /** @phpstan-ignore method.notFound */
             ->once()
             ->andReturn($stream);
-        $response
-            ->shouldReceive('getHeader')
+        $response->shouldReceive('getHeader') /** @phpstan-ignore method.notFound */
             ->once()
             ->with('content-type')
             ->andReturn('application/json');
