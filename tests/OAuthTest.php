@@ -313,6 +313,7 @@ class OAuthTest extends SapphireTest
             ->with('content-type')
             ->andReturn('application/json');
 
+        /** @var ClientInterface|\Mockery\MockInterface $client */
         $client = Mockery::spy(ClientInterface::class, [
             'send' => $response,
         ]);
