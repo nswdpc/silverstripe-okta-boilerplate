@@ -96,7 +96,7 @@ class OktaLoginHandler extends LoginTokenHandler
     /**
      * Return message related to code
      */
-    public static function getFailMessageForCode(string $code): string
+    public static function getFailMessageForCode(int $code): string
     {
         return match ($code) {
             self::FAIL_USER_NO_GROUPS => _t('OAUTH.FAIL_' . $code, 'User has no Okta groups'),
@@ -138,13 +138,16 @@ class OktaLoginHandler extends LoginTokenHandler
     }
 
     /**
-     * @return string|null
+     * Return the login failure code
      */
     public function getLoginFailureCode(): ?int
     {
         return $this->loginFailureCode;
     }
 
+    /**
+     * Return the login failure message Id value, which is a random number provided to the user
+     */
     public function getLoginFailureMessageId(): int
     {
         return $this->loginFailureMessageId;

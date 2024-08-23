@@ -43,26 +43,31 @@ class OktaProfileLoginCreateTask extends BuildTask
             $result = DB::query($sqlSelect);
             $recordCount = 0;
             if($result) {
-                $row = $result->nextRecord();
-                $recordCount = $row['RecordCount'];
+                $row = $result->record();
+                $recordCount = $row['RecordCount'] ?? 0;
             }
 
             DB::alteration_message("Found {$recordCount} matching member records", "changed");
 
-            $sql = 'UPDATE "Member" '
-                . ' SET "OktaProfileLogin" = "Email"'
-                . " WHERE {$conditional}";
-            $result = DB::query($sql);
-            $affectedRows = DB::affected_rows();
+            if($recordCount > 0) {
 
-            DB::alteration_message("Changed {$affectedRows} member records", "changed");
+                $sqlUpdate = 'UPDATE "Member" '
+                    . ' SET "OktaProfileLogin" = "Email"'
+                    . " WHERE {$conditional}";
+                $result = DB::query($sqlUpdate);
+                $affectedRows = DB::affected_rows();
 
-            if($commitChanges) {
-                DB::alteration_message("Commit", "changed");
-                DB::get_conn()->transactionEnd();
+                DB::alteration_message("Changed {$affectedRows} member records", "changed");
+
+                if($commitChanges) {
+                    DB::alteration_message("Commit", "changed");
+                    DB::get_conn()->transactionEnd();
+                } else {
+                    DB::alteration_message("Rolling back", "changed");
+                    DB::get_conn()->transactionRollback();
+                }
             } else {
-                DB::alteration_message("Rolling back", "changed");
-                DB::get_conn()->transactionRollback();
+                DB::alteration_message("Done", "changed");
             }
         } catch (\Exception $exception) {
             print $exception->getMessage();
