@@ -10,28 +10,26 @@ use SilverStripe\View\TemplateGlobalProvider;
  */
 class AccessSupportAssistance implements TemplateGlobalProvider
 {
-
     use Configurable;
 
-    /**
-     * @var string
-     */
-    private static $assistance_link = '';
+    private static string $assistance_link = '';
 
     /**
      * Return the assistance link, entitised for a template
      */
-    public static function get_assistance_link() {
-        return htmlspecialchars(self::config()->get('assistance_link'));
+    public static function get_assistance_link(): string
+    {
+        return htmlspecialchars((string) self::config()->get('assistance_link'));
     }
 
     /**
      * Add support assistance variables globally
      * @return array
      */
-    public static function get_template_global_variables() {
-        return array(
+    public static function get_template_global_variables()
+    {
+        return [
             'OAuthSupportAssistanceLink' => 'get_assistance_link',
-        );
+        ];
     }
 }

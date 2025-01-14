@@ -1,8 +1,7 @@
-# 🧪 Okta authentication boilerplate
+# Okta authentication boilerplate
 
 This module adds Okta OAuth2 authentication to your Silverstripe website
 
-:warning: 🧪 This module is under active development and may include breaking changes.
 
 ## Scope
 

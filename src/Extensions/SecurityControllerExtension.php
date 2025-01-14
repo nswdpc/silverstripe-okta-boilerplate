@@ -10,7 +10,8 @@ use SilverStripe\View\Requirements;
  */
 class SecurityControllerExtension extends Extension
 {
-    public function onAfterInit() {
+    public function onAfterInit()
+    {
         Requirements::css(
             'nswdpc/silverstripe-okta-boilerplate:client/static/style/auth.css',
             'screen'

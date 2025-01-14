@@ -10,7 +10,6 @@ use SilverStripe\Security\Member;
  */
 class OktaProfileValueTest extends SapphireTest
 {
-
     /**
      * @inheritdoc
      */
@@ -19,7 +18,7 @@ class OktaProfileValueTest extends SapphireTest
     /**
      * Test write and retrieve okta profile value
      */
-    public function testOktaProfileValue()
+    public function testOktaProfileValue(): void
     {
         $member = Member::create([
             'FirstName' => 'Jason',
@@ -40,7 +39,7 @@ class OktaProfileValueTest extends SapphireTest
         $member->OktaProfileValue = $profileValue;
         $member->write();
         $get = $member->getOktaProfileValueAsArray();
-        foreach($profileValue as $k=>$v) {
+        foreach($profileValue as $k => $v) {
             $this->assertEquals($v, $get[$k]);
         }
     }
@@ -48,7 +47,7 @@ class OktaProfileValueTest extends SapphireTest
     /**
      * Test write and retrieve okta profile value
      */
-    public function testStringOktaProfileValue()
+    public function testStringOktaProfileValue(): void
     {
         $member = Member::create([
             'FirstName' => 'Jason',
@@ -69,7 +68,7 @@ class OktaProfileValueTest extends SapphireTest
         $member->OktaProfileValue = json_encode($profileValue);
         $member->write();
         $get = $member->getOktaProfileValueAsArray();
-        foreach($profileValue as $k=>$v) {
+        foreach($profileValue as $k => $v) {
             $this->assertEquals($v, $get[$k]);
         }
     }
@@ -77,7 +76,7 @@ class OktaProfileValueTest extends SapphireTest
     /**
      * Test write and retrieve okta profile value
      */
-    public function testInvalidOktaProfileValue()
+    public function testInvalidOktaProfileValue(): void
     {
         $member = Member::create([
             'FirstName' => 'Jason',

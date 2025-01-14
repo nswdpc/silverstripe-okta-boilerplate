@@ -12,7 +12,6 @@ use SilverStripe\Security\Permission;
  */
 class LostPasswordHandlerExtension extends Extension
 {
-
     /**
      * Veto or allow forgotPassword requests for a member
      * @deprecated note that this method will be removed in a future major release
@@ -20,9 +19,9 @@ class LostPasswordHandlerExtension extends Extension
      *              on Member and provide a context of 'lostPasswordSendEmail'
      * @param Member|null $member
      */
-    public function forgotPassword(Member &$member = null) : bool
+    public function forgotPassword(Member &$member = null): bool
     {
-        if($member) {
+        if($member instanceof \SilverStripe\Security\Member) {
             $canSend = MemberExtension::canSendLostPasswordEmail($member);
             if($canSend) {
                 // permissions allow
@@ -32,6 +31,7 @@ class LostPasswordHandlerExtension extends Extension
                 $member = null;
             }
         }
+
         // default: no action
         return true;
     }

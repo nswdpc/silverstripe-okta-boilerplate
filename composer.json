@@ -27,9 +27,18 @@
     },
     "require-dev": {
         "mockery/mockery": "^1.5",
+        "cambis/silverstripe-rector": "^0.5.1",
         "phpunit/phpunit": "^9.5",
-        "friendsofphp/php-cs-fixer": "^3"
+        "syntro/silverstripe-phpstan": "^5",
+        "nswdpc/ci-files": "^1",
+        "phpstan/phpstan-mockery": "^1.1"
     },
+    "repositories": [
+        {
+        "type": "git",
+        "url": "https://github.com/nswdpc/ci-files.git"
+        }
+    ],
     "autoload": {
         "psr-4": {
             "NSWDPC\\Authentication\\Okta\\": [
@@ -44,6 +53,16 @@
                 "src/Traits/"
             ],
             "NSWDPC\\Authentication\\Okta\\Tests\\": "tests/"
+        }
+    },
+    "prefer-stable": true,
+    "minimum-stability": "dev",
+    "config": {
+        "allow-plugins": {
+            "composer/installers": true,
+            "silverstripe/vendor-plugin": true,
+            "silverstripe/recipe-plugin": true,
+            "phpstan/extension-installer": true
         }
     }
 }
