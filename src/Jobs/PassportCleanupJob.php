@@ -24,11 +24,11 @@ class PassportCleanupJob extends AbstractQueuedJob
      */
     public function __construct($staleness_in_days = 30, $report_only = 0)
     {
-        if($report_only !== '') {
+        if ($report_only !== '') {
             $this->report_only = $report_only;
         }
 
-        if($staleness_in_days !== '') {
+        if ($staleness_in_days !== '') {
             $this->staleness_in_days = $staleness_in_days;
         }
     }
@@ -65,7 +65,7 @@ class PassportCleanupJob extends AbstractQueuedJob
     public function process()
     {
         try {
-            if($this->staleness_in_days <= 0) {
+            if ($this->staleness_in_days <= 0) {
                 throw new \Exception("Invalid value for staleness_in_days.. must be > 0");
             }
 
@@ -84,7 +84,7 @@ class PassportCleanupJob extends AbstractQueuedJob
                 . " AND OAuthSource = 'Okta'";
             $result = DB::query($sql);
             $affectedRows = DB::affected_rows();
-            if($dryRun) {
+            if ($dryRun) {
                 $this->addMessage("Report only: would delete {$affectedRows} records");
                 DB::get_conn()->transactionRollback();
             } else {

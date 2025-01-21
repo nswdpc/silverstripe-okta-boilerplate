@@ -21,9 +21,9 @@ class LostPasswordHandlerExtension extends Extension
      */
     public function forgotPassword(Member &$member = null): bool
     {
-        if($member instanceof \SilverStripe\Security\Member) {
+        if ($member instanceof \SilverStripe\Security\Member) {
             $canSend = MemberExtension::canSendLostPasswordEmail($member);
-            if($canSend) {
+            if ($canSend) {
                 // permissions allow
                 return true;
             } else {

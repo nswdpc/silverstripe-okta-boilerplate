@@ -17,7 +17,7 @@ class OAuthLoginFormExtension extends Extension
     public function updateFormActions(&$actions)
     {
         $member = Security::getCurrentUser();
-        if($member && $member->exists()) {
+        if ($member && $member->exists()) {
             $logoutLink = Security::logout_url();
             $actions = FieldList::create([
                 LiteralField::create(

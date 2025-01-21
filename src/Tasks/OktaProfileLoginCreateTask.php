@@ -42,14 +42,14 @@ class OktaProfileLoginCreateTask extends BuildTask
 
             $result = DB::query($sqlSelect);
             $recordCount = 0;
-            if($result) {
+            if ($result) {
                 $row = $result->record();
                 $recordCount = $row['RecordCount'] ?? 0;
             }
 
             DB::alteration_message("Found {$recordCount} matching member records", "changed");
 
-            if($recordCount > 0) {
+            if ($recordCount > 0) {
 
                 $sqlUpdate = 'UPDATE "Member" '
                     . ' SET "OktaProfileLogin" = "Email"'
@@ -59,7 +59,7 @@ class OktaProfileLoginCreateTask extends BuildTask
 
                 DB::alteration_message("Changed {$affectedRows} member records", "changed");
 
-                if($commitChanges) {
+                if ($commitChanges) {
                     DB::alteration_message("Commit", "changed");
                     DB::get_conn()->transactionEnd();
                 } else {

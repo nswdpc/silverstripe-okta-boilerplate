@@ -170,7 +170,7 @@ class PassportExtension extends DataExtension implements PermissionProvider
             $providerFactory = Injector::inst()->get(ProviderFactory::class);
             $providers = $providerFactory->getProviders();
             $listProviders = [];
-            if($this->getOwner()->OAuthSource) {
+            if ($this->getOwner()->OAuthSource) {
                 $listProviders[ $this->getOwner()->OAuthSource ] = _t(
                     'OKTA.PROVIDER_' . $this->getOwner()->OAuthSource,
                     $this->getOwner()->OAuthSource

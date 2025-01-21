@@ -103,7 +103,7 @@ class GroupExtension extends DataExtension
         $code = Convert::raw2url($parent['Code']);
         $group = Group::get()->filter([ 'Code' => $code ])->first();
         $title = trim(empty($parent['Title']) ? '' : $parent['Title']);
-        if($title === '') {
+        if ($title === '') {
             $title = self::DEFAULT_GROUP_TITLE;
         }
 

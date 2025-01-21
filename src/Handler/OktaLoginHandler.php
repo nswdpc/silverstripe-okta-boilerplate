@@ -349,7 +349,7 @@ class OktaLoginHandler extends LoginTokenHandler
         // Link Okta User to Member, or create a new Member
         $oktaLinker = new OktaLinker();
         $member = $oktaLinker->linkViaOktaUser($user, true);
-        if(!$member instanceof \SilverStripe\Security\Member) {
+        if (!$member instanceof \SilverStripe\Security\Member) {
             // Could not link the member to the Okta user
             $this->setLoginFailureCode(self::FAIL_USER_MEMBER_LINK_FAILED, $user->getId());
             throw \SilverStripe\ORM\ValidationException::create(_t(
@@ -364,10 +364,10 @@ class OktaLoginHandler extends LoginTokenHandler
             try {
                 $member->write();
                 return $member;
-            } catch(ValidationException $e) {
+            } catch (ValidationException $e) {
                 Logger::log("Failed to write member with error: {$e->getMessage()}", "WARNING");
                 /** @phpstan-ignore catch.neverThrown */
-            } catch(\Exception $e) {
+            } catch (\Exception $e) {
                 Logger::log("Failed to write member with error: {$e->getMessage()}", "WARNING");
             }
         }

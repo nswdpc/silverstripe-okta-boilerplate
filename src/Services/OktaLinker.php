@@ -76,13 +76,13 @@ class OktaLinker
     {
 
         // Linking requires both the Okta login and email values
-        if($userLogin === '' || $userEmail === '') {
+        if ($userLogin === '' || $userEmail === '') {
             return null;
         }
 
         // Attempt to find Member via Member.OktaProfileLogin
         $member = self::linkLoginLogin($userLogin);
-        if(!$member instanceof \SilverStripe\Security\Member && self::config()->get('link_via_email')) {
+        if (!$member instanceof \SilverStripe\Security\Member && self::config()->get('link_via_email')) {
             // Logger::log("OktaLinker: link_via_email=on", "DEBUG");
             // Attempt to find Member via Member.Email
             $member = self::linkLoginEmail($userLogin);
@@ -106,7 +106,7 @@ class OktaLinker
             $member->Surname = $userSurname;
             $member->OAuthSource = null;
             $member->OktaLastSync = DBDatetime::now()->Rfc2822();
-            if(!$member->OktaProfileLogin) {
+            if (!$member->OktaProfileLogin) {
                 $member->OktaProfileLogin = $userLogin;
             }
         }

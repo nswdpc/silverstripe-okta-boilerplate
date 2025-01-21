@@ -73,7 +73,7 @@ class MemberExtension extends DataExtension implements PermissionProvider
     public static function canSendLostPasswordEmail(Member $member): bool
     {
         // handler is trying to send a lost password email
-        if(Permission::checkMember($member, 'OKTA_LOCAL_PASSWORD_RESET')) {
+        if (Permission::checkMember($member, 'OKTA_LOCAL_PASSWORD_RESET')) {
             // This specific member has a permission to allow local password reset
             return true;
         } else {
@@ -89,11 +89,11 @@ class MemberExtension extends DataExtension implements PermissionProvider
     public function isExternallyManagedContext($context): bool
     {
 
-        if($context == 'lostPasswordSendEmail') {
+        if ($context == 'lostPasswordSendEmail') {
             /** @var Member $member */
             $member = $this->getOwner();
             $canSend = self::canSendLostPasswordEmail($member);
-            if($canSend) {
+            if ($canSend) {
                 // local password reset allowed in this context
                 return false;
             }
@@ -126,21 +126,21 @@ class MemberExtension extends DataExtension implements PermissionProvider
     {
         $profileValue = [];
         $profileFields = $this->getOwner()->config()->get('okta_profile_fields');
-        if(!is_array($profileFields)) {
+        if (!is_array($profileFields)) {
             $profileFields = [];
         }
 
-        if(is_string($value)) {
+        if (is_string($value)) {
             try {
                 $value = json_decode($value, true, 512, JSON_THROW_ON_ERROR);
-            } catch(\JsonException $e) {
+            } catch (\JsonException $e) {
                 // JSON validation error
                 Logger::log("JSON decode exception: {$e->getMessage()} when trying to set profile value", "NOTICE");
             }
         }
 
-        if(is_array($value)) {
-            foreach(array_keys($profileFields) as $profileFieldName) {
+        if (is_array($value)) {
+            foreach (array_keys($profileFields) as $profileFieldName) {
                 $profileValue[ $profileFieldName ] = $value[ $profileFieldName ] ?? null;
             }
 
@@ -166,7 +166,7 @@ class MemberExtension extends DataExtension implements PermissionProvider
     public function getOktaProfileValueAsArray(): array
     {
         $value = json_decode($this->getOwner()->OktaProfileValue ?? '', true, JSON_THROW_ON_ERROR);
-        if(!is_array($value)) {
+        if (!is_array($value)) {
             $value = [];
         }
 
@@ -179,7 +179,7 @@ class MemberExtension extends DataExtension implements PermissionProvider
     public function formatOktaProfileValue(): string
     {
         $formattedValue = '';
-        if($this->getOwner()->OktaProfileValue) {
+        if ($this->getOwner()->OktaProfileValue) {
             try {
                 $formattedValue = json_encode(
                     $this->getOktaProfileValueAsArray(),
@@ -204,7 +204,7 @@ class MemberExtension extends DataExtension implements PermissionProvider
             'OktaUnlinkedWhen'
         ]);
 
-        if(Permission::checkMember(Security::getCurrentUser(), 'ADMIN')) {
+        if (Permission::checkMember(Security::getCurrentUser(), 'ADMIN')) {
             $fields->addFieldToTab(
                 'Root.Okta',
                 CompositeField::create(
