@@ -26,13 +26,13 @@ class OAuthAdmin extends ModelAdmin
      */
     public $showImportForm = false;
 
-    private static $url_segment = 'oauth';
+    private static string $url_segment = 'oauth';
 
-    private static $menu_title = 'OAuth';
+    private static string $menu_title = 'OAuth';
 
-    private static $menu_icon = 'nswdpc/silverstripe-okta-boilerplate:client/static/images/oauth_logo_final.png';
+    private static string $menu_icon = 'nswdpc/silverstripe-okta-boilerplate:client/static/images/oauth_logo_final.png';
 
-    private static $managed_models = [
+    private static array $managed_models = [
         Passport::class,
         OAuthLog::class
     ];

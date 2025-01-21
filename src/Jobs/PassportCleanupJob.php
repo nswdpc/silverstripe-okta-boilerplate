@@ -17,20 +17,18 @@ class PassportCleanupJob extends AbstractQueuedJob
 {
     use Configurable;
 
-    /**
-     * @var int
-     */
-    private static $requeue_in_seconds = 86400;
+    private static int $requeue_in_seconds = 86400;
 
     /**
      * Create the job with args
      */
     public function __construct($staleness_in_days = 30, $report_only = 0)
     {
-        if($report_only !== '') {
+        if ($report_only !== '') {
             $this->report_only = $report_only;
         }
-        if($staleness_in_days !== '') {
+
+        if ($staleness_in_days !== '') {
             $this->staleness_in_days = $staleness_in_days;
         }
     }
@@ -67,9 +65,10 @@ class PassportCleanupJob extends AbstractQueuedJob
     public function process()
     {
         try {
-            if($this->staleness_in_days <= 0 ) {
+            if ($this->staleness_in_days <= 0) {
                 throw new \Exception("Invalid value for staleness_in_days.. must be > 0");
             }
+
             // increment number of steps
             $this->currentStep++;
             /**
@@ -80,21 +79,22 @@ class PassportCleanupJob extends AbstractQueuedJob
             $dt->modify("-{$this->staleness_in_days} days");
 
             DB::get_conn()->transactionStart();
-            $sql = "DELETE FROM \"SS_OAuth_Passport\""
+            $sql = 'DELETE FROM "SS_OAuth_Passport"'
                 . " WHERE \"LastEdited\" < '" . Convert::raw2sql($dt->format('Y-m-d H:i:s')) . "'"
                 . " AND OAuthSource = 'Okta'";
             $result = DB::query($sql);
             $affectedRows = DB::affected_rows();
-            if($dryRun) {
+            if ($dryRun) {
                 $this->addMessage("Report only: would delete {$affectedRows} records");
                 DB::get_conn()->transactionRollback();
             } else {
                 DB::get_conn()->transactionEnd();
                 $this->addMessage("Deleted {$affectedRows} records");
             }
+
             $this->isComplete = true;
-        } catch (\Exception $e) {
-            $this->addMessage($e->getMessage(), "ERROR");
+        } catch (\Exception $exception) {
+            $this->addMessage($exception->getMessage(), "ERROR");
         }
     }
 
@@ -108,6 +108,7 @@ class PassportCleanupJob extends AbstractQueuedJob
             // default every 1 day if not configured
             $seconds = 86400;
         }
+
         $rdt = new \DateTime();
         $rdt->modify("+{$seconds} seconds");
         Injector::inst()->get(QueuedJobService::class)->queueJob(

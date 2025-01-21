@@ -15,29 +15,21 @@ use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
 use SilverStripe\Security\PermissionProvider;
 use SilverStripe\Security\Security;
-use PhpTek\JSONText\ORM\FieldType\JSONText;
 
 /**
  * Updates member view in administration area
  */
 class MemberExtension extends DataExtension implements PermissionProvider
 {
-
-    /**
-     * @var array
-     */
-    private static $db = [
-        'OktaProfileValue' => JSONText::class,
+    private static array $db = [
+        'OktaProfileValue' => 'Text',
         // see https://developer.okta.com/docs/reference/api/users/#profile-object
         'OktaProfileLogin' => 'Varchar(100)',
         'OktaLastSync' => 'DBDatetime',
         'OktaUnlinkedWhen' => 'DBDatetime'
     ];
 
-    /**
-     * @var array
-     */
-    private static $indexes = [
+    private static array $indexes = [
         'OktaLastSync' => true,
         'OktaUnlinkedWhen' => true,
         'OktaProfileLogin' => [
@@ -51,9 +43,8 @@ class MemberExtension extends DataExtension implements PermissionProvider
     /**
      * Default profile fields stored during sync
      * See: https://developer.okta.com/docs/reference/api/users/#default-profile-properties
-     * @var array
      */
-    private static $okta_profile_fields = [];
+    private static array $okta_profile_fields = [];
 
     /**
      * Handle member okta operations on write
@@ -61,8 +52,8 @@ class MemberExtension extends DataExtension implements PermissionProvider
     public function onBeforeWrite()
     {
         parent::onBeforeWrite();
-        if ($this->owner->OktaLastSyncClear) {
-            $this->owner->OktaLastSync = null;
+        if ($this->getOwner()->OktaLastSyncClear) {
+            $this->getOwner()->OktaLastSync = null;
         }
     }
 
@@ -72,17 +63,17 @@ class MemberExtension extends DataExtension implements PermissionProvider
     public function onAfterWrite()
     {
         parent::onAfterWrite();
-        $this->owner->OktaLastSyncClear = null;
+        $this->getOwner()->OktaLastSyncClear = null;
     }
 
     /**
      * Check if the lost password email can be sent
      * @todo exclude ADMIN permission members (return false ?)
-     * @return bool
      */
-    public static function canSendLostPasswordEmail(Member $member) {
+    public static function canSendLostPasswordEmail(Member $member): bool
+    {
         // handler is trying to send a lost password email
-        if(Permission::checkMember($member, 'OKTA_LOCAL_PASSWORD_RESET')) {
+        if (Permission::checkMember($member, 'OKTA_LOCAL_PASSWORD_RESET')) {
             // This specific member has a permission to allow local password reset
             return true;
         } else {
@@ -94,19 +85,22 @@ class MemberExtension extends DataExtension implements PermissionProvider
      * Test external management context for this member
      * This is used to flag that the person can manage their member record externally
      * In the case of Okta, this is all contexts
-     * @return bool
      */
-    public function isExternallyManagedContext($context) : bool {
+    public function isExternallyManagedContext($context): bool
+    {
 
-        if($context == 'lostPasswordSendEmail') {
-            $canSend = self::canSendLostPasswordEmail($this->owner);
-            if($canSend) {
+        if ($context == 'lostPasswordSendEmail') {
+            /** @var Member $member */
+            $member = $this->getOwner();
+            $canSend = self::canSendLostPasswordEmail($member);
+            if ($canSend) {
                 // local password reset allowed in this context
                 return false;
             }
         }
+
         // default: all contexts are externally managed
-        return $this->owner->OktaProfileLogin != '';
+        return $this->getOwner()->OktaProfileLogin != '';
     }
 
     /**
@@ -115,7 +109,7 @@ class MemberExtension extends DataExtension implements PermissionProvider
      */
     public function getPassport(string $provider)
     {
-        if ($passports = $this->owner->Passports()) {
+        if ($passports = $this->getOwner()->Passports()) {
             return $passports->filter('OAuthSource', $provider)->first();
         } else {
             return null;
@@ -123,62 +117,78 @@ class MemberExtension extends DataExtension implements PermissionProvider
     }
 
     /**
-     * Setter for OktaProfileValue JSONText field
-     * The passed value can either be an array or an {@link \Okta\Users\UserProfile}
+     * Setter for OktaProfileValue Text field, formatted as JSON
      * The configuration value of `Silverstripe\Security\Members.okta_profile_fields`
      * determines what profile fields are stored
+     * @param array|string $value either an array or a JSON encoded string
      */
-    public function setOktaProfileValue($value) {
+    public function setOktaProfileValue($value): bool
+    {
         $profileValue = [];
-        $profileFields = $this->owner->config()->get('okta_profile_fields');
-        if(!is_array($profileFields)) {
+        $profileFields = $this->getOwner()->config()->get('okta_profile_fields');
+        if (!is_array($profileFields)) {
             $profileFields = [];
         }
-        if($value instanceof \Okta\Users\UserProfile) {
-            foreach($profileFields as $profileFieldName => $profileFieldMeta) {
-                $profileValue[ $profileFieldName ] = $value->getProperty($profileFieldName);
-            }
-        } else if(is_array($value)) {
-            // Parameter is a key value pair
-            foreach($profileFields as $profileFieldName => $profileFieldMeta) {
-                $profileValue[ $profileFieldName ] = isset($value[ $profileFieldName ]) ? $value[ $profileFieldName ] : null;
+
+        if (is_string($value)) {
+            try {
+                $value = json_decode($value, true, 512, JSON_THROW_ON_ERROR);
+            } catch (\JsonException $e) {
+                // JSON validation error
+                Logger::log("JSON decode exception: {$e->getMessage()} when trying to set profile value", "NOTICE");
             }
         }
-        ksort($profileValue);
-        $this->owner->setField(
-            'OktaProfileValue',
-            json_encode($profileValue)
-        );
+
+        if (is_array($value)) {
+            foreach (array_keys($profileFields) as $profileFieldName) {
+                $profileValue[ $profileFieldName ] = $value[ $profileFieldName ] ?? null;
+            }
+
+            ksort($profileValue);
+            $this->getOwner()->setField(
+                'OktaProfileValue',
+                json_encode($profileValue)
+            );
+        } else {
+            $this->getOwner()->setField(
+                'OktaProfileValue',
+                null
+            );
+        }
+
         return true;
     }
 
     /**
      * Return OktaProfileValue as an array
-     * @return array
      * @throws \Exception
      */
-    public function getOktaProfileValueAsArray() : array {
-        $value = json_decode($this->owner->OktaProfileValue, true, JSON_THROW_ON_ERROR);
-        if(!is_array($value)) {
+    public function getOktaProfileValueAsArray(): array
+    {
+        $value = json_decode($this->getOwner()->OktaProfileValue ?? '', true, JSON_THROW_ON_ERROR);
+        if (!is_array($value)) {
             $value = [];
         }
+
         return $value;
     }
 
     /**
      * Return a formatted OktaProfileValue for display in a readable format
      */
-    public function formatOktaProfileValue() : string {
+    public function formatOktaProfileValue(): string
+    {
         $formattedValue = '';
-        if($this->owner->OktaProfileValue) {
+        if ($this->getOwner()->OktaProfileValue) {
             try {
                 $formattedValue = json_encode(
                     $this->getOktaProfileValueAsArray(),
-                    JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES|JSON_THROW_ON_ERROR
+                    JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR
                 );
-            } catch (\Exception $e) {
+            } catch (\Exception) {
             }
         }
+
         return $formattedValue;
     }
 
@@ -194,7 +204,7 @@ class MemberExtension extends DataExtension implements PermissionProvider
             'OktaUnlinkedWhen'
         ]);
 
-        if( Permission::checkMember( Security::getCurrentUser(), 'ADMIN') ) {
+        if (Permission::checkMember(Security::getCurrentUser(), 'ADMIN')) {
             $fields->addFieldToTab(
                 'Root.Okta',
                 CompositeField::create(
@@ -206,7 +216,7 @@ class MemberExtension extends DataExtension implements PermissionProvider
                         ReadonlyField::create(
                             'OktaLastSync',
                             _t('OKTA.LAST_SYNC_DATETIME', 'Last sync. date'),
-                            $this->owner->OktaLastSync
+                            $this->getOwner()->OktaLastSync
                         ),
                         CheckboxField::create(
                             'OktaLastSyncClear',
@@ -225,9 +235,8 @@ class MemberExtension extends DataExtension implements PermissionProvider
 
     /**
      * Extend {@link Member::validateCanLogin()} to block logins for anyone whose account has become stale
-     * @return void
      */
-    public function canLogIn(ValidationResult &$result)
+    public function canLogIn(ValidationResult &$result): bool
     {
 
         /**
@@ -237,20 +246,21 @@ class MemberExtension extends DataExtension implements PermissionProvider
             return false;
         }
 
-        $days = intval($this->owner->config()->get('okta_lockout_after_days'));
+        $days = intval($this->getOwner()->config()->get('okta_lockout_after_days'));
         if ($days <= 0) {
             // if the configured days is 0 or less, OK
             return true;
         }
-        if (!$this->owner->OktaLastSync) {
+
+        if (!$this->getOwner()->OktaLastSync) {
             // If the member has never been sync'd, allow
-            return;
+            return true;
         }
 
         // calculate datetime comparison
         try {
             $dt = new \DateTime();
-            $odt = new \DateTime($this->owner->OktaLastSync);
+            $odt = new \DateTime($this->getOwner()->OktaLastSync);
             $odt->modify("+{$days} day");
             if ($odt < $dt) {
                 // still not on or after today
@@ -263,26 +273,27 @@ class MemberExtension extends DataExtension implements PermissionProvider
                 );
                 return false;
             }
-        } catch (\Exception $e) {
+        } catch (\Exception) {
             // noop
         }
+
         return true;
     }
 
     /**
      * Get a Member's *direct* Okta groups
      */
-    public function getOktaGroups() : ManyManyList
+    public function getOktaGroups(): ManyManyList
     {
-        return $this->owner->DirectGroups()->filter(['IsOktaGroup' => 1]);
+        return $this->getOwner()->DirectGroups()->filter(['IsOktaGroup' => 1]);
     }
 
     /**
      * Get a Member's *direct* non Okta groups
      */
-    public function getNonOktaGroups() : ManyManyList
+    public function getNonOktaGroups(): ManyManyList
     {
-        return $this->owner->DirectGroups()->exclude(['IsOktaGroup' => 1]);
+        return $this->getOwner()->DirectGroups()->exclude(['IsOktaGroup' => 1]);
     }
 
     /**

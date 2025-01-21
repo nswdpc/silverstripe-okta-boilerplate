@@ -22,25 +22,15 @@ use SilverStripe\Security\Security;
  */
 class PassportExtension extends DataExtension implements PermissionProvider
 {
-
-    /**
-     * @var array
-     */
-    private static $db = [
+    private static array $db = [
         'OAuthSource' => 'Varchar(255)'
     ];
 
-    /**
-     * @var array
-     */
-    private static $has_one = [
+    private static array $has_one = [
         'CreatedByMember' => Member::class
     ];
 
-    /**
-     * @var array
-     */
-    private static $indexes = [
+    private static array $indexes = [
         'Created' => true,
         'LastEdited' => true,
         'IdentifierProvider' => [
@@ -52,10 +42,7 @@ class PassportExtension extends DataExtension implements PermissionProvider
         ]
     ];
 
-    /**
-     * @var array
-     */
-    private static $summary_fields = [
+    private static array $summary_fields = [
         'Identifier' => 'Identifier',
         'OAuthSource' => 'OAuth provider',
         'Member.Email' => 'Member',
@@ -64,10 +51,7 @@ class PassportExtension extends DataExtension implements PermissionProvider
         'CreatedByMember.Email' => 'Created by'
     ];
 
-    /**
-     * @var array
-     */
-    private static $searchable_fields = [
+    private static array $searchable_fields = [
         'Identifier' => 'PartialMatchFilter',
         'OAuthSource' => 'ExactMatchFilter',
         'Member.Email' => 'PartialMatchFilter'
@@ -76,45 +60,41 @@ class PassportExtension extends DataExtension implements PermissionProvider
     /**
      * Validate the values provided prior to allowing write
      */
-    public function validatePassportWrite()
+    public function validatePassportWrite(): bool
     {
 
         // Validate: the Identifier/OAuthSource is unique
-        if ($this->owner->Identifier && $this->owner->OAuthSource) {
+        if ($this->getOwner()->Identifier && $this->getOwner()->OAuthSource) {
             $existing = Passport::get()->filter([
-                'Identifier' => $this->owner->Identifier,
-                'OAuthSource' => $this->owner->OAuthSource
+                'Identifier' => $this->getOwner()->Identifier,
+                'OAuthSource' => $this->getOwner()->OAuthSource
             ]);
-            if ($this->owner->isInDB()) {
+            if ($this->getOwner()->isInDB()) {
                 // exclude current record if it exists
-                $existing = $existing->exclude([ "ID" => $this->owner->ID ]);
+                $existing = $existing->exclude([ "ID" => $this->getOwner()->ID ]);
             }
+
             $existing = $existing->first();
             if ($existing && $existing->exists()) {
-                throw new ValidationException(
-                    OktaLoginHandler::getFailMessageForCode(OktaLoginHandler::FAIL_PASSPORT_CREATE_IDENT_COLLISION),
-                    OktaLoginHandler::FAIL_PASSPORT_CREATE_IDENT_COLLISION
-                );
+                throw \SilverStripe\ORM\ValidationException::create(OktaLoginHandler::getFailMessageForCode(OktaLoginHandler::FAIL_PASSPORT_CREATE_IDENT_COLLISION), OktaLoginHandler::FAIL_PASSPORT_CREATE_IDENT_COLLISION);
             }
         }
 
         // Validate: the MemberID/OAuthSource is unique
-        if ($this->owner->MemberID && $this->owner->OAuthSource) {
+        if ($this->getOwner()->MemberID && $this->getOwner()->OAuthSource) {
             // validate member/provider passport does not exist
             $existing = Passport::get()->filter([
-                'MemberID' => $this->owner->MemberID,
-                'OAuthSource' => $this->owner->OAuthSource
+                'MemberID' => $this->getOwner()->MemberID,
+                'OAuthSource' => $this->getOwner()->OAuthSource
             ]);
-            if ($this->owner->isInDB()) {
+            if ($this->getOwner()->isInDB()) {
                 // exclude current record if it exists (updating current record)
-                $existing = $existing->exclude(["ID" => $this->owner->ID ]);
+                $existing = $existing->exclude(["ID" => $this->getOwner()->ID ]);
             }
+
             $existing = $existing->first();
             if ($existing && $existing->exists()) {
-                throw new ValidationException(
-                    OktaLoginHandler::getFailMessageForCode(OktaLoginHandler::FAIL_USER_MEMBER_PASSPORT_MISMATCH),
-                    OktaLoginHandler::FAIL_USER_MEMBER_PASSPORT_MISMATCH
-                );
+                throw \SilverStripe\ORM\ValidationException::create(OktaLoginHandler::getFailMessageForCode(OktaLoginHandler::FAIL_USER_MEMBER_PASSPORT_MISMATCH), OktaLoginHandler::FAIL_USER_MEMBER_PASSPORT_MISMATCH);
             }
         }
 
@@ -124,23 +104,24 @@ class PassportExtension extends DataExtension implements PermissionProvider
     public function onBeforeWrite()
     {
         parent::onBeforeWrite();
-        if (!$this->owner->isInDB()) {
+        if (!$this->getOwner()->isInDB()) {
             $member = Security::getCurrentUser();
-            $this->owner->CreatedByMemberID = $member->ID ?? 0;
+            $this->getOwner()->CreatedByMemberID = $member->ID ?? 0;
         }
+
         // validate that the passport can be written
         $this->validatePassportWrite();
     }
 
     public function getTitle()
     {
-        if ($this->owner->exists()) {
+        if ($this->getOwner()->exists()) {
             return _t(
                 'OAUTH.PASSPORT_TITLE',
                 '{Identifier} @ {OAuthSource}',
                 [
-                    'Identifier' => $this->owner->Identifier,
-                    'OAuthSource' => $this->owner->OAuthSource
+                    'Identifier' => $this->getOwner()->Identifier,
+                    'OAuthSource' => $this->getOwner()->OAuthSource
                 ]
             );
         } else {
@@ -189,32 +170,34 @@ class PassportExtension extends DataExtension implements PermissionProvider
             $providerFactory = Injector::inst()->get(ProviderFactory::class);
             $providers = $providerFactory->getProviders();
             $listProviders = [];
-            if($this->owner->OAuthSource) {
-                $listProviders[ $this->owner->OAuthSource ] = _t(
-                    'OKTA.PROVIDER_' . $this->owner->OAuthSource,
-                    $this->owner->OAuthSource
+            if ($this->getOwner()->OAuthSource) {
+                $listProviders[ $this->getOwner()->OAuthSource ] = _t(
+                    'OKTA.PROVIDER_' . $this->getOwner()->OAuthSource,
+                    $this->getOwner()->OAuthSource
                 );
             }
+
             if (is_array($providers)) {
-                foreach ($providers as $providerName => $provider) {
+                foreach (array_keys($providers) as $providerName) {
                     $listProviders[ $providerName ] = _t(
                         'OKTA.PROVIDER_' . $providerName,
                         $providerName
                     );
                 }
             }
+
             $fields->replaceField(
                 'OAuthSource',
                 DropdownField::create(
                     'OAuthSource',
                     _t('OAUTH.SOURCE_TITLE', 'OAuth provider'),
                     $listProviders,
-                    $this->owner->OAuthSource
+                    $this->getOwner()->OAuthSource
                 )->setEmptyString('')
             );
         }
 
-        if (!$this->owner->isInDB()) {
+        if (!$this->getOwner()->isInDB()) {
             $fields->removeByName('CreatedByMemberID');
         } elseif ($createdByMemberField = $fields->dataFieldByName('CreatedByMemberID')) {
             $createdByMemberField->setTitle(_t('OAUTH.CREATED_BY_MEMBER', 'Created by'));

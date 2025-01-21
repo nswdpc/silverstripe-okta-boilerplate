@@ -14,7 +14,6 @@ use SilverStripe\ORM\DB;
  */
 class PassportCleanUpJobTest extends SapphireTest
 {
-
     /**
      * @inheritdoc
      */
@@ -28,35 +27,38 @@ class PassportCleanUpJobTest extends SapphireTest
     /**
      * Test passport clean up
      */
-    public function testPassportCleanup() {
+    public function testPassportCleanup(): void
+    {
 
         $passports = Passport::get();
         $ids = $passports->column('ID');
-        $staleIds = $okIds = [];
-        foreach($ids as $id) {
-            if($id % 2 == 0) {
+        $staleIds = [];
+        $okIds = [];
+        foreach ($ids as $id) {
+            if ($id % 2 == 0) {
                 $staleIds[] = $id;
             } else {
                 $okIds[] = $id;
             }
         }
-        $totalCount = $passports->count();
+
+        $passports->count();
         $staleness = 30;
-        $interval = $staleness+1;
+        $interval = $staleness + 1;
         // mark stale records with a stale last edited date beyond the limit
-        $result = DB::query(
-            "UPDATE \"SS_OAuth_Passport\""
+        DB::query(
+            'UPDATE "SS_OAuth_Passport"'
             . " SET \"LastEdited\" = CURDATE() - INTERVAL {$interval} DAY "
             . " WHERE ID IN (" . implode(",", $staleIds) . ")"
         );
         $job = new PassportCleanupJob(30, 0);
-        $result = $job->process();
+        $job->process();
 
         $removedPassports = Passport::get()->filter(['ID' => $staleIds]);
         $keptPassports = Passport::get()->filter(['ID' => $okIds]);
 
-        $this->assertEquals( 0, $removedPassports->count() );
-        $this->assertEquals( count($okIds), $keptPassports->count() );
+        $this->assertEquals(0, $removedPassports->count());
+        $this->assertEquals(count($okIds), $keptPassports->count());
 
     }
 

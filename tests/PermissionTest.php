@@ -18,9 +18,12 @@ use SilverStripe\Security\MemberAuthenticator\LostPasswordForm;
  */
 class PermissionTest extends SapphireTest
 {
+    /**
+     * @inheritdoc
+     */
     protected $usesDatabase = true;
 
-    public function testGroupPermission()
+    public function testGroupPermission(): void
     {
         try {
             $group = Group::create([
@@ -32,14 +35,15 @@ class PermissionTest extends SapphireTest
             $group->Permissions()->add($permissionAdmin);
             $group->write();
             $this->assertFalse(true, 'Okta group write with a permission should have failed');
-        } catch (\Exception $e) {
-            $this->assertInstanceOf(OktaPermissionEscalationException::class, $e);
+        } catch (\Exception $exception) {
+            $this->assertInstanceOf(OktaPermissionEscalationException::class, $exception);
         }
+
         $postGroup = Group::get()->filter(['Code' => 'oktagroup'])->first();
         $this->assertEmpty($postGroup, "Group exists!");
     }
 
-    public function testGroupRoles()
+    public function testGroupRoles(): void
     {
         try {
             $group = Group::create([
@@ -52,9 +56,10 @@ class PermissionTest extends SapphireTest
             $group->Roles()->add($permissionRole);
             $group->write();
             $this->assertFalse(true, 'Okta group write with a role should have failed');
-        } catch (\Exception $e) {
-            $this->assertInstanceOf(OktaPermissionEscalationException::class, $e);
+        } catch (\Exception $exception) {
+            $this->assertInstanceOf(OktaPermissionEscalationException::class, $exception);
         }
+
         $postGroup = Group::get()->filter(['Code' => 'oktagroup'])->first();
         $this->assertEmpty($postGroup, "Group exists!");
     }
@@ -62,7 +67,8 @@ class PermissionTest extends SapphireTest
     /**
      * Test ability to reset a local password
      */
-    public function testPasswordReset() {
+    public function testPasswordReset(): void
+    {
 
         $passwordUpdaters = Group::create([
             'Title' => 'Local password updaters',
@@ -119,7 +125,7 @@ class PermissionTest extends SapphireTest
 
         $statusCode = $response->getStatusCode();
         $this->assertEquals(302, $statusCode);
-        $this->assertTrue( strpos( $response->getHeader("Location"), $passwordSent) !== false, "redirect URL should contain '{$passwordSent}" );
+        $this->assertTrue(str_contains($response->getHeader("Location"), $passwordSent), "redirect URL should contain '{$passwordSent}");
 
         $email = $this->findEmail($canUpdatePassword->Email);
 
@@ -134,7 +140,7 @@ class PermissionTest extends SapphireTest
         // people who cannot update password should still get this page
         $statusCode = $response->getStatusCode();
         $this->assertEquals(302, $statusCode);
-        $this->assertTrue( strpos( $response->getHeader("Location"), $passwordSent) !== false, "redirect URL should contain '{$passwordSent}' for cannotUpdatePassword" );
+        $this->assertTrue(str_contains($response->getHeader("Location"), $passwordSent), "redirect URL should contain '{$passwordSent}' for cannotUpdatePassword");
 
         $email = $this->findEmail($cannotUpdatePassword->Email);
 
@@ -148,7 +154,7 @@ class PermissionTest extends SapphireTest
         // people who cannot update password should still get this page
         $statusCode = $response->getStatusCode();
         $this->assertEquals(302, $statusCode);
-        $this->assertTrue( strpos( $response->getHeader("Location"), $passwordSent) !== false, "redirect URL should contain '{$passwordSent}' for isEditor" );
+        $this->assertTrue(str_contains($response->getHeader("Location"), $passwordSent), "redirect URL should contain '{$passwordSent}' for isEditor");
 
         $email = $this->findEmail($isEditor->Email);
 

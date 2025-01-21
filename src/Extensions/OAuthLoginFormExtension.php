@@ -8,15 +8,16 @@ use SilverStripe\Forms\LiteralField;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Security;
 
-class OAuthLoginFormExtension extends Extension {
-
+class OAuthLoginFormExtension extends Extension
+{
     /**
      * Modify actions, based on signed in/out state
      * If signed in, change form actions to be a link to the logout URL
      */
-    public function updateFormActions(&$actions) {
+    public function updateFormActions(&$actions)
+    {
         $member = Security::getCurrentUser();
-        if($member && $member->exists()) {
+        if ($member && $member->exists()) {
             $logoutLink = Security::logout_url();
             $actions = FieldList::create([
                 LiteralField::create(
