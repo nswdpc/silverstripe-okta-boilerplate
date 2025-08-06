@@ -14,6 +14,8 @@ use SilverStripe\Security\Group;
 /**
  * Update group handling to include Okta group support
  * @author James
+ * @property bool $IsOktaGroup
+ * @extends \SilverStripe\ORM\DataExtension<(\SilverStripe\Security\Group & static)>
  */
 class GroupExtension extends DataExtension
 {

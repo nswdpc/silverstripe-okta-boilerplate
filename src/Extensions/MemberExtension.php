@@ -18,6 +18,11 @@ use SilverStripe\Security\Security;
 
 /**
  * Updates member view in administration area
+ * @property ?string $OktaProfileValue
+ * @property ?string $OktaProfileLogin
+ * @property ?string $OktaLastSync
+ * @property ?string $OktaUnlinkedWhen
+ * @extends \SilverStripe\ORM\DataExtension<(\SilverStripe\Security\Member & static)>
  */
 class MemberExtension extends DataExtension implements PermissionProvider
 {

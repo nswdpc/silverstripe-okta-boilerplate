@@ -38,6 +38,7 @@ class OktaProfileValueTest extends SapphireTest
         ];
         $member->OktaProfileValue = $profileValue;
         $member->write();
+
         $get = $member->getOktaProfileValueAsArray();
         foreach ($profileValue as $k => $v) {
             $this->assertEquals($v, $get[$k]);
@@ -67,6 +68,7 @@ class OktaProfileValueTest extends SapphireTest
         ];
         $member->OktaProfileValue = json_encode($profileValue);
         $member->write();
+
         $get = $member->getOktaProfileValueAsArray();
         foreach ($profileValue as $k => $v) {
             $this->assertEquals($v, $get[$k]);
@@ -87,6 +89,7 @@ class OktaProfileValueTest extends SapphireTest
         $this->assertNull($member->OktaProfileValue);
         $member->OktaProfileValue = 'Not a json string';
         $member->write();
+
         $get = $member->getOktaProfileValueAsArray();
         $this->assertEquals([], $get);
     }

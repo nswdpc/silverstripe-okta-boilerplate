@@ -9,6 +9,7 @@ use SilverStripe\Security\Permission;
 /**
  * Veto lost password requests for non-CMS users
  * @todo make generic
+ * @extends \SilverStripe\Core\Extension<(\SilverStripe\Security\MemberAuthenticator\LostPasswordHandler & static)>
  */
 class LostPasswordHandlerExtension extends Extension
 {

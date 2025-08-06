@@ -8,6 +8,9 @@ use SilverStripe\Forms\LiteralField;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Security;
 
+/**
+ * @extends \SilverStripe\Core\Extension<(\Bigfork\SilverStripeOAuth\Client\Form\LoginForm & static)>
+ */
 class OAuthLoginFormExtension extends Extension
 {
     /**

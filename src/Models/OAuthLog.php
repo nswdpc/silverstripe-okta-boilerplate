@@ -11,6 +11,10 @@ use SilverStripe\Security\PermissionProvider;
 /**
  * Stores OAuth failures for inspection
  * @author James
+ * @property ?string $Code
+ * @property int $MessageId
+ * @property ?string $OAuthSource
+ * @property ?string $Identifier
  */
 class OAuthLog extends DataObject implements PermissionProvider
 {

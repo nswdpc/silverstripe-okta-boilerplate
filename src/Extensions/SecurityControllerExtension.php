@@ -7,6 +7,7 @@ use SilverStripe\View\Requirements;
 
 /**
  * Security controller extension
+ * @extends \SilverStripe\Core\Extension<(\SilverStripe\Security\Security & static)>
  */
 class SecurityControllerExtension extends Extension
 {
