@@ -4,7 +4,6 @@ namespace NSWDPC\Authentication\Okta;
 
 use SilverStripe\Core\Extension;
 use SilverStripe\Security\Member;
-use SilverStripe\Security\Permission;
 
 /**
  * Veto lost password requests for non-CMS users

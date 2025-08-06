@@ -3,9 +3,7 @@
 namespace NSWDPC\Authentication\Okta;
 
 use SilverStripe\Core\Convert;
-use SilverStripe\Core\Config\Config;
 use SilverStripe\ORM\DataExtension;
-use SilverStripe\ORM\ValidationException;
 use SilverStripe\ORM\FieldType\DBBoolean;
 use SilverStripe\ORM\FieldType\DBField;
 use SilverStripe\Forms\ReadonlyField;

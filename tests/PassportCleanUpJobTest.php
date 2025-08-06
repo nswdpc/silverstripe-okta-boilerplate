@@ -4,8 +4,6 @@ namespace NSWDPC\Authentication\Okta\Tests;
 
 use Bigfork\SilverStripeOAuth\Client\Model\Passport;
 use NSWDPC\Authentication\Okta\PassportCleanupJob;
-use SilverStripe\Core\Config\Config;
-use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\ORM\DB;
 

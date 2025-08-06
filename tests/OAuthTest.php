@@ -10,7 +10,6 @@ use Foxworth42\OAuth2\Client\Provider\OktaUser;
 use GuzzleHttp\ClientInterface;
 use League\OAuth2\Client\Token\AccessToken;
 use Mockery;
-use NSWDPC\Authentication\Okta\ClientFactory;
 use NSWDPC\Authentication\Okta\OktaLoginHandler;
 use NSWDPC\Authentication\Okta\OktaLinker;
 use NSWDPC\Authentication\Okta\GroupExtension;
@@ -24,11 +23,8 @@ use SilverStripe\Control\Session;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\SapphireTest;
-use SilverStripe\ORM\ValidationResult;
 use SilverStripe\Security\Group;
 use SilverStripe\Security\Member;
-use SilverStripe\Security\RequestAuthenticationHandler;
-use SilverStripe\Security\Security;
 
 /**
  * OAuth (Okta) tests
