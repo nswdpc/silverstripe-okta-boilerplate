@@ -356,8 +356,6 @@ class OAuthTest extends SapphireTest
         $handler = new OktaLoginHandler();
         $response = $handler->handleToken($result['accessToken'], $result['provider']);
 
-        $handler->getLoginFailureCode();
-
         $this->assertInstanceOf(HTTPResponse::class, $response);
 
         // the permission failure is a redirect code as not signed in

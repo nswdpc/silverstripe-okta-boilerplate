@@ -34,6 +34,7 @@ class PermissionTest extends SapphireTest
             $permissionAdmin = Permission::get()->filter('Code', 'ADMIN')->first();
             $group->Permissions()->add($permissionAdmin);
             $group->write();
+            /** @phpstan-ignore method.alreadyNarrowedType */
             $this->assertFalse(true, 'Okta group write with a permission should have failed');
         } catch (\Exception $exception) {
             $this->assertInstanceOf(OktaPermissionEscalationException::class, $exception);
@@ -55,6 +56,7 @@ class PermissionTest extends SapphireTest
             $permissionRole->write();
             $group->Roles()->add($permissionRole);
             $group->write();
+            /** @phpstan-ignore method.alreadyNarrowedType */
             $this->assertFalse(true, 'Okta group write with a role should have failed');
         } catch (\Exception $exception) {
             $this->assertInstanceOf(OktaPermissionEscalationException::class, $exception);

@@ -72,12 +72,9 @@ class OAuthLog extends DataObject implements PermissionProvider
         return $record;
     }
 
-    /**
-     * @return string
-     */
     public function getTitle()
     {
-        return $this->MessageId;
+        return (string) $this->MessageId;
     }
 
     /**
