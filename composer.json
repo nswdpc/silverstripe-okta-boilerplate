@@ -27,18 +27,15 @@
     },
     "require-dev": {
         "mockery/mockery": "^1.5",
-        "cambis/silverstripe-rector": "^0.5.1",
+        "cambis/silverstan": "^2",
+        "cambis/silverstripe-rector": "^2",
+        "rector/rector": "^2",
+        "phpstan/phpstan": "^2",
         "phpunit/phpunit": "^9.5",
-        "syntro/silverstripe-phpstan": "^5",
-        "nswdpc/ci-files": "^1",
-        "phpstan/phpstan-mockery": "^1.1"
+        "nswdpc/ci-files": "dev-v-4",
+        "phpstan/phpstan-phpunit": "^2",
+        "phpstan/phpstan-mockery": "^2"
     },
-    "repositories": [
-        {
-        "type": "git",
-        "url": "https://github.com/nswdpc/ci-files.git"
-        }
-    ],
     "autoload": {
         "psr-4": {
             "NSWDPC\\Authentication\\Okta\\": [

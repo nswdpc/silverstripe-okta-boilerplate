@@ -4,4 +4,3 @@
 /.php-cs-fixer.cache
 /public/
 /composer.lock
-node_modules
