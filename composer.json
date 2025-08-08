@@ -19,11 +19,11 @@
         ]
     },
     "require": {
-        "php": "^8.1",
-        "bigfork/silverstripe-oauth-login": "^2.3",
+        "php": "^8.3",
+        "bigfork/silverstripe-oauth-login": "*",
         "foxworth42/oauth2-okta": "^1",
-        "silverstripe/framework": "^5",
-        "symbiote/silverstripe-queuedjobs": "^5"
+        "silverstripe/framework": "^6",
+        "symbiote/silverstripe-queuedjobs": "^6"
     },
     "require-dev": {
         "mockery/mockery": "^1.5",
@@ -31,7 +31,7 @@
         "cambis/silverstripe-rector": "^2",
         "rector/rector": "^2",
         "phpstan/phpstan": "^2",
-        "phpunit/phpunit": "^9.5",
+        "phpunit/phpunit": "^11.5",
         "nswdpc/ci-files": "dev-v-4",
         "phpstan/phpstan-phpunit": "^2",
         "phpstan/phpstan-mockery": "^2"
