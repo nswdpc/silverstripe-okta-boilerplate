@@ -20,7 +20,7 @@
     },
     "require": {
         "php": "^8.3",
-        "bigfork/silverstripe-oauth-login": "*",
+        "bigfork/silverstripe-oauth-login": "^3",
         "foxworth42/oauth2-okta": "^1",
         "silverstripe/framework": "^6",
         "symbiote/silverstripe-queuedjobs": "^6"
