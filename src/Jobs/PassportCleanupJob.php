@@ -71,9 +71,6 @@ class PassportCleanupJob extends AbstractQueuedJob
 
             // increment number of steps
             $this->currentStep++;
-            /**
-             * @var bool
-             */
             $dryRun = ($this->report_only != 0);
             $dt = new \DateTime();
             $dt->modify("-{$this->staleness_in_days} days");
