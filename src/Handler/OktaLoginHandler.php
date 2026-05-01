@@ -61,6 +61,7 @@ class OktaLoginHandler extends LoginTokenHandler
      * - reset the login failure code
      * - work around some issues with validationCanLogin message handling
      */
+    #[\Override]
     public function handleToken(AccessToken $token, AbstractProvider $provider)
     {
         try {
@@ -166,7 +167,7 @@ class OktaLoginHandler extends LoginTokenHandler
      * Given an identifier and a provider string, return the Passport matching
      * @return Passport|null
      */
-    protected function getPassport(string $identifier, string $provider)
+    protected function getPassport(string $identifier, string $provider): ?\SilverStripe\ORM\DataObject
     {
         return Passport::get()->filter([
             'Identifier' => $identifier,
@@ -211,6 +212,7 @@ class OktaLoginHandler extends LoginTokenHandler
     /**
      * @inheritdoc
      */
+    #[\Override]
     protected function findOrCreateMember(AccessToken $token, AbstractProvider $provider)
     {
         $session = $this->getSession();
@@ -298,6 +300,7 @@ class OktaLoginHandler extends LoginTokenHandler
      *
      * @throws ValidationException
      */
+    #[\Override]
     protected function createMember(AccessToken $token, AbstractProvider $provider): ?Member
     {
         $session = $this->getSession();

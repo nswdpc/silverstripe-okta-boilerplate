@@ -29,6 +29,7 @@ class OAuthAdmin extends ModelAdmin
         OAuthLog::class
     ];
 
+    #[\Override]
     public function getEditForm($id = null, $fields = null)
     {
         if ($this->modelClass == OAuthLog::class) {

@@ -135,7 +135,7 @@ class PassportExtension extends Extension implements PermissionProvider
     /**
      * Members cannot edit a passport record
      */
-    public function canEdit($member)
+    public function canEdit($member): bool
     {
         return false;
     }
@@ -143,7 +143,7 @@ class PassportExtension extends Extension implements PermissionProvider
     /**
      * Members cannot create a passport record
      */
-    public function canCreate($member)
+    public function canCreate($member): bool
     {
         return false;
     }

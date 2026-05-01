@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NSWDPC\Authentication\Okta\Tests;
 
 use Bigfork\SilverStripeOAuth\Client\Model\Passport;

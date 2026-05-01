@@ -86,7 +86,7 @@ class GroupExtension extends Extension
     /**
      * Require default records on dev build
      */
-    public function requireDefaultRecords()
+    public function onRequireDefaultRecords()
     {
         self::applyOktaRootGroup();
     }
