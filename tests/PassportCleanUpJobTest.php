@@ -33,7 +33,7 @@ class PassportCleanUpJobTest extends SapphireTest
         $staleIds = [];
         $okIds = [];
         foreach ($ids as $id) {
-            if ($id % 2 == 0) {
+            if ($id % 2 === 0) {
                 $staleIds[] = $id;
             } else {
                 $okIds[] = $id;
