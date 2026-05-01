@@ -3,7 +3,7 @@
 namespace NSWDPC\Authentication\Okta;
 
 use SilverStripe\Core\Convert;
-use SilverStripe\ORM\DataExtension;
+use SilverStripe\Core\Extension;
 use SilverStripe\ORM\FieldType\DBBoolean;
 use SilverStripe\ORM\FieldType\DBField;
 use SilverStripe\Forms\ReadonlyField;
@@ -13,9 +13,9 @@ use SilverStripe\Security\Group;
  * Update group handling to include Okta group support
  * @author James
  * @property bool $IsOktaGroup
- * @extends \SilverStripe\ORM\DataExtension<(\SilverStripe\Security\Group & static)>
+ * @extends \SilverStripe\Core\Extension<(\SilverStripe\Security\Group & static)>
  */
-class GroupExtension extends DataExtension
+class GroupExtension extends Extension
 {
     private static array $db = [
         'IsOktaGroup' => 'Boolean'
@@ -38,7 +38,6 @@ class GroupExtension extends DataExtension
      */
     public function onBeforeWrite()
     {
-        parent::onBeforeWrite();
         if ($this->getOwner()->IsOktaGroup) {
             // avoid writing an OktaGroup with permissions
             $permissionCount = $this->getOwner()->Permissions()->count();
@@ -76,6 +75,8 @@ class GroupExtension extends DataExtension
                     'This group was synchronised from Okta'
                 )
             )->setValue(
+                // DBBoolean::Nice()
+                // @phpstan-ignore method.notFound
                 DBField::create_field(DBBoolean::class, $this->getOwner()->IsOktaGroup)->Nice()
             ),
             'Description'

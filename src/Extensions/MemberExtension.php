@@ -2,9 +2,9 @@
 
 namespace NSWDPC\Authentication\Okta;
 
-use SilverStripe\ORM\DataExtension;
+use SilverStripe\Core\Extension;
 use SilverStripe\ORM\ManyManyList;
-use SilverStripe\ORM\ValidationResult;
+use SilverStripe\Core\Validation\ValidationResult;
 use SilverStripe\Forms\ReadonlyField;
 use SilverStripe\Forms\CompositeField;
 use SilverStripe\Forms\CheckboxField;
@@ -19,9 +19,9 @@ use SilverStripe\Security\Security;
  * @property ?string $OktaProfileLogin
  * @property ?string $OktaLastSync
  * @property ?string $OktaUnlinkedWhen
- * @extends \SilverStripe\ORM\DataExtension<(\SilverStripe\Security\Member & static)>
+ * @extends \SilverStripe\Core\Extension<(\SilverStripe\Security\Member & static)>
  */
-class MemberExtension extends DataExtension implements PermissionProvider
+class MemberExtension extends Extension implements PermissionProvider
 {
     private static array $db = [
         'OktaProfileValue' => 'Text',
@@ -53,7 +53,6 @@ class MemberExtension extends DataExtension implements PermissionProvider
      */
     public function onBeforeWrite()
     {
-        parent::onBeforeWrite();
         if ($this->getOwner()->OktaLastSyncClear) {
             $this->getOwner()->OktaLastSync = null;
         }
@@ -64,7 +63,6 @@ class MemberExtension extends DataExtension implements PermissionProvider
      */
     public function onAfterWrite()
     {
-        parent::onAfterWrite();
         $this->getOwner()->OktaLastSyncClear = null;
     }
 
