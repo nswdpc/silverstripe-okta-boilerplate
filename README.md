@@ -42,7 +42,7 @@ After installing the module, run a `dev/build` then [start with the documentatio
 
 ## Maintainers
 
-+ [dpcdigital@NSWDPC:~$](https://dpc.nsw.gov.au)
++ PD Web Team
 
 ## Bugtracker
 
