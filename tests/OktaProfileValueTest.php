@@ -93,7 +93,7 @@ class OktaProfileValueTest extends SapphireTest
         try {
             $assert = false;
             $get = $member->getOktaProfileValueAsArray();
-        } catch (\JsonException $jsonException) {
+        } catch (\JsonException) {
             $assert = true;
         }
 
