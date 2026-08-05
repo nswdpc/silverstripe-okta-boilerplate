@@ -310,7 +310,7 @@ class OAuthTest extends SapphireTest
             // @phpstan-ignore method.notFound
             ->once()
             ->with('content-type')
-            ->andReturn('application/json');
+            ->andReturn(['application/json']);
 
         /** @var ClientInterface|\Mockery\MockInterface $client */
         $client = Mockery::spy(ClientInterface::class, [
