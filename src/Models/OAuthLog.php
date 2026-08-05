@@ -63,7 +63,7 @@ class OAuthLog extends DataObject implements PermissionProvider
     /**
      * Quick add record
      */
-    public static function add($code, int $messageId, $providerName, $identifier = ''): self
+    public static function add(string $code, int $messageId, string $providerName, string $identifier = ''): self
     {
         $record = self::create([
             'Code' => $code,

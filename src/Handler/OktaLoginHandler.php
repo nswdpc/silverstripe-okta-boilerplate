@@ -125,7 +125,7 @@ class OktaLoginHandler extends LoginTokenHandler
             $session = $this->getSession();
             $providerName = $session->get('oauth2.provider');
             OAuthLog::add(
-                $code,
+                (string) $code,// code is stored as a string
                 $messageId,
                 $providerName,
                 $userId
