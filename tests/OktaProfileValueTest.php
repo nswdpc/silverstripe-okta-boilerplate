@@ -90,8 +90,14 @@ class OktaProfileValueTest extends SapphireTest
         $member->OktaProfileValue = 'Not a json string';
         $member->write();
 
-        $get = $member->getOktaProfileValueAsArray();
-        $this->assertEquals([], $get);
+        try {
+            $assert = false;
+            $get = $member->getOktaProfileValueAsArray();
+        } catch (\JsonException $jsonException) {
+            $assert = true;
+        }
+
+        $this->assertTrue($assert);
     }
 
 }
