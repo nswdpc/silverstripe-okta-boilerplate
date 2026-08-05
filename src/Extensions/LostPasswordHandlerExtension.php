@@ -20,7 +20,7 @@ class LostPasswordHandlerExtension extends Extension
      *              Project code should lean on isExternallyManagedContext extension method
      *              on Member and provide a context of 'lostPasswordSendEmail'
      */
-    public function forgotPassword(?Member &$member = null): bool
+    public function onForgotPassword(?Member &$member = null): bool
     {
         if ($member instanceof \SilverStripe\Security\Member) {
             $canSend = MemberExtension::canSendLostPasswordEmail($member);

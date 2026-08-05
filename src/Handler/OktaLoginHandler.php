@@ -9,7 +9,7 @@ use League\OAuth2\Client\Token\AccessToken;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\ORM\FieldType\DBDatetime;
-use SilverStripe\ORM\ValidationException;
+use SilverStripe\Core\Validation\ValidationException;
 use SilverStripe\Security\IdentityStore;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Security;
@@ -61,6 +61,7 @@ class OktaLoginHandler extends LoginTokenHandler
      * - reset the login failure code
      * - work around some issues with validationCanLogin message handling
      */
+    #[\Override]
     public function handleToken(AccessToken $token, AbstractProvider $provider)
     {
         try {
@@ -124,7 +125,7 @@ class OktaLoginHandler extends LoginTokenHandler
             $session = $this->getSession();
             $providerName = $session->get('oauth2.provider');
             OAuthLog::add(
-                $code,
+                (string) $code,// code is stored as a string
                 $messageId,
                 $providerName,
                 $userId
@@ -166,7 +167,7 @@ class OktaLoginHandler extends LoginTokenHandler
      * Given an identifier and a provider string, return the Passport matching
      * @return Passport|null
      */
-    protected function getPassport(string $identifier, string $provider)
+    protected function getPassport(string $identifier, string $provider): ?\SilverStripe\ORM\DataObject
     {
         return Passport::get()->filter([
             'Identifier' => $identifier,
@@ -197,7 +198,7 @@ class OktaLoginHandler extends LoginTokenHandler
             // catch the validation exception thrown on write error
             $this->setLoginFailureCode($validationException->getCode(), $identifier);
             // rethrow with the login exception message
-            throw \SilverStripe\ORM\ValidationException::create(_t(
+            throw ValidationException::create(_t(
                 'OKTA.INVALID_MEMBER',
                 '{getSupportMessage} (#{messageId})',
                 [
@@ -211,6 +212,7 @@ class OktaLoginHandler extends LoginTokenHandler
     /**
      * @inheritdoc
      */
+    #[\Override]
     protected function findOrCreateMember(AccessToken $token, AbstractProvider $provider)
     {
         $session = $this->getSession();
@@ -224,7 +226,7 @@ class OktaLoginHandler extends LoginTokenHandler
         $userUsername = $user->getPreferredUsername();
         if (!$userUsername) {
             $this->setLoginFailureCode(self::FAIL_USER_MISSING_USERNAME, $user->getId());
-            throw \SilverStripe\ORM\ValidationException::create(_t(
+            throw ValidationException::create(_t(
                 'OKTA.GENERAL_SESSION_ERROR',
                 '{getSupportMessage} (#{messageId})',
                 [
@@ -236,7 +238,7 @@ class OktaLoginHandler extends LoginTokenHandler
 
         if (empty($providerName)) {
             $this->setLoginFailureCode(self::FAIL_NO_PROVIDER_NAME, $user->getId());
-            throw \SilverStripe\ORM\ValidationException::create(_t(
+            throw ValidationException::create(_t(
                 'OKTA.GENERAL_SESSION_ERROR',
                 '{getSupportMessage} (#{messageId})',
                 [
@@ -255,7 +257,7 @@ class OktaLoginHandler extends LoginTokenHandler
             if (!$member instanceof \SilverStripe\Security\Member) {
                 // Failed to create or find member
                 $this->setLoginFailureCode(self::FAIL_NO_PASSPORT_NO_MEMBER_CREATED, $user->getId());
-                throw \SilverStripe\ORM\ValidationException::create(_t(
+                throw ValidationException::create(_t(
                     'OKTA.INVALID_MEMBER',
                     '{getSupportMessage} (#{messageId})',
                     [
@@ -273,7 +275,7 @@ class OktaLoginHandler extends LoginTokenHandler
             $member = $this->createMember($token, $provider);
             if (!$member instanceof \SilverStripe\Security\Member) {
                 $this->setLoginFailureCode(self::FAIL_PASSPORT_NO_MEMBER_CREATED, $user->getId());
-                throw \SilverStripe\ORM\ValidationException::create(_t(
+                throw ValidationException::create(_t(
                     'OKTA.INVALID_MEMBER',
                     '{getSupportMessage} (#{messageId})',
                     [
@@ -298,6 +300,7 @@ class OktaLoginHandler extends LoginTokenHandler
      *
      * @throws ValidationException
      */
+    #[\Override]
     protected function createMember(AccessToken $token, AbstractProvider $provider): ?Member
     {
         $session = $this->getSession();
@@ -308,7 +311,7 @@ class OktaLoginHandler extends LoginTokenHandler
         // require a provider name for this operation
         if (empty($providerName)) {
             $this->setLoginFailureCode(self::FAIL_NO_PROVIDER_NAME, $user->getId());
-            throw \SilverStripe\ORM\ValidationException::create(_t(
+            throw ValidationException::create(_t(
                 'OKTA.GENERAL_SESSION_ERROR',
                 '{getSupportMessage} (#{messageId})',
                 [
@@ -321,7 +324,7 @@ class OktaLoginHandler extends LoginTokenHandler
         // Require the user preferred username (Okta login) for this operation
         if (!$user->getPreferredUsername()) {
             $this->setLoginFailureCode(self::FAIL_USER_MISSING_USERNAME, $user->getId());
-            throw \SilverStripe\ORM\ValidationException::create(_t(
+            throw ValidationException::create(_t(
                 'OKTA.NO_USERNAME_RETURNED',
                 '{getSupportMessage} (#{messageId})',
                 [
@@ -334,7 +337,7 @@ class OktaLoginHandler extends LoginTokenHandler
         // Require user email
         if (!$user->getEmail()) {
             $this->setLoginFailureCode(self::FAIL_USER_MISSING_EMAIL, $user->getId());
-            throw \SilverStripe\ORM\ValidationException::create(_t(
+            throw ValidationException::create(_t(
                 'OKTA.NO_USERNAME_RETURNED',
                 '{getSupportMessage} (#{messageId})',
                 [
@@ -350,7 +353,7 @@ class OktaLoginHandler extends LoginTokenHandler
         if (!$member instanceof \SilverStripe\Security\Member) {
             // Could not link the member to the Okta user
             $this->setLoginFailureCode(self::FAIL_USER_MEMBER_LINK_FAILED, $user->getId());
-            throw \SilverStripe\ORM\ValidationException::create(_t(
+            throw ValidationException::create(_t(
                 'OKTA.MEMBER_COLLISION',
                 '{getSupportMessage} (#{messageId})',
                 [

@@ -63,7 +63,7 @@ class OAuthLog extends DataObject implements PermissionProvider
     /**
      * Quick add record
      */
-    public static function add($code, int $messageId, $providerName, $identifier = ''): self
+    public static function add(string $code, int $messageId, string $providerName, string $identifier = ''): self
     {
         $record = self::create([
             'Code' => $code,
@@ -75,6 +75,7 @@ class OAuthLog extends DataObject implements PermissionProvider
         return $record;
     }
 
+    #[\Override]
     public function getTitle()
     {
         return (string) $this->MessageId;
@@ -97,6 +98,7 @@ class OAuthLog extends DataObject implements PermissionProvider
     /**
      * Who can edit
      */
+    #[\Override]
     public function canEdit($member = null)
     {
         return false;
@@ -105,6 +107,7 @@ class OAuthLog extends DataObject implements PermissionProvider
     /**
      * Who can create
      */
+    #[\Override]
     public function canCreate($member = null, $context = [])
     {
         return false;
@@ -113,6 +116,7 @@ class OAuthLog extends DataObject implements PermissionProvider
     /**
      * Who can delete
      */
+    #[\Override]
     public function canDelete($member = null)
     {
         return Permission::checkMember($member, 'OAUTH_LOG_DELETE');
@@ -121,6 +125,7 @@ class OAuthLog extends DataObject implements PermissionProvider
     /**
      * Who can view
      */
+    #[\Override]
     public function canView($member = null)
     {
         return Permission::checkMember($member, 'OAUTH_LOG_VIEW');
@@ -146,6 +151,7 @@ class OAuthLog extends DataObject implements PermissionProvider
     /**
      * Update fields
      */
+    #[\Override]
     public function getCmsFields()
     {
         $fields = parent::getCmsFields();

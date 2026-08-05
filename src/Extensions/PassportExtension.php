@@ -5,8 +5,9 @@ namespace NSWDPC\Authentication\Okta;
 use Bigfork\SilverStripeOAuth\Client\Model\Passport;
 use Bigfork\SilverStripeOAuth\Client\Factory\ProviderFactory;
 use SilverStripe\Core\Injector\Injector;
+use SilverStripe\Core\Validation\ValidationException;
 use SilverStripe\Forms\DropdownField;
-use SilverStripe\ORM\DataExtension;
+use SilverStripe\Core\Extension;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
 use SilverStripe\Security\PermissionProvider;
@@ -21,9 +22,9 @@ use SilverStripe\Security\Security;
  * @property ?string $OAuthSource
  * @property int $CreatedByMemberID
  * @method \SilverStripe\Security\Member CreatedByMember()
- * @extends \SilverStripe\ORM\DataExtension<(\Bigfork\SilverStripeOAuth\Client\Model\Passport & static)>
+ * @extends \SilverStripe\Core\Extension<(\Bigfork\SilverStripeOAuth\Client\Model\Passport & static)>
  */
-class PassportExtension extends DataExtension implements PermissionProvider
+class PassportExtension extends Extension implements PermissionProvider
 {
     private static array $db = [
         'OAuthSource' => 'Varchar(255)'
@@ -79,7 +80,7 @@ class PassportExtension extends DataExtension implements PermissionProvider
 
             $existing = $existing->first();
             if ($existing && $existing->exists()) {
-                throw \SilverStripe\ORM\ValidationException::create(OktaLoginHandler::getFailMessageForCode(OktaLoginHandler::FAIL_PASSPORT_CREATE_IDENT_COLLISION), OktaLoginHandler::FAIL_PASSPORT_CREATE_IDENT_COLLISION);
+                throw ValidationException::create(OktaLoginHandler::getFailMessageForCode(OktaLoginHandler::FAIL_PASSPORT_CREATE_IDENT_COLLISION), OktaLoginHandler::FAIL_PASSPORT_CREATE_IDENT_COLLISION);
             }
         }
 
@@ -97,7 +98,7 @@ class PassportExtension extends DataExtension implements PermissionProvider
 
             $existing = $existing->first();
             if ($existing && $existing->exists()) {
-                throw \SilverStripe\ORM\ValidationException::create(OktaLoginHandler::getFailMessageForCode(OktaLoginHandler::FAIL_USER_MEMBER_PASSPORT_MISMATCH), OktaLoginHandler::FAIL_USER_MEMBER_PASSPORT_MISMATCH);
+                throw ValidationException::create(OktaLoginHandler::getFailMessageForCode(OktaLoginHandler::FAIL_USER_MEMBER_PASSPORT_MISMATCH), OktaLoginHandler::FAIL_USER_MEMBER_PASSPORT_MISMATCH);
             }
         }
 
@@ -106,7 +107,6 @@ class PassportExtension extends DataExtension implements PermissionProvider
 
     public function onBeforeWrite()
     {
-        parent::onBeforeWrite();
         if (!$this->getOwner()->isInDB()) {
             $member = Security::getCurrentUser();
             $this->getOwner()->CreatedByMemberID = $member->ID ?? 0;
@@ -135,7 +135,7 @@ class PassportExtension extends DataExtension implements PermissionProvider
     /**
      * Members cannot edit a passport record
      */
-    public function canEdit($member)
+    public function canEdit($member): bool
     {
         return false;
     }
@@ -143,7 +143,7 @@ class PassportExtension extends DataExtension implements PermissionProvider
     /**
      * Members cannot create a passport record
      */
-    public function canCreate($member)
+    public function canCreate($member): bool
     {
         return false;
     }

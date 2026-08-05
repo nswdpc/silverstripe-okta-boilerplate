@@ -42,6 +42,7 @@ class PassportCleanupJob extends AbstractQueuedJob
         $this->totalSteps = 1;//there is one step in this job
     }
 
+    #[\Override]
     public function getJobType()
     {
         return QueuedJob::QUEUED;
