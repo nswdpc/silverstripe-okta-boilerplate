@@ -165,7 +165,7 @@ class MemberExtension extends Extension implements PermissionProvider
      */
     public function getOktaProfileValueAsArray(): array
     {
-        $value = json_decode($this->getOwner()->OktaProfileValue ?? '', true, JSON_THROW_ON_ERROR);
+        $value = json_decode($this->getOwner()->OktaProfileValue ?? '', true, 512, JSON_THROW_ON_ERROR);
         if (!is_array($value)) {
             $value = [];
         }
