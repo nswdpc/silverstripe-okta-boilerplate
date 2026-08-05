@@ -5,9 +5,11 @@ namespace NSWDPC\Authentication\Okta;
 use SilverStripe\Core\Extension;
 use SilverStripe\Forms\FieldList;
 use SilverStripe\Forms\LiteralField;
-use SilverStripe\Security\Member;
 use SilverStripe\Security\Security;
 
+/**
+ * @extends \SilverStripe\Core\Extension<(\Bigfork\SilverStripeOAuth\Client\Form\LoginForm & static)>
+ */
 class OAuthLoginFormExtension extends Extension
 {
     /**

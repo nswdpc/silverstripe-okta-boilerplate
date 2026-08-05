@@ -5,12 +5,9 @@ namespace NSWDPC\Authentication\Okta;
 use SilverStripe\ORM\DataExtension;
 use SilverStripe\ORM\ManyManyList;
 use SilverStripe\ORM\ValidationResult;
-use SilverStripe\ORM\FieldType\DBField;
 use SilverStripe\Forms\ReadonlyField;
 use SilverStripe\Forms\CompositeField;
 use SilverStripe\Forms\CheckboxField;
-use SilverStripe\Forms\LabelField;
-use SilverStripe\Forms\LiteralField;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
 use SilverStripe\Security\PermissionProvider;
@@ -18,6 +15,11 @@ use SilverStripe\Security\Security;
 
 /**
  * Updates member view in administration area
+ * @property ?string $OktaProfileValue
+ * @property ?string $OktaProfileLogin
+ * @property ?string $OktaLastSync
+ * @property ?string $OktaUnlinkedWhen
+ * @extends \SilverStripe\ORM\DataExtension<(\SilverStripe\Security\Member & static)>
  */
 class MemberExtension extends DataExtension implements PermissionProvider
 {
@@ -165,7 +167,7 @@ class MemberExtension extends DataExtension implements PermissionProvider
      */
     public function getOktaProfileValueAsArray(): array
     {
-        $value = json_decode($this->getOwner()->OktaProfileValue ?? '', true, JSON_THROW_ON_ERROR);
+        $value = json_decode($this->getOwner()->OktaProfileValue ?? '', true, 512, JSON_THROW_ON_ERROR);
         if (!is_array($value)) {
             $value = [];
         }

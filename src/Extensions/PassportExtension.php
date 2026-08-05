@@ -7,7 +7,6 @@ use Bigfork\SilverStripeOAuth\Client\Factory\ProviderFactory;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Forms\DropdownField;
 use SilverStripe\ORM\DataExtension;
-use SilverStripe\ORM\ValidationException;
 use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
 use SilverStripe\Security\PermissionProvider;
@@ -19,6 +18,10 @@ use SilverStripe\Security\Security;
  *
  * Adds unique indexes to the DB
  * @author James
+ * @property ?string $OAuthSource
+ * @property int $CreatedByMemberID
+ * @method \SilverStripe\Security\Member CreatedByMember()
+ * @extends \SilverStripe\ORM\DataExtension<(\Bigfork\SilverStripeOAuth\Client\Model\Passport & static)>
  */
 class PassportExtension extends DataExtension implements PermissionProvider
 {

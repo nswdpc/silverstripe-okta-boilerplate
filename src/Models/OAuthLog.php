@@ -4,13 +4,16 @@ namespace NSWDPC\Authentication\Okta;
 
 use SilverStripe\ORM\DataObject;
 use SilverStripe\ORM\DB;
-use SilverStripe\Security\Member;
 use SilverStripe\Security\Permission;
 use SilverStripe\Security\PermissionProvider;
 
 /**
  * Stores OAuth failures for inspection
  * @author James
+ * @property ?string $Code
+ * @property int $MessageId
+ * @property ?string $OAuthSource
+ * @property ?string $Identifier
  */
 class OAuthLog extends DataObject implements PermissionProvider
 {
@@ -72,12 +75,9 @@ class OAuthLog extends DataObject implements PermissionProvider
         return $record;
     }
 
-    /**
-     * @return string
-     */
     public function getTitle()
     {
-        return $this->MessageId;
+        return (string) $this->MessageId;
     }
 
     /**

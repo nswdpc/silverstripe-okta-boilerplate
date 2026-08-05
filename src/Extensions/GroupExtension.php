@@ -3,9 +3,7 @@
 namespace NSWDPC\Authentication\Okta;
 
 use SilverStripe\Core\Convert;
-use SilverStripe\Core\Config\Config;
 use SilverStripe\ORM\DataExtension;
-use SilverStripe\ORM\ValidationException;
 use SilverStripe\ORM\FieldType\DBBoolean;
 use SilverStripe\ORM\FieldType\DBField;
 use SilverStripe\Forms\ReadonlyField;
@@ -14,6 +12,8 @@ use SilverStripe\Security\Group;
 /**
  * Update group handling to include Okta group support
  * @author James
+ * @property bool $IsOktaGroup
+ * @extends \SilverStripe\ORM\DataExtension<(\SilverStripe\Security\Group & static)>
  */
 class GroupExtension extends DataExtension
 {

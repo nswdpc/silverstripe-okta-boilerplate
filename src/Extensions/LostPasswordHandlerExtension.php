@@ -1,14 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace NSWDPC\Authentication\Okta;
 
 use SilverStripe\Core\Extension;
 use SilverStripe\Security\Member;
-use SilverStripe\Security\Permission;
 
 /**
  * Veto lost password requests for non-CMS users
  * @todo make generic
+ * @extends \SilverStripe\Core\Extension<(\SilverStripe\Security\MemberAuthenticator\LostPasswordHandler & static)>
  */
 class LostPasswordHandlerExtension extends Extension
 {
@@ -17,9 +19,8 @@ class LostPasswordHandlerExtension extends Extension
      * @deprecated note that this method will be removed in a future major release
      *              Project code should lean on isExternallyManagedContext extension method
      *              on Member and provide a context of 'lostPasswordSendEmail'
-     * @param Member|null $member
      */
-    public function forgotPassword(Member &$member = null): bool
+    public function forgotPassword(?Member &$member = null): bool
     {
         if ($member instanceof \SilverStripe\Security\Member) {
             $canSend = MemberExtension::canSendLostPasswordEmail($member);

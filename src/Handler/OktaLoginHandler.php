@@ -6,8 +6,6 @@ use Bigfork\SilverStripeOAuth\Client\Model\Passport;
 use Bigfork\SilverStripeOAuth\Client\Handler\LoginTokenHandler;
 use League\OAuth2\Client\Provider\AbstractProvider;
 use League\OAuth2\Client\Token\AccessToken;
-use League\OAuth2\Client\Provider\ResourceOwnerInterface;
-use SilverStripe\Control\Controller;
 use SilverStripe\Core\Config\Configurable;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\ORM\FieldType\DBDatetime;
@@ -96,7 +94,7 @@ class OktaLoginHandler extends LoginTokenHandler
     /**
      * Return message related to code
      */
-    public static function getFailMessageForCode(int $code): string
+    public static function getFailMessageForCode(int|string $code): string
     {
         return match ($code) {
             self::FAIL_USER_NO_GROUPS => _t('OAUTH.FAIL_' . $code, 'User has no Okta groups'),

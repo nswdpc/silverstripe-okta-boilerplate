@@ -10,7 +10,6 @@ use Foxworth42\OAuth2\Client\Provider\OktaUser;
 use GuzzleHttp\ClientInterface;
 use League\OAuth2\Client\Token\AccessToken;
 use Mockery;
-use NSWDPC\Authentication\Okta\ClientFactory;
 use NSWDPC\Authentication\Okta\OktaLoginHandler;
 use NSWDPC\Authentication\Okta\OktaLinker;
 use NSWDPC\Authentication\Okta\GroupExtension;
@@ -24,11 +23,8 @@ use SilverStripe\Control\Session;
 use SilverStripe\Core\Config\Config;
 use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\SapphireTest;
-use SilverStripe\ORM\ValidationResult;
 use SilverStripe\Security\Group;
 use SilverStripe\Security\Member;
-use SilverStripe\Security\RequestAuthenticationHandler;
-use SilverStripe\Security\Security;
 
 /**
  * OAuth (Okta) tests
@@ -300,18 +296,21 @@ class OAuthTest extends SapphireTest
         $provider = new Okta($options);
 
         $stream = Mockery::mock(StreamInterface::class);
-        $stream->shouldReceive('__toString') /** @phpstan-ignore method.notFound */
+        $stream->shouldReceive('__toString')
+            // @phpstan-ignore method.notFound
             ->once()
             ->andReturn(json_encode($authenticatingUser));
 
         $response = Mockery::mock(ResponseInterface::class);
-        $response->shouldReceive('getBody') /** @phpstan-ignore method.notFound */
+        $response->shouldReceive('getBody')
+            // @phpstan-ignore method.notFound
             ->once()
             ->andReturn($stream);
-        $response->shouldReceive('getHeader') /** @phpstan-ignore method.notFound */
+        $response->shouldReceive('getHeader')
+            // @phpstan-ignore method.notFound
             ->once()
             ->with('content-type')
-            ->andReturn('application/json');
+            ->andReturn(['application/json']);
 
         /** @var ClientInterface|\Mockery\MockInterface $client */
         $client = Mockery::spy(ClientInterface::class, [
@@ -355,8 +354,6 @@ class OAuthTest extends SapphireTest
 
         $handler = new OktaLoginHandler();
         $response = $handler->handleToken($result['accessToken'], $result['provider']);
-
-        $handler->getLoginFailureCode();
 
         $this->assertInstanceOf(HTTPResponse::class, $response);
 

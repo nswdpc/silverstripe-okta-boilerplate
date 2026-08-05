@@ -4,8 +4,6 @@ namespace NSWDPC\Authentication\Okta\Tests;
 
 use Bigfork\SilverStripeOAuth\Client\Model\Passport;
 use NSWDPC\Authentication\Okta\PassportCleanupJob;
-use SilverStripe\Core\Config\Config;
-use SilverStripe\Core\Injector\Injector;
 use SilverStripe\Dev\SapphireTest;
 use SilverStripe\ORM\DB;
 
@@ -35,7 +33,7 @@ class PassportCleanUpJobTest extends SapphireTest
         $staleIds = [];
         $okIds = [];
         foreach ($ids as $id) {
-            if ($id % 2 == 0) {
+            if ($id % 2 === 0) {
                 $staleIds[] = $id;
             } else {
                 $okIds[] = $id;
