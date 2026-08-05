@@ -19,7 +19,6 @@ class LostPasswordHandlerExtension extends Extension
      * @deprecated note that this method will be removed in a future major release
      *              Project code should lean on isExternallyManagedContext extension method
      *              on Member and provide a context of 'lostPasswordSendEmail'
-     * @param Member|null $member
      */
     public function forgotPassword(?Member &$member = null): bool
     {
